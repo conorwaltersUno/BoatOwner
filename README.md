@@ -14,10 +14,71 @@ One of the standout features of BoatOwner is its ability to maintain a detailed 
 
 In summary, BoatOwner is an essential tool for any boat owner looking to simplify and enhance their boating experience. It provides a centralized platform for managing all aspects of boat ownership, from tracking journeys and planning maintenance to monitoring finances and maintaining detailed logs. With BoatOwner, boat owners can enjoy their time on the water without the stress of juggling numerous responsibilities.
 
+## Domain Model Diagram
+
 ```mermaid
 flowchart
  USER --- BOAT
- BOAT --- LOGS
- BOAT --- Tasks
- BOAT --- Expenses
+ BOAT --- Logs_Boat
+ BOAT --- Task_Boat
+ BOAT --- Expenses_Boat
+ Logs_Boat --- LOGS
+ Task_Boat --- TASKS
+ Expenses_Boat --- EXPENSES
+```
+
+## Entity Relationship Diagram
+
+```mermaid
+erDiagram
+ user ||--|| boat : ""
+
+ user {
+    serial id PK
+    varchar email_address
+    varchar password
+    timestamp created
+}
+ boat {
+    int user_id FK
+    varchar name
+    varchar model
+}
+logs_boat {
+    serial boat_id FK
+    serial log_id FK
+}
+logs {
+    serial id PK
+    string descrption
+    array crew_memebers
+    array coordinates
+    array photo_urls
+    timestamp log_started
+    timestamp log_ended
+    timestamp created_on
+    boolean isRecordingLocation
+}
+tasks_boat {
+    serial boat_id FK
+    serial tasks_id FK
+}
+tasks {
+    serial id PK
+    varchar description
+    varchar status
+    timestamp created_on
+}
+expenses_boat {
+    serial boat_id FK
+    serial expenses_id FK
+}
+expenses {
+    serial id PK
+    varchar expense_type
+    int amount
+    timestamp expense_date
+    timestamp created_on
+}
+
 ```
