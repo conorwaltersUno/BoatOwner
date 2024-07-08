@@ -35,9 +35,9 @@ erDiagram
     boat ||--o{ expense_boat : ""
     boat ||--o{ logs_boat : ""
     boat ||--o{ tasks_boat : ""
-    expense_boat }o--|| boat : ""
-    logs_boat }o--|| boat : ""
-    tasks_boat }o--|| boat : ""
+    logs_boat }o--|| logs : ""
+    tasks_boat }o--|| tasks : ""
+    expense_boat }o--|| expenses : ""
 
 
  user {
