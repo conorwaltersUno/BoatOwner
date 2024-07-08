@@ -31,13 +31,13 @@ flowchart
 
 ```mermaid
 erDiagram
- user |--|| boat : ""
- boat |--|| expense_boat : ""
- boat |--|| logs_boat : ""
- boat |--|| tasks_boat : ""
- expense_boat ||--|| boat : ""
- logs_boat ||--|| boat : ""
- tasks_boat ||--|| boat : ""
+    user ||--o{ boat : ""
+    boat ||--o{ expense_boat : ""
+    boat ||--o{ logs_boat : ""
+    boat ||--o{ tasks_boat : ""
+    expense_boat }o--|| boat : ""
+    logs_boat }o--|| boat : ""
+    tasks_boat }o--|| boat : ""
 
 
  user {
