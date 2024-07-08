@@ -19,12 +19,9 @@ In summary, BoatOwner is an essential tool for any boat owner looking to simplif
 ```mermaid
 flowchart
  USER --- BOAT
- BOAT --- Logs_Boat
- BOAT --- Task_Boat
- BOAT --- Expenses_Boat
- Logs_Boat --- LOGS
- Task_Boat --- TASKS
- Expenses_Boat --- EXPENSES
+ BOAT --- LOGS
+ BOAT --- TASKS
+ BOAT --- EXPENSES
 ```
 
 ## Entity Relationship Diagram
