@@ -32,12 +32,12 @@ flowchart
 ```mermaid
 erDiagram
     user ||--o{ boat : ""
-    boat ||--o{ expense_boat : ""
+    boat ||--o{ expenses_boat : ""
     boat ||--o{ logs_boat : ""
     boat ||--o{ tasks_boat : ""
     logs_boat }o--|| logs : ""
     tasks_boat }o--|| tasks : ""
-    expense_boat }o--|| expenses : ""
+    expenses_boat }o--|| expenses : ""
 
 
  user {
