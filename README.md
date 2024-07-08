@@ -31,7 +31,14 @@ flowchart
 
 ```mermaid
 erDiagram
- user ||--|| boat : ""
+ user |--|| boat : ""
+ boat |--|| expense_boat : ""
+ boat |--|| logs_boat : ""
+ boat |--|| tasks_boat : ""
+ expense_boat ||--|| boat : ""
+ logs_boat ||--|| boat : ""
+ tasks_boat ||--|| boat : ""
+
 
  user {
     serial id PK
