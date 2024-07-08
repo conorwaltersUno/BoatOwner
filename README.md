@@ -13,3 +13,11 @@ Additionally, BoatOwner includes robust financial tracking capabilities. Users c
 One of the standout features of BoatOwner is its ability to maintain a detailed log of all passages made during ownership. This log not only serves as a valuable record for the owner but also adds to the boat's documented history, which can be beneficial if the owner decides to sell the boat in the future.
 
 In summary, BoatOwner is an essential tool for any boat owner looking to simplify and enhance their boating experience. It provides a centralized platform for managing all aspects of boat ownership, from tracking journeys and planning maintenance to monitoring finances and maintaining detailed logs. With BoatOwner, boat owners can enjoy their time on the water without the stress of juggling numerous responsibilities.
+
+```mermaid
+flowchart
+ USER --- BOAT
+ BOAT --- LOGS
+ BOAT --- Tasks
+ BOAT --- Expenses
+```
