@@ -28,10 +28,10 @@ flowchart
 
 ```mermaid
 erDiagram
-    user ||--o{ boat : ""
-    boat |--o{ logs : ""
-    boat |--o{ tasks : ""
-    boat |--o{ expenses : ""
+    user --o|""| boat
+    boat --o|""| logs
+    boat --o|""| tasks
+    boat --o|""| expenses
 
  user {
     serial id PK
