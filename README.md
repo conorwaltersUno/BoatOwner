@@ -29,13 +29,9 @@ flowchart
 ```mermaid
 erDiagram
     user ||--o{ boat : ""
-    boat ||--o{ expenses_boat : ""
-    boat ||--o{ logs_boat : ""
-    boat ||--o{ tasks_boat : ""
-    logs_boat }o--|| logs : ""
-    tasks_boat }o--|| tasks : ""
-    expenses_boat }o--|| expenses : ""
-
+    boat |--o{ logs : ""
+    boat |--o{ tasks : ""
+    boat |--o{ expenses : ""
 
  user {
     serial id PK
@@ -44,16 +40,15 @@ erDiagram
     timestamp created
 }
  boat {
+    serial id PK
     int user_id FK
     varchar name
     varchar model
 }
-logs_boat {
-    serial boat_id FK
-    serial log_id FK
-}
+
 logs {
     serial id PK
+    serial boat_id FK
     string descrption
     array crew_memebers
     array coordinates
@@ -63,22 +58,18 @@ logs {
     timestamp created_on
     boolean isRecordingLocation
 }
-tasks_boat {
-    serial boat_id FK
-    serial tasks_id FK
-}
+
 tasks {
     serial id PK
+    serial boat_id FK
     varchar description
     varchar status
     timestamp created_on
 }
-expenses_boat {
-    serial boat_id FK
-    serial expenses_id FK
-}
+
 expenses {
     serial id PK
+    serial boat_id FK
     varchar expense_type
     int amount
     timestamp expense_date
