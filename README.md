@@ -92,7 +92,8 @@ expenses {
 
 ### API Specification
 
-USER
+## USER
+
 GET /users
 
 Return a list of all users
