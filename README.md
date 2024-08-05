@@ -174,7 +174,8 @@ Deletes a user
 Response: 204 No Content
 Response: 404 Not Found (if user with the given id does not exist)
 
-BOATS
+##BOATS
+
 GET /boats
 
 Return a list of all boats
@@ -257,7 +258,8 @@ Deletes a boat
 Response: 204 No Content
 Response: 404 Not Found (if boat with the given id does not exist)
 
-LOGS
+## LOGS
+
 GET /logs
 
 Return a list of all logs
@@ -405,7 +407,8 @@ Deletes a log
 Response: 204 No Content
 Response: 404 Not Found (if log with the given id does not exist)
 
-TASKS
+##TASKS
+
 GET /tasks
 
 Return a list of all tasks
@@ -514,7 +517,8 @@ Deletes a task
 Response: 204 No Content
 Response: 404 Not Found (if task with the given id does not exist)
 
-EXPENSES
+## EXPENSES
+
 GET /expenses
 
 Return a list of all expenses
