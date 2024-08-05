@@ -130,6 +130,7 @@ Return a user
 ```
 
 Response: 200 Success
+
 Response: 404 Not Found (if user with the given id does not exist)
 
 POST /users
@@ -145,6 +146,7 @@ Create a user
 ```
 
 Response: 201 Created
+
 Response: 400 Bad Request (if required fields are missing or invalid)
 
 PUT /users/{id}
@@ -160,7 +162,9 @@ Update a user
 ```
 
 Response: 200 Success
+
 Response: 400 Bad Request (if required fields are missing or invalid)
+
 Response: 404 Not Found (if user with the given id does not exist)
 
 DELETE /users/{id}
@@ -173,6 +177,7 @@ Deletes a user
 ```
 
 Response: 204 No Content
+
 Response: 404 Not Found (if user with the given id does not exist)
 
 ##BOATS
@@ -214,6 +219,7 @@ Return a boat
 ```
 
 Response: 200 Success
+
 Response: 404 Not Found (if boat with the given id does not exist)
 
 POST /boats
@@ -229,6 +235,7 @@ Create a boat
 ```
 
 Response: 201 Created
+
 Response: 400 Bad Request (if required fields are missing or invalid)
 
 PUT /boats/{id}
@@ -244,7 +251,9 @@ Update a boat
 ```
 
 Response: 200 Success
+
 Response: 400 Bad Request (if required fields are missing or invalid)
+
 Response: 404 Not Found (if boat with the given id does not exist)
 
 DELETE /boats/{id}
@@ -257,6 +266,7 @@ Deletes a boat
 ```
 
 Response: 204 No Content
+
 Response: 404 Not Found (if boat with the given id does not exist)
 
 ## LOGS
@@ -315,6 +325,7 @@ Return all logs associated with a boat
 ```
 
 Response: 200 Success
+
 Response: 404 Not Found (if log with the given id does not exist)
 
 GET /logs/{id}
@@ -336,6 +347,7 @@ Return a log
 ```
 
 Response: 200 Success
+
 Response: 404 Not Found (if log with the given id does not exist)
 
 POST /logs/{boat_id}
@@ -357,6 +369,7 @@ Create a log
 ```
 
 Response: 201 Created
+
 Response: 400 Bad Request (if required fields are missing or invalid)
 
 PUT /logs/{id}
@@ -378,7 +391,9 @@ Update a log
 ```
 
 Response: 200 Success
+
 Response: 400 Bad Request (if required fields are missing or invalid)
+
 Response: 404 Not Found (if log with the given id does not exist)
 
 POST Co-ordinates
@@ -393,7 +408,9 @@ Add a new co-ordinate to a log
 ```
 
 Response: 200 Success
+
 Response: 400 Bad Request (if required fields are missing or invalid)
+
 Response: 404 Not Found (if log with the given id does not exist)
 
 DELETE /logs/{id}
@@ -406,6 +423,7 @@ Deletes a log
 ```
 
 Response: 204 No Content
+
 Response: 404 Not Found (if log with the given id does not exist)
 
 ##TASKS
@@ -450,6 +468,7 @@ Return a task
 ```
 
 Response: 200 Success
+
 Response: 404 Not Found (if task with the given id does not exist)
 
 GET /boat/{boat_id}/tasks
@@ -474,6 +493,7 @@ Return all tasks associated with a boat
 ```
 
 Response: 200 Success
+
 Response: 404 Not Found (if boat id is not found)
 
 POST /tasks/{boat_id}
@@ -489,6 +509,7 @@ Create a task
 ```
 
 Response: 201 Created
+
 Response: 400 Bad Request (if required fields are missing or invalid)
 
 PUT /tasks/{id}
@@ -503,7 +524,9 @@ Update a task
 ```
 
 Response: 200 Success
+
 Response: 400 Bad Request (if required fields are missing or invalid)
+
 Response: 404 Not Found (if task with the given id does not exist)
 
 DELETE /tasks/{id}
@@ -516,6 +539,7 @@ Deletes a task
 ```
 
 Response: 204 No Content
+
 Response: 404 Not Found (if task with the given id does not exist)
 
 ## EXPENSES
@@ -588,6 +612,7 @@ Return an expense
 ```
 
 Response: 200 Success
+
 Response: 404 Not Found (if expense with the given id does not exist)
 
 GET boat/{boat_id}/expenses
@@ -616,6 +641,7 @@ Return an expense
 ```
 
 Response: 200 Success
+
 Response: 404 Not Found (if expense with the given id does not exist)
 
 POST /expenses
@@ -633,6 +659,7 @@ Create an expense
 ```
 
 Response: 201 Created
+
 Response: 400 Bad Request (if required fields are missing or invalid)
 
 PUT /expenses/{id}
@@ -649,7 +676,9 @@ Update an expense
 ```
 
 Response: 200 Success
+
 Response: 400 Bad Request (if required fields are missing or invalid)
+
 Response: 404 Not Found (if expense with the given id does not exist)
 
 DELETE /expenses/{id}
@@ -662,4 +691,5 @@ Deletes an expense
 ```
 
 Response: 204 No Content
+
 Response: 404 Not Found (if expense with the given id does not exist)
