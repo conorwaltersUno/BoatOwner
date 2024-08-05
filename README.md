@@ -157,7 +157,6 @@ Update a user
 {
 "email": "newuser@email.com",
 "password": "password123",
-"created": "2023-08-05 10:00:00"
 }
 ```
 
