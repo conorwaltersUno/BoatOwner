@@ -98,7 +98,8 @@ GET /users
 
 Return a list of all users
 
-```[
+```
+[
 {
 "id": 1,
 "email": "user1@email.com",
