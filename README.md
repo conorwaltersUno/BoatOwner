@@ -14,6 +14,17 @@ One of the standout features of BoatOwner is its ability to maintain a detailed 
 
 In summary, BoatOwner is an essential tool for any boat owner looking to simplify and enhance their boating experience. It provides a centralized platform for managing all aspects of boat ownership, from tracking journeys and planning maintenance to monitoring finances and maintaining detailed logs. With BoatOwner, boat owners can enjoy their time on the water without the stress of juggling numerous responsibilities.
 
+## MVP
+- Ability for users to Log in / Log out and authenticate user accounts
+- Ability for users to view expenses, logs and tasks in seperate tabs per boat
+- Ability for users to add a new expense via expense tab
+- Ability for users to add a new task via task tab
+- Ability for users to begin a 'log session' where the co-ordinates of the journey undertaken while recorded can be saved to the db per log
+- Ability for users to add a description, photos and any other information required to save a log after recording the journey
+- Ability for users to view all expenses in a user friendly manner in the expenses tab
+- Ability for users to view all past logs associated with their boat
+- Ability for users to view, edit and update tasks associated with their boat
+
 ## Domain Model Diagram
 
 ```mermaid
