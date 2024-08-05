@@ -293,6 +293,27 @@ Return a list of all logs
 
 Response: 200 Success
 
+GET /boat/logs/{boat_id}
+
+```
+Return all logs associated with a boat
+{
+  "id": 1,
+  "boat_id": 1,
+  "description": "Departed from dock",
+  "crew_members": ["Alice", "Bob"],
+  "coordinates": [[37.7749, -122.4194], [36.7783, -119.4179]],
+  "photo_urls": ["http://example.com/photo1.jpg", "http://example.com/photo2.jpg"],
+  "log_started": "2023-07-01T08:00:00Z",
+  "log_ended": "2023-07-01T12:00:00Z",
+  "created_on": "2023-07-01T08:00:00Z",
+  "isRecordingLocation": true
+}
+```
+
+Response: 200 Success
+Response: 404 Not Found (if log with the given id does not exist)
+
 GET /logs/{id}
 
 ```
@@ -427,7 +448,7 @@ Return a task
 Response: 200 Success
 Response: 404 Not Found (if task with the given id does not exist)
 
-GET /tasks/{boat_id}
+GET /boat/{boat_id}/tasks
 
 Return all tasks associated with a boat
 
@@ -559,6 +580,34 @@ Return an expense
   "expense_date": "2023-08-01T09:00:00Z",
   "created_on": "2023-08-01T09:00:00Z"
 }
+```
+
+Response: 200 Success
+Response: 404 Not Found (if expense with the given id does not exist)
+
+GET boat/{boat_id}/expenses
+
+Return an expense
+
+```
+[
+{
+  "id": 1,
+  "boat_id": 1,
+  "expense_type": "Fuel",
+  "amount": 500,
+  "expense_date": "2023-08-01T09:00:00Z",
+  "created_on": "2023-08-01T09:00:00Z"
+},
+{
+  "id": 1,
+  "boat_id": 1,
+  "expense_type": "Fuel",
+  "amount": 500,
+  "expense_date": "2023-08-01T09:00:00Z",
+  "created_on": "2023-08-01T09:00:00Z"
+}
+]
 ```
 
 Response: 200 Success
