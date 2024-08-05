@@ -302,14 +302,13 @@ Return a log
 Response: 200 Success
 Response: 404 Not Found (if log with the given id does not exist)
 
-POST /logs
+POST /logs/{boat_id}
 
 Create a log
 
 ```
 
 {
-  "boat_id": 1,
   "description": "New log entry",
   "crew_members": ["Eve", "Frank"],
   "coordinates": [[40.7128, -74.0060], [34.0522, -118.2437]],
@@ -415,6 +414,30 @@ Return a task
 
 Response: 200 Success
 Response: 404 Not Found (if task with the given id does not exist)
+
+GET /tasks/{boat_id}
+
+Return all tasks associated with a boat
+
+```
+[
+{
+  "id": 1,
+  "description": "Clean the deck",
+  "status": "Pending",
+  "created_on": "2023-08-01T09:00:00Z"
+},
+{
+  "id": 2,
+  "description": "Clean the wheel",
+  "status": "Done",
+  "created_on": "2023-08-01T09:00:00Z"
+}
+]
+```
+
+Response: 200 Success
+Response: 404 Not Found (if boat id is not found)
 
 POST /tasks/{boat_id}
 
