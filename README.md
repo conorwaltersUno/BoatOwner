@@ -462,6 +462,8 @@ EXPENSES
 GET /expenses
 
 Return a list of all expenses
+
+```
 [
 {
 "id": 1,
@@ -480,6 +482,8 @@ Return a list of all expenses
 "created_on": "2023-08-02T10:00:00Z"
 }
 ]
+```
+
 Response: 200 Success
 
 GET /expenses/boat_id
