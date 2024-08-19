@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model boat {
+  id       Int        @id @default(autoincrement())
+  user_id  Int
+  name     String     @db.VarChar(255)
+  model    String     @db.VarChar(255)
+  user     user       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user")
+  expenses expenses[]
+  logs     logs[]
+  tasks    tasks[]
+}
+
+model expenses {
+  id           Int      @id @default(autoincrement())
+  boat_id      Int      @default(autoincrement())
+  expense_type String   @db.VarChar(255)
+  amount       Int
+  expense_date DateTime @db.Timestamp(6)
+  created_on   DateTime @default(now()) @db.Timestamp(6)
+  boat         boat     @relation(fields: [boat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_boat")
+}
+
+model flyway_schema_history {
+  installed_rank Int      @id(map: "flyway_schema_history_pk")
+  version        String?  @db.VarChar(50)
+  description    String   @db.VarChar(200)
+  type           String   @db.VarChar(20)
+  script         String   @db.VarChar(1000)
+  checksum       Int?
+  installed_by   String   @db.VarChar(100)
+  installed_on   DateTime @default(now()) @db.Timestamp(6)
+  execution_time Int
+  success        Boolean
+
+  @@index([success], map: "flyway_schema_history_s_idx")
+}
+
+model logs {
+  id                  Int                     @id @default(autoincrement())
+  boat_id             Int
+  description         String
+  crew_members        String[]
+  coordinates         Unsupported("_point")[]
+  photo_urls          String[]
+  log_started         DateTime                @db.Timestamp(6)
+  log_ended           DateTime                @db.Timestamp(6)
+  created_on          DateTime                @default(now()) @db.Timestamp(6)
+  isrecordinglocation Boolean
+  boat                boat                    @relation(fields: [boat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_boat")
+}
+
+model tasks {
+  id          Int      @id @default(autoincrement())
+  boat_id     Int      @default(autoincrement())
+  description String   @db.VarChar(255)
+  status      String   @db.VarChar(50)
+  created_on  DateTime @default(now()) @db.Timestamp(6)
+  boat        boat     @relation(fields: [boat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_boat")
+}
+
+model user {
+  id       Int      @id @default(autoincrement())
+  email    String   @db.VarChar(255)
+  password String   @db.VarChar(255)
+  created  DateTime @default(now()) @db.Timestamp(6)
+  boat     boat[]
+}

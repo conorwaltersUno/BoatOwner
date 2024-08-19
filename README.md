@@ -281,7 +281,7 @@ Return a list of all logs
     "boat_id": 1,
     "description": "Departed from dock",
     "crew_members": ["Alice", "Bob"],
-    "coordinates": [[37.7749, -122.4194], [36.7783, -119.4179]],
+    "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
     "photo_urls": ["http://example.com/photo1.jpg", "http://example.com/photo2.jpg"],
     "log_started": "2023-07-01T08:00:00Z",
     "log_ended": "2023-07-01T12:00:00Z",
@@ -293,7 +293,7 @@ Return a list of all logs
     "boat_id": 2,
     "description": "Fishing trip",
     "crew_members": ["Charlie", "Dave"],
-    "coordinates": [[35.6895, 139.6917], [34.0522, -118.2437]],
+  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
     "photo_urls": ["http://example.com/photo3.jpg", "http://example.com/photo4.jpg"],
     "log_started": "2023-07-02T06:00:00Z",
     "log_ended": "2023-07-02T10:00:00Z",
@@ -305,7 +305,7 @@ Return a list of all logs
 
 Response: 200 Success
 
-GET /boat/logs/{boat_id}
+GET /boat/{boat_id}/logs
 
 ```
 Return all logs associated with a boat
@@ -314,7 +314,7 @@ Return all logs associated with a boat
   "boat_id": 1,
   "description": "Departed from dock",
   "crew_members": ["Alice", "Bob"],
-  "coordinates": [[37.7749, -122.4194], [36.7783, -119.4179]],
+  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
   "photo_urls": ["http://example.com/photo1.jpg", "http://example.com/photo2.jpg"],
   "log_started": "2023-07-01T08:00:00Z",
   "log_ended": "2023-07-01T12:00:00Z",
@@ -336,7 +336,7 @@ Return a log
   "boat_id": 1,
   "description": "Departed from dock",
   "crew_members": ["Alice", "Bob"],
-  "coordinates": [[37.7749, -122.4194], [36.7783, -119.4179]],
+  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
   "photo_urls": ["http://example.com/photo1.jpg", "http://example.com/photo2.jpg"],
   "log_started": "2023-07-01T08:00:00Z",
   "log_ended": "2023-07-01T12:00:00Z",
@@ -358,7 +358,7 @@ Create a log
 {
   "description": "New log entry",
   "crew_members": ["Eve", "Frank"],
-  "coordinates": [[40.7128, -74.0060], [34.0522, -118.2437]],
+  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
   "photo_urls": ["http://example.com/photo5.jpg", "http://example.com/photo6.jpg"],
   "log_started": "2023-07-03T07:00:00Z",
   "log_ended": "2023-07-03T11:00:00Z",
@@ -380,7 +380,7 @@ Update a log
   "boat_id": 1,
   "description": "Updated log entry",
   "crew_members": ["George", "Hannah"],
-  "coordinates": [[41.8781, -87.6298], [34.0522, -118.2437]],
+  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
   "photo_urls": ["http://example.com/photo7.jpg", "http://example.com/photo8.jpg"],
   "log_started": "2023-07-04T08:00:00Z",
   "log_ended": "2023-07-04T12:00:00Z",
@@ -401,7 +401,7 @@ Add a new co-ordinate to a log
 ```
 {
   "log_id": 1,
-  "coordinates": [[41.8781, -87.6298], [34.0522, -118.2437]],
+  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
   "isRecordingLocation": true
 }
 ```
@@ -570,31 +570,6 @@ Return a list of all expenses
 
 Response: 200 Success
 
-GET /expenses/boat_id
-
-Return a list of all expenses by boat_id
-
-```
-[
-{
-"id": 1,
-"expense_type": "Fuel",
-"amount": 500,
-"expense_date": "2023-08-01T09:00:00Z",
-"created_on": "2023-08-01T09:00:00Z"
-},
-{
-"id": 2,
-"expense_type": "Maintenance",
-"amount": 300,
-"expense_date": "2023-08-02T10:00:00Z",
-"created_on": "2023-08-02T10:00:00Z"
-}
-]
-```
-
-Response: 200 Success
-
 GET /expenses/{id}
 
 Return an expense
@@ -622,7 +597,6 @@ Return an expense
 [
 {
   "id": 1,
-  "boat_id": 1,
   "expense_type": "Fuel",
   "amount": 500,
   "expense_date": "2023-08-01T09:00:00Z",
@@ -630,7 +604,6 @@ Return an expense
 },
 {
   "id": 1,
-  "boat_id": 1,
   "expense_type": "Fuel",
   "amount": 500,
   "expense_date": "2023-08-01T09:00:00Z",
@@ -653,7 +626,6 @@ Create an expense
   "expense_type": "Supplies",
   "amount": 200,
   "expense_date": "2023-08-05T11:00:00Z",
-  "created_on": "2023-08-05T11:00:00Z"
 }
 ```
 

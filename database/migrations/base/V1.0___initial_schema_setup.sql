@@ -1,4 +1,4 @@
-CREATE TABLE user (
+CREATE TABLE "user" (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
@@ -17,17 +17,17 @@ CREATE TABLE boat (
 
 CREATE TABLE logs (
     id SERIAL PRIMARY KEY,
-    boat_id SERIAL NOT NULL,
+    boat_id INTEGER NOT NULL,
     description TEXT NOT NULL,
     crew_members TEXT[] NOT NULL,
-    coordinates TEXT[] NOT NULL,
+    coordinates point[] NOT NULL,
     photo_urls TEXT[] NOT NULL,
     log_started TIMESTAMP NOT NULL,
     log_ended TIMESTAMP NOT NULL,
     created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     isRecordingLocation BOOLEAN NOT NULL,
     CONSTRAINT fk_boat
-        FOREIGN KEY(boat_id)
+        FOREIGN KEY (boat_id)
         REFERENCES boat(id)
 );
 

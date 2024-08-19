@@ -7,14 +7,14 @@ INSERT INTO "user" (email, password, created) VALUES
 -- Insert data into the boat table
 INSERT INTO boat (user_id, name, model) VALUES
 (1, 'Boaty McBoatface', 'Model A'),
-(2, 'Sea Explorer', 'Model B'),
-(3, 'Wave Rider', 'Model C');
+(1, 'Sea Explorer', 'Model B'),
+(1, 'Wave Rider', 'Model C');
 
 -- Insert data into the logs table
 INSERT INTO logs (boat_id, description, crew_members, coordinates, photo_urls, log_started, log_ended, created_on, isRecordingLocation) VALUES
-(1, 'First trip', ARRAY['Alice', 'Bob'], ARRAY['(10,10)', '(20,20)'], ARRAY['http://example.com/photo1.jpg', 'http://example.com/photo2.jpg'], '2024-07-01 08:00:00', '2024-07-01 18:00:00', '2024-07-01 19:00:00', TRUE),
-(2, 'Fishing expedition', ARRAY['Charlie', 'Dave'], ARRAY['(30,30)', '(40,40)'], ARRAY['http://example.com/photo3.jpg', 'http://example.com/photo4.jpg'], '2024-07-02 06:00:00', '2024-07-02 14:00:00', '2024-07-02 15:00:00', TRUE),
-(3, 'Weekend cruise', ARRAY['Eve', 'Frank'], ARRAY['(50,50)', '(60,60)'], ARRAY['http://example.com/photo5.jpg', 'http://example.com/photo6.jpg'], '2024-07-03 09:00:00', '2024-07-03 17:00:00', '2024-07-03 18:00:00', FALSE);
+(1, 'First trip', ARRAY['Alice', 'Bob'], ARRAY['(10,-20)'::point, '(15,-25)'::point], ARRAY['http://example.com/photo1.jpg', 'http://example.com/photo2.jpg'], '2024-07-01 08:00:00', '2024-07-01 18:00:00', '2024-07-01 19:00:00', TRUE),
+(2, 'Fishing expedition', ARRAY['Charlie', 'Dave'], ARRAY['(20,-30)'::point, '(25,-35)'::point], ARRAY['http://example.com/photo3.jpg', 'http://example.com/photo4.jpg'], '2024-07-02 06:00:00', '2024-07-02 14:00:00', '2024-07-02 15:00:00', TRUE),
+(3, 'Weekend cruise', ARRAY['Eve', 'Frank'], ARRAY['(50,50)'::point, '(60,60)'::point], ARRAY['http://example.com/photo5.jpg', 'http://example.com/photo6.jpg'], '2024-07-03 09:00:00', '2024-07-03 17:00:00', '2024-07-03 18:00:00', FALSE);
 
 -- Insert data into the tasks table
 INSERT INTO tasks (boat_id, description, status, created_on) VALUES
