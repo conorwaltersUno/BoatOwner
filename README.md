@@ -179,7 +179,7 @@ Response: 204 No Content
 
 Response: 404 Not Found (if user with the given id does not exist)
 
-##BOATS
+## BOATS
 
 GET /boats
 
@@ -425,7 +425,7 @@ Response: 204 No Content
 
 Response: 404 Not Found (if log with the given id does not exist)
 
-##TASKS
+## TASKS
 
 GET /tasks
 
