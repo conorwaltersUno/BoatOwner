@@ -10,18 +10,39 @@
       "url": "https://localhost:3010"
     }
   ],
+  "basePath": "",
   "tags": [
     {
-      "name": "Users",
-      "description": "Endpoints related to users"
+      "name": "User",
+      "description": "Endpoints"
+    },
+    {
+      "name": "Boat",
+      "description": "Endpoints"
+    },
+    {
+      "name": "log",
+      "description": "Endpoints"
     }
   ],
   "paths": {
-    "/users": {
+    "/": {
       "get": {
-        "tags": ["Users"],
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/users/": {
+      "get": {
+        "tags": [
+          "User"
+        ],
         "summary": "Get all users",
-        "operationId": "getAllUsers",
+        "description": "",
         "responses": {
           "200": {
             "description": "Successfully retrieved list of users",
@@ -39,26 +60,18 @@
         }
       },
       "post": {
-        "tags": ["Users"],
+        "tags": [
+          "User"
+        ],
         "summary": "Create a new user",
-        "operationId": "createUser",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/createUserDTO"
-              }
-            }
-          }
-        },
+        "description": "",
         "responses": {
           "201": {
             "description": "User created successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/userDTO"
+                  "$ref": "#/components/schemas/createUserResponse"
                 }
               }
             }
@@ -69,23 +82,49 @@
           "500": {
             "description": "Internal server error"
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "P@ssw0rd"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
         }
       }
     },
     "/users/{id}": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "User"
+        ],
         "summary": "Get user by ID",
-        "operationId": "getUserById",
+        "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "User ID",
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "User ID"
           }
         ],
         "responses": {
@@ -94,10 +133,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/userDTO"
+                  "$ref": "#/components/schemas/getUserByIdResponse"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad Request"
           },
           "404": {
             "description": "User not found"
@@ -108,37 +150,29 @@
         }
       },
       "put": {
-        "tags": ["Users"],
+        "tags": [
+          "User"
+        ],
         "summary": "Update an existing user",
-        "operationId": "updateUser",
+        "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "User ID",
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "User ID"
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/updateUserDTO"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "User updated successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/userDTO"
+                  "$ref": "#/components/schemas/updateUserResponse"
                 }
               }
             }
@@ -152,32 +186,549 @@
           "500": {
             "description": "Internal server error"
           }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "NewP@ssw0rd"
+                  }
+                }
+              }
+            }
+          }
         }
       },
       "delete": {
-        "tags": ["Users"],
+        "tags": [
+          "User"
+        ],
         "summary": "Delete a user",
-        "operationId": "deleteUser",
+        "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "User ID",
             "schema": {
               "type": "integer"
-            }
+            },
+            "description": "User ID"
           }
         ],
         "responses": {
           "204": {
             "description": "User deleted successfully"
           },
+          "400": {
+            "description": "Bad Request"
+          },
           "404": {
             "description": "User not found"
           },
           "500": {
             "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/boat/": {
+      "get": {
+        "tags": [
+          "Boat"
+        ],
+        "summary": "Get all boats",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved list of boats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getAllBoatsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Boat"
+        ],
+        "summary": "Create a new boat",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Boat created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/createBoatResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "New Boat"
+                  },
+                  "model": {
+                    "type": "string",
+                    "example": "Z300"
+                  }
+                },
+                "required": [
+                  "user_id",
+                  "name",
+                  "model"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/boat/{id}": {
+      "get": {
+        "tags": [
+          "Boat"
+        ],
+        "summary": "Get boat by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Boat ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved boat data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getBoatByIdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Boat not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Boat"
+        ],
+        "summary": "Update an existing boat",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Boat ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Boat updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/updateBoatResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "404": {
+            "description": "Boat not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Updated Boat"
+                  },
+                  "model": {
+                    "type": "string",
+                    "example": "Z300"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Boat"
+        ],
+        "summary": "Delete a boat",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Boat ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Boat deleted successfully"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Boat not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/logs/": {
+      "get": {
+        "tags": [
+          "log"
+        ],
+        "summary": "Get all logs",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved list of logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getAllLogsResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/logs/boat/{boat_id}": {
+      "get": {
+        "tags": [
+          "log"
+        ],
+        "summary": "Get logs by boat ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "boat_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Boat ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved logs for the boat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getLogsByBoatIdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Boat not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/logs/{id}": {
+      "get": {
+        "tags": [
+          "log"
+        ],
+        "summary": "Get log by ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Log ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved log data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getLogByIdResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Log not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "log"
+        ],
+        "summary": "Update an existing log",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Log ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Log updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/updateLogResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "404": {
+            "description": "Log not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/updateLogDTO"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "log"
+        ],
+        "summary": "Delete a log",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Log ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Log deleted successfully"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Log not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/logs/coordinates": {
+      "post": {
+        "tags": [
+          "log"
+        ],
+        "summary": "Add coordinates to a log",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Coordinates added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/addCoordinatesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "404": {
+            "description": "Log not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/addCoordinatesDTO"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logs/{boat_id}": {
+      "post": {
+        "tags": [
+          "log"
+        ],
+        "summary": "Create a new log",
+        "description": "",
+        "parameters": [
+          {
+            "name": "boat_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Boat ID"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Log created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/createLogResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/createLogDTO"
+              }
+            }
           }
         }
       }
@@ -189,7 +740,7 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "number",
             "example": 1
           },
           "email": {
@@ -233,6 +784,321 @@
         "items": {
           "$ref": "#/components/schemas/userDTO"
         }
+      },
+      "getUserByIdResponse": {
+        "$ref": "#/components/schemas/userDTO"
+      },
+      "createUserResponse": {
+        "$ref": "#/components/schemas/userDTO"
+      },
+      "updateUserResponse": {
+        "$ref": "#/components/schemas/userDTO"
+      },
+      "boatDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "user_id": {
+            "type": "number",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Boaty McBoatface"
+          },
+          "model": {
+            "type": "string",
+            "example": "X200"
+          }
+        }
+      },
+      "createBoatDTO": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "number",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "New Boat"
+          },
+          "model": {
+            "type": "string",
+            "example": "Z300"
+          }
+        }
+      },
+      "updateBoatDTO": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "number",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Updated Boat"
+          },
+          "model": {
+            "type": "string",
+            "example": "Z300"
+          }
+        }
+      },
+      "getAllBoatsResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/boatDTO"
+        }
+      },
+      "getBoatByIdResponse": {
+        "$ref": "#/components/schemas/boatDTO"
+      },
+      "createBoatResponse": {
+        "$ref": "#/components/schemas/boatDTO"
+      },
+      "updateBoatResponse": {
+        "$ref": "#/components/schemas/boatDTO"
+      },
+      "logDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 1
+          },
+          "boat_id": {
+            "type": "number",
+            "example": 1
+          },
+          "description": {
+            "type": "string",
+            "example": "Departed from dock"
+          },
+          "crew_members": {
+            "type": "array",
+            "example": [
+              "Alice",
+              "Bob"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number",
+                  "example": 34.0522
+                },
+                "y": {
+                  "type": "number",
+                  "example": -118.2437
+                }
+              }
+            }
+          },
+          "photo_urls": {
+            "type": "array",
+            "example": [
+              "http://example.com/photo1.jpg",
+              "http://example.com/photo2.jpg"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "log_started": {
+            "type": "string",
+            "example": "2023-07-01T08:00:00Z"
+          },
+          "log_ended": {
+            "type": "string",
+            "example": "2023-07-01T12:00:00Z"
+          },
+          "created_on": {
+            "type": "string",
+            "example": "2023-07-01T08:00:00Z"
+          },
+          "isrecordinglocation": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "createLogDTO": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "example": "New log entry"
+          },
+          "crew_members": {
+            "type": "array",
+            "example": [
+              "Eve",
+              "Frank"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number",
+                  "example": 34.0522
+                },
+                "y": {
+                  "type": "number",
+                  "example": -118.2437
+                }
+              }
+            }
+          },
+          "photo_urls": {
+            "type": "array",
+            "example": [
+              "http://example.com/photo5.jpg",
+              "http://example.com/photo6.jpg"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "log_started": {
+            "type": "string",
+            "example": "2023-07-03T07:00:00Z"
+          },
+          "log_ended": {
+            "type": "string",
+            "example": "2023-07-03T11:00:00Z"
+          },
+          "isrecordinglocation": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "updateLogDTO": {
+        "type": "object",
+        "properties": {
+          "boat_id": {
+            "type": "number",
+            "example": 1
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated log entry"
+          },
+          "crew_members": {
+            "type": "array",
+            "example": [
+              "George",
+              "Hannah"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number",
+                  "example": 34.0522
+                },
+                "y": {
+                  "type": "number",
+                  "example": -118.2437
+                }
+              }
+            }
+          },
+          "photo_urls": {
+            "type": "array",
+            "example": [
+              "http://example.com/photo7.jpg",
+              "http://example.com/photo8.jpg"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "log_started": {
+            "type": "string",
+            "example": "2023-07-04T08:00:00Z"
+          },
+          "log_ended": {
+            "type": "string",
+            "example": "2023-07-04T12:00:00Z"
+          },
+          "isrecordinglocation": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "addCoordinatesDTO": {
+        "type": "object",
+        "properties": {
+          "log_id": {
+            "type": "number",
+            "example": 1
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number",
+                  "example": 34.0522
+                },
+                "y": {
+                  "type": "number",
+                  "example": -118.2437
+                }
+              }
+            }
+          }
+        }
+      },
+      "getAllLogsResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/logDTO"
+        }
+      },
+      "getLogsByBoatIdResponse": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/logDTO"
+        }
+      },
+      "getLogByIdResponse": {
+        "$ref": "#/components/schemas/logDTO"
+      },
+      "createLogResponse": {
+        "$ref": "#/components/schemas/logDTO"
+      },
+      "updateLogResponse": {
+        "$ref": "#/components/schemas/logDTO"
+      },
+      "addCoordinatesResponse": {
+        "$ref": "#/components/schemas/logDTO"
       }
     }
   }

@@ -44,17 +44,17 @@ model flyway_schema_history {
 }
 
 model logs {
-  id                  Int                     @id @default(autoincrement())
+  id                  Int      @id @default(autoincrement())
   boat_id             Int
   description         String
   crew_members        String[]
-  coordinates         Unsupported("_point")[]
+  coordinates         Json     @db.Json
   photo_urls          String[]
-  log_started         DateTime                @db.Timestamp(6)
-  log_ended           DateTime                @db.Timestamp(6)
-  created_on          DateTime                @default(now()) @db.Timestamp(6)
+  log_started         DateTime @db.Timestamp(6)
+  log_ended           DateTime @db.Timestamp(6)
+  created_on          DateTime @default(now()) @db.Timestamp(6)
   isrecordinglocation Boolean
-  boat                boat                    @relation(fields: [boat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_boat")
+  boat                boat     @relation(fields: [boat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_boat")
 }
 
 model tasks {

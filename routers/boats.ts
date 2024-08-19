@@ -1,20 +1,20 @@
 import Router, { RequestHandler } from "express";
-import { getAllUsers, getUserById, createUser, updateUser, deleteUser } from "../controllers";
+import { getAllBoats, getBoatById, createBoat, updateBoat, deleteBoat } from "../controllers";
 import { validator } from "../middleware/expressValidator";
 import { body, param } from "express-validator";
 
-const UserRouter = Router();
+const BoatRouter = Router();
 
-// Get all users
-UserRouter.route("/").get(
+// Get all boats
+BoatRouter.route("/").get(
   /*
-      #swagger.tags = ['User']
-      #swagger.summary = 'Get all users'
+      #swagger.tags = ['Boat']
+      #swagger.summary = 'Get all boats'
       #swagger.responses[200] = {
-        description: 'Successfully retrieved list of users',
+        description: 'Successfully retrieved list of boats',
         content: {
           "application/json": {
-            schema: { $ref: '#/definitions/getAllUserResponse' }
+            schema: { $ref: '#/definitions/getAllBoatsResponse' }
           }
         }
       }
@@ -23,31 +23,31 @@ UserRouter.route("/").get(
       }
     */
   (async (req, res) => {
-    await getAllUsers(req, res);
+    await getAllBoats(req, res);
   }) as RequestHandler
 );
 
-// Get user by ID
-UserRouter.route("/:id").get(
+// Get boat by ID
+BoatRouter.route("/:id").get(
   /*
-      #swagger.tags = ['User']
-      #swagger.summary = 'Get user by ID'
+      #swagger.tags = ['Boat']
+      #swagger.summary = 'Get boat by ID'
       #swagger.parameters['id'] = {
         in: 'path',
         required: true,
-        description: 'User ID',
+        description: 'Boat ID',
         schema: { type: 'integer' }
       }
       #swagger.responses[200] = {
-        description: 'Successfully retrieved user data',
+        description: 'Successfully retrieved boat data',
         content: {
           "application/json": {
-            schema: { $ref: '#/definitions/getUserByIdResponse' }
+            schema: { $ref: '#/definitions/getBoatByIdResponse' }
           }
         }
       }
       #swagger.responses[404] = {
-        description: "User not found"
+        description: "Boat not found"
       }
       #swagger.responses[500] = {
         description: "Internal server error"
@@ -58,15 +58,15 @@ UserRouter.route("/:id").get(
     validator(req, res, next);
   },
   (async (req, res) => {
-    await getUserById(req, res);
+    await getBoatById(req, res);
   }) as RequestHandler
 );
 
-// Create a new user
-UserRouter.route("/").post(
+// Create a new boat
+BoatRouter.route("/").post(
   /*
-      #swagger.tags = ['User']
-      #swagger.summary = 'Create a new user'
+      #swagger.tags = ['Boat']
+      #swagger.summary = 'Create a new boat'
       #swagger.requestBody = {
         required: true,
         content: {
@@ -74,19 +74,20 @@ UserRouter.route("/").post(
             schema: {
               type: 'object',
               properties: {
-                email: { type: 'string', example: 'user@example.com' },
-                password: { type: 'string', example: 'P@ssw0rd' }
+                user_id: { type: 'integer', example: 1 },
+                name: { type: 'string', example: 'New Boat' },
+                model: { type: 'string', example: 'Z300' }
               },
-              required: ['email', 'password']
+              required: ['user_id', 'name', 'model']
             }
           }
         }
       }
       #swagger.responses[201] = {
-        description: 'User created successfully',
+        description: 'Boat created successfully',
         content: {
           "application/json": {
-            schema: { $ref: '#/definitions/createUserResponse' }
+            schema: { $ref: '#/definitions/createBoatResponse' }
           }
         }
       }
@@ -98,26 +99,27 @@ UserRouter.route("/").post(
       }
     */
   [
-    body("email").exists().isEmail().withMessage("This request requires a valid email"),
-    body("password").exists().isString().notEmpty().withMessage("This request requires a valid password"),
+    body("user_id").exists().isInt().withMessage("This request requires a valid user_id"),
+    body("name").exists().isString().notEmpty().withMessage("This request requires a valid name"),
+    body("model").exists().isString().notEmpty().withMessage("This request requires a valid model"),
   ],
   (req, res, next) => {
     validator(req, res, next);
   },
   (async (req, res) => {
-    await createUser(req, res);
+    await createBoat(req, res);
   }) as RequestHandler
 );
 
-// Update an existing user
-UserRouter.route("/:id").put(
+// Update an existing boat
+BoatRouter.route("/:id").put(
   /*
-      #swagger.tags = ['User']
-      #swagger.summary = 'Update an existing user'
+      #swagger.tags = ['Boat']
+      #swagger.summary = 'Update an existing boat'
       #swagger.parameters['id'] = {
         in: 'path',
         required: true,
-        description: 'User ID',
+        description: 'Boat ID',
         schema: { type: 'integer' }
       }
       #swagger.requestBody = {
@@ -127,18 +129,19 @@ UserRouter.route("/:id").put(
             schema: {
               type: 'object',
               properties: {
-                email: { type: 'string', example: 'user@example.com' },
-                password: { type: 'string', example: 'NewP@ssw0rd' }
+                user_id: { type: 'integer', example: 1 },
+                name: { type: 'string', example: 'Updated Boat' },
+                model: { type: 'string', example: 'Z300' }
               }
             }
           }
         }
       }
       #swagger.responses[200] = {
-        description: 'User updated successfully',
+        description: 'Boat updated successfully',
         content: {
           "application/json": {
-            schema: { $ref: '#/definitions/updateUserResponse' }
+            schema: { $ref: '#/definitions/updateBoatResponse' }
           }
         }
       }
@@ -146,7 +149,7 @@ UserRouter.route("/:id").put(
         description: "Invalid input data"
       }
       #swagger.responses[404] = {
-        description: "User not found"
+        description: "Boat not found"
       }
       #swagger.responses[500] = {
         description: "Internal server error"
@@ -154,33 +157,34 @@ UserRouter.route("/:id").put(
     */
   [
     param("id").isInt().withMessage("ID must be an integer"),
-    body("email").optional().isEmail().withMessage("Invalid email format"),
-    body("password").optional().isString().notEmpty().withMessage("Password cannot be empty"),
+    body("user_id").optional().isInt().withMessage("Invalid user_id"),
+    body("name").optional().isString().notEmpty().withMessage("Name cannot be empty"),
+    body("model").optional().isString().notEmpty().withMessage("Model cannot be empty"),
   ],
   (req, res, next) => {
     validator(req, res, next);
   },
   (async (req, res) => {
-    await updateUser(req, res);
+    await updateBoat(req, res);
   }) as RequestHandler
 );
 
-// Delete a user
-UserRouter.route("/:id").delete(
+// Delete a boat
+BoatRouter.route("/:id").delete(
   /*
-      #swagger.tags = ['User']
-      #swagger.summary = 'Delete a user'
+      #swagger.tags = ['Boat']
+      #swagger.summary = 'Delete a boat'
       #swagger.parameters['id'] = {
         in: 'path',
         required: true,
-        description: 'User ID',
+        description: 'Boat ID',
         schema: { type: 'integer' }
       }
       #swagger.responses[204] = {
-        description: 'User deleted successfully'
+        description: 'Boat deleted successfully'
       }
       #swagger.responses[404] = {
-        description: "User not found"
+        description: "Boat not found"
       }
       #swagger.responses[500] = {
         description: "Internal server error"
@@ -191,8 +195,8 @@ UserRouter.route("/:id").delete(
     validator(req, res, next);
   },
   (async (req, res) => {
-    await deleteUser(req, res);
+    await deleteBoat(req, res);
   }) as RequestHandler
 );
 
-export { UserRouter };
+export { BoatRouter };

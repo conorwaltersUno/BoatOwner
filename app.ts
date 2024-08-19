@@ -1,8 +1,11 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import { HealthRouter, UserRouter } from "./routers";
 import swaggerUi from "swagger-ui-express";
 import swaggerFile from "./swaggerSchema/swagger_output.json";
+import { UserRouter } from "./routers/users";
+import { HealthRouter } from "./routers/health";
+import { BoatRouter } from "./routers/boats";
+import { LogRouter } from "./routers/logs";
 
 const app = express();
 
@@ -14,6 +17,8 @@ app.use("/swagger-ui", swaggerUi.serve, swaggerUi.setup(swaggerFile));
 
 app.use("/", HealthRouter);
 app.use("/users", UserRouter);
+app.use("/boat", BoatRouter);
+app.use("/logs", LogRouter);
 
 app.use((err, req: Request, res: Response, next: NextFunction) => {
   if (err) {

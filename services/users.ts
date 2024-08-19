@@ -1,5 +1,3 @@
-// services/userService.ts
-
 import { prisma } from "../utilities";
 import { UserDTO, CreateUserDTO, UpdateUserDTO } from "../interfaces/user";
 import dayjs from "dayjs";
