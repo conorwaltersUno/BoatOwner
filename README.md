@@ -281,7 +281,7 @@ Return a list of all logs
     "boat_id": 1,
     "description": "Departed from dock",
     "crew_members": ["Alice", "Bob"],
-    "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
+    "coordinates": [{x:41.8781, y:-87.6298},{x:34.0522, y:-118.2437}],
     "photo_urls": ["http://example.com/photo1.jpg", "http://example.com/photo2.jpg"],
     "log_started": "2023-07-01T08:00:00Z",
     "log_ended": "2023-07-01T12:00:00Z",
@@ -293,7 +293,7 @@ Return a list of all logs
     "boat_id": 2,
     "description": "Fishing trip",
     "crew_members": ["Charlie", "Dave"],
-  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
+    "coordinates": [{x:41.8781, y:-87.6298},{x:34.0522, y:-118.2437}],
     "photo_urls": ["http://example.com/photo3.jpg", "http://example.com/photo4.jpg"],
     "log_started": "2023-07-02T06:00:00Z",
     "log_ended": "2023-07-02T10:00:00Z",
@@ -314,7 +314,7 @@ Return all logs associated with a boat
   "boat_id": 1,
   "description": "Departed from dock",
   "crew_members": ["Alice", "Bob"],
-  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
+  "coordinates": [{x:41.8781, y:-87.6298},{x:34.0522, y:-118.2437}],
   "photo_urls": ["http://example.com/photo1.jpg", "http://example.com/photo2.jpg"],
   "log_started": "2023-07-01T08:00:00Z",
   "log_ended": "2023-07-01T12:00:00Z",
@@ -336,7 +336,7 @@ Return a log
   "boat_id": 1,
   "description": "Departed from dock",
   "crew_members": ["Alice", "Bob"],
-  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
+  "coordinates": [{x:41.8781, y:-87.6298},{x:34.0522, y:-118.2437}],
   "photo_urls": ["http://example.com/photo1.jpg", "http://example.com/photo2.jpg"],
   "log_started": "2023-07-01T08:00:00Z",
   "log_ended": "2023-07-01T12:00:00Z",
@@ -380,7 +380,7 @@ Update a log
   "boat_id": 1,
   "description": "Updated log entry",
   "crew_members": ["George", "Hannah"],
-  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
+  "coordinates": [{x:41.8781, y:-87.6298},{x:34.0522, y:-118.2437}],
   "photo_urls": ["http://example.com/photo7.jpg", "http://example.com/photo8.jpg"],
   "log_started": "2023-07-04T08:00:00Z",
   "log_ended": "2023-07-04T12:00:00Z",
@@ -401,7 +401,7 @@ Add a new co-ordinate to a log
 ```
 {
   "log_id": 1,
-  "coordinates": [[{x:41.8781, y:-87.6298}], [{x:34.0522, y:-118.2437}]],
+  "coordinates": [{x:41.8781, y:-87.6298},{x:34.0522, y:-118.2437}],
   "isRecordingLocation": true
 }
 ```
