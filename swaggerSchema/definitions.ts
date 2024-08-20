@@ -3,20 +3,37 @@ export const definitions = {
   userDTO: {
     id: 1,
     email: "email@gmail.com",
-    password: "password",
+    password:
+      "$2b$08$mdR4psJFv41YzWl0YX0BQu5l78QDPCxTbr02YcM/i1pK4qbXmNwsC$2b$08$$2b$08$mdR4psJFv41YzWl0YX0BQu5l78QDPCxTbr02YcM/i1pK4qbXmNwsC/i1pK4qbXmNwsC",
   },
   createUserDTO: {
     email: "email@gmail.com",
-    password: "password",
+    password: "$2b$08$mdR4psJFv41YzWl0YX0BQu5l78QDPCxTbr02YcM/i1pK4qbXmNwsC",
   },
   updateUserDTO: {
     email: "email@gmail.com",
-    password: "password",
+    password: "$2b$08$mdR4psJFv41YzWl0YX0BQu5l78QDPCxTbr02YcM/i1pK4qbXmNwsC",
+  },
+  accessToken: {
+    accessToken:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7InVzZXJpZCI6Nn0sImlhdCI6MTcyNDE0NzY3MSwiZXhwIjoxNzI0MTQ5NDcxfQ.ZiMYxY71XFBQ49xrygh5LLufxm-ApVRoZa5A1_4nhmA",
+  },
+  refreshToken: {
+    refreshToken:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7InVzZXJpZCI6Nn0sImlhdCI6MTcyNDE0NzY3MSwiZXhwIjoxNzI2NzM5NjcxfQ.AHT6JI6MQgg39AJtPBQhEDqt0TuUAKda-wF9fINKHSk",
   },
   getAllUserResponse: [{ $ref: "#/definitions/userDTO" }],
   getUserByIdResponse: { $ref: "#/definitions/userDTO" },
-  createUserResponse: { $ref: "#/definitions/userDTO" },
+  createUserResponse: {
+    accessToken: { $ref: "#/definitions/accessToken/properties/accessToken" },
+    refreshToken: { $ref: "#/definitions/refreshToken/properties/refreshToken" },
+    user: { $ref: "#/definitions/userDTO" },
+  },
   updateUserResponse: { $ref: "#/definitions/userDTO" },
+  signInUserResponse: {
+    accessToken: { $ref: "#/definitions/accessToken/properties/accessToken" },
+    refreshToken: { $ref: "#/definitions/refreshToken/properties/refreshToken" },
+  },
 
   //Boat Definitions
   boatDTO: {

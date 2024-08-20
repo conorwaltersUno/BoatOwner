@@ -109,6 +109,53 @@ UserRouter.route("/").post(
   }) as RequestHandler
 );
 
+// Sign in
+UserRouter.route("/sign-in").post(
+  /*
+      #swagger.tags = ['User']
+      #swagger.summary = 'Sign-in'
+      #swagger.requestBody = {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: 'object',
+              properties: {
+                email: { type: 'string', example: 'user@example.com' },
+                password: { type: 'string', example: 'P@ssw0rd' }
+              },
+              required: ['email', 'password']
+            }
+          }
+        }
+      }
+      #swagger.responses[201] = {
+        description: 'Signed in successfully',
+        content: {
+          "application/json": {
+            schema: { $ref: '#/definitions/signInUserResponse' }
+          }
+        }
+      }
+      #swagger.responses[400] = {
+        description: "Invalid input data"
+      }
+      #swagger.responses[500] = {
+        description: "Internal server error"
+      }
+    */
+  [
+    body("email").exists().isEmail().withMessage("This request requires a valid email"),
+    body("password").exists().isString().notEmpty().withMessage("This request requires a valid password"),
+  ],
+  (req, res, next) => {
+    validator(req, res, next);
+  },
+  (async (req, res) => {
+    // await signInUser(req, res);
+  }) as RequestHandler
+);
+
 // Update an existing user
 UserRouter.route("/:id").put(
   /*

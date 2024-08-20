@@ -26,6 +26,24 @@ async function getUserById(userId: number): Promise<UserDTO | null> {
   }
 }
 
+async function getUserByEmail(body: CreateUserDTO): Promise<UserDTO | null> {
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        email: body.email,
+      },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    return user;
+  } catch (error: any) {
+    throw Error(`Error getting user by email: ${error}`);
+  }
+}
+
 async function createUser(data: CreateUserDTO): Promise<UserDTO> {
   try {
     const newUser = await prisma.user.create({
@@ -77,6 +95,7 @@ async function deleteUser(userId: number): Promise<boolean> {
 const UserService = {
   getAllUsers,
   getUserById,
+  getUserByEmail,
   createUser,
   updateUser,
   deleteUser,

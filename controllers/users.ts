@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { UserService } from "../services";
+import bcrypt from "bcrypt";
 import { UserDTO } from "../interfaces/user";
+import { JwtMiddleWare } from "../middleware/jwt";
 
 const okStatus = 200;
 const createdStatus = 201;
@@ -38,13 +40,41 @@ async function getUserById(req: Request, res: Response) {
 // Create a new user
 async function createUser(req: Request, res: Response) {
   try {
+    req.body.password = bcrypt.hashSync(req.body.password, 8);
+  } catch (error: any) {
+    return res.status(internalServerError).json({ message: "Ensure the password field is correct, please try again" });
+  }
+  try {
+    const userbyemail: UserDTO = await UserService.getUserByEmail(req.body);
+
+    if (userbyemail) {
+      return res
+        .status(badRequestStatus)
+        .json({ message: "Error creating user, user already exists with this email, please try again" });
+    }
+
     const user: UserDTO = await UserService.createUser(req.body);
 
     if (!user) {
       return res.status(badRequestStatus).json({ message: "Error creating user, please try again" });
     }
 
-    return res.status(createdStatus).json(user);
+    const accessToken = JwtMiddleWare.signAccessToken({
+      userid: user.id,
+    });
+    const refreshToken = JwtMiddleWare.signRefreshToken({
+      userid: user.id,
+    });
+
+    return res.status(createdStatus).json({ accessToken, refreshToken, user });
+  } catch (error: any) {
+    res.status(internalServerError).json(error.message);
+  }
+}
+
+async function signInUser(req: Request, res: Response) {
+  try {
+    const body = req.body;
   } catch (error: any) {
     res.status(internalServerError).json(error.message);
   }
@@ -52,6 +82,11 @@ async function createUser(req: Request, res: Response) {
 
 // Update an existing user
 async function updateUser(req: Request, res: Response) {
+  try {
+    req.body.password = bcrypt.hashSync(req.body.password, 8);
+  } catch (error: any) {
+    return res.status(internalServerError).json({ message: "Ensure the password field is correct, please try again" });
+  }
   try {
     const user: UserDTO | null = await UserService.updateUser(Number(req.params.id), req.body);
 

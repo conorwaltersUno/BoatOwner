@@ -241,6 +241,57 @@
         }
       }
     },
+    "/users/sign-in": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Sign-in",
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Signed in successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/signInUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "P@ssw0rd"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
     "/boat/": {
       "get": {
         "tags": [
@@ -749,7 +800,7 @@
           },
           "password": {
             "type": "string",
-            "example": "password"
+            "example": "$2b$08$mdR4psJFv41YzWl0YX0BQu5l78QDPCxTbr02YcM/i1pK4qbXmNwsC$2b$08$$2b$08$mdR4psJFv41YzWl0YX0BQu5l78QDPCxTbr02YcM/i1pK4qbXmNwsC/i1pK4qbXmNwsC"
           }
         }
       },
@@ -762,7 +813,7 @@
           },
           "password": {
             "type": "string",
-            "example": "password"
+            "example": "$2b$08$mdR4psJFv41YzWl0YX0BQu5l78QDPCxTbr02YcM/i1pK4qbXmNwsC"
           }
         }
       },
@@ -775,7 +826,25 @@
           },
           "password": {
             "type": "string",
-            "example": "password"
+            "example": "$2b$08$mdR4psJFv41YzWl0YX0BQu5l78QDPCxTbr02YcM/i1pK4qbXmNwsC"
+          }
+        }
+      },
+      "accessToken": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7InVzZXJpZCI6Nn0sImlhdCI6MTcyNDE0NzY3MSwiZXhwIjoxNzI0MTQ5NDcxfQ.ZiMYxY71XFBQ49xrygh5LLufxm-ApVRoZa5A1_4nhmA"
+          }
+        }
+      },
+      "refreshToken": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7InVzZXJpZCI6Nn0sImlhdCI6MTcyNDE0NzY3MSwiZXhwIjoxNzI2NzM5NjcxfQ.AHT6JI6MQgg39AJtPBQhEDqt0TuUAKda-wF9fINKHSk"
           }
         }
       },
@@ -789,10 +858,32 @@
         "$ref": "#/components/schemas/userDTO"
       },
       "createUserResponse": {
-        "$ref": "#/components/schemas/userDTO"
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "$ref": "#/components/schemas/accessToken/properties/accessToken"
+          },
+          "refreshToken": {
+            "$ref": "#/components/schemas/refreshToken/properties/refreshToken"
+          },
+          "user": {
+            "$ref": "#/components/schemas/userDTO"
+          }
+        }
       },
       "updateUserResponse": {
         "$ref": "#/components/schemas/userDTO"
+      },
+      "signInUserResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "$ref": "#/components/schemas/accessToken/properties/accessToken"
+          },
+          "refreshToken": {
+            "$ref": "#/components/schemas/refreshToken/properties/refreshToken"
+          }
+        }
       },
       "boatDTO": {
         "type": "object",
