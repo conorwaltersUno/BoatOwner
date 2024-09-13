@@ -9,6 +9,10 @@ export interface CreateUserDTO {
   password: string;
 }
 
+export interface refreshTokenDTO {
+  refreshToken: string;
+}
+
 export interface UpdateUserDTO {
   email: string;
   password: string;

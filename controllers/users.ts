@@ -74,7 +74,35 @@ async function createUser(req: Request, res: Response) {
 
 async function signInUser(req: Request, res: Response) {
   try {
-    const body = req.body;
+    const user = await UserService.getUserByEmail(req.body);
+    if (!user) {
+      return res.status(internalServerError).json({ message: "No user with email provided exists, please try again" });
+    }
+
+    const checkPassword = bcrypt.compareSync(req.body.password, user.password);
+    if (!checkPassword) {
+      return res.status(internalServerError).json({ message: "Password is incorrect, please try again" });
+    }
+
+    const accessToken = JwtMiddleWare.signAccessToken({
+      userid: user.id,
+    });
+    const refreshToken = JwtMiddleWare.signRefreshToken({
+      userid: user.id,
+    });
+    res.status(okStatus).json({ accessToken, refreshToken });
+  } catch (error: any) {
+    res.status(internalServerError).json(error.message);
+  }
+}
+
+// Genreate a new accessToken from refreshToken
+async function generateNewAccessToken(req: Request, res: Response) {
+  try {
+    const data = await UserService.generateNewAccessToken(req.body);
+    return res.status(okStatus).json({
+      accessToken: data,
+    });
   } catch (error: any) {
     res.status(internalServerError).json(error.message);
   }
@@ -115,4 +143,4 @@ async function deleteUser(req: Request, res: Response) {
   }
 }
 
-export { getAllUsers, getUserById, createUser, updateUser, deleteUser };
+export { getAllUsers, generateNewAccessToken, getUserById, createUser, signInUser, updateUser, deleteUser };

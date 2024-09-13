@@ -1,6 +1,7 @@
 import { prisma } from "../utilities";
-import { UserDTO, CreateUserDTO, UpdateUserDTO } from "../interfaces/user";
+import { UserDTO, CreateUserDTO, UpdateUserDTO, refreshTokenDTO } from "../interfaces/user";
 import dayjs from "dayjs";
+import { JwtMiddleWare } from "../middleware/jwt";
 
 async function getAllUsers(): Promise<UserDTO[]> {
   try {
@@ -23,6 +24,22 @@ async function getUserById(userId: number): Promise<UserDTO | null> {
     });
   } catch (error: any) {
     throw Error(`No user found with id: ${userId}`);
+  }
+}
+
+async function generateNewAccessToken(body: refreshTokenDTO) {
+  try {
+    const decodedToken: any = await JwtMiddleWare.verifyRefreshToken(body.refreshToken);
+    const user = await prisma.user.findUnique({
+      where: {
+        id: decodedToken.payload.userid,
+      },
+    });
+    return JwtMiddleWare.signAccessToken({
+      userid: user.id,
+    });
+  } catch (error: any) {
+    throw Error(`Error in generating new accessToken: ${error.message}`);
   }
 }
 
@@ -93,12 +110,13 @@ async function deleteUser(userId: number): Promise<boolean> {
 }
 
 const UserService = {
+  createUser,
+  deleteUser,
   getAllUsers,
   getUserById,
   getUserByEmail,
-  createUser,
+  generateNewAccessToken,
   updateUser,
-  deleteUser,
 };
 
 export { UserService };

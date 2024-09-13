@@ -1,5 +1,13 @@
 import Router, { RequestHandler } from "express";
-import { getAllUsers, getUserById, createUser, updateUser, deleteUser } from "../controllers";
+import {
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+  signInUser,
+  generateNewAccessToken,
+} from "../controllers";
 import { validator } from "../middleware/expressValidator";
 import { body, param } from "express-validator";
 
@@ -66,7 +74,7 @@ UserRouter.route("/:id").get(
 UserRouter.route("/").post(
   /*
       #swagger.tags = ['User']
-      #swagger.summary = 'Create a new user'
+      #swagger.summary = 'Sign up'
       #swagger.requestBody = {
         required: true,
         content: {
@@ -152,7 +160,49 @@ UserRouter.route("/sign-in").post(
     validator(req, res, next);
   },
   (async (req, res) => {
-    // await signInUser(req, res);
+    await signInUser(req, res);
+  }) as RequestHandler
+);
+
+// Generate a new accessToken using refreshToken
+UserRouter.route("/token").post(
+  /*
+      #swagger.tags = ['User']
+      #swagger.summary = 'Get a new refresh token from access token'
+      #swagger.requestBody = {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: 'object',
+              properties: {
+                refreshToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwYXlsb2FkIjp7InVzZXJpZCI6NH0sImlhdCI6MTcyNDE1MDU1OCwiZXhwIjoxNzI0MTUyMzU4fQ.Gy2YtEi8dY419wPzcxQ1EkR5MNkNXRlSP6tZOeMNJtQ' },
+              }
+            }
+          }
+        }
+      }
+      #swagger.responses[200] = {
+        description: 'New Access Token generated',
+        content: {
+          "application/json": {
+            schema: { $ref: '#/definitions/accessToken' }
+          }
+        }
+      }
+      #swagger.responses[400] = {
+        description: "Invalid input data"
+      }
+      #swagger.responses[500] = {
+        description: "Internal server error"
+      }
+    */
+  [body("refreshToken").isString().withMessage("RefreshToken is required")],
+  (req, res, next) => {
+    validator(req, res, next);
+  },
+  (async (req, res) => {
+    await generateNewAccessToken(req, res);
   }) as RequestHandler
 );
 

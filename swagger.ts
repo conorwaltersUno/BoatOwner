@@ -27,12 +27,31 @@ const doc = {
       name: "log",
       description: "Endpoints",
     },
+    {
+      name: "Task",
+      description: "Endpoints",
+    },
   ],
   definitions: definitions,
+
+  // Add security definitions
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+      },
+    },
+  },
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
 };
 
 const outputFile = "./swaggerSchema/swagger_output.json";
-
 const endpointsFiles = ["./app.ts"];
 
 swaggerAutogen({ openapi: "3.0.0" })(outputFile, endpointsFiles, doc);

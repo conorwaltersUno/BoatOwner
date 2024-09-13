@@ -111,4 +111,23 @@ export const definitions = {
   createLogResponse: { $ref: "#/definitions/logDTO" },
   updateLogResponse: { $ref: "#/definitions/logDTO" },
   addCoordinatesResponse: { $ref: "#/definitions/logDTO" },
+
+  //task definitions
+  taskDTO: {
+    id: 1,
+    boat_id: 1,
+    description: "Departed from dock",
+    status: "To Complete",
+    created_on: "2023-07-04T12:00:00Z",
+  },
+  createTaskDTO: {
+    description: "Departed from dock",
+    status: "To Complete",
+    created_on: "2023-07-04T12:00:00Z",
+  },
+  getAllTasksResponse: [{ $ref: "#/definitions/taskDTO" }],
+  getTasksByBoatIdResponse: [{ $ref: "#/definitions/taskDTO" }],
+  getTaskByIdResponse: { $ref: "#/definitions/taskDTO" },
+  createTaskResponse: { $ref: "#/definitions/taskDTO" },
+  updateTaskResponse: { $ref: "#/definitions/taskDTO" },
 };

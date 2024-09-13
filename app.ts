@@ -6,6 +6,7 @@ import { UserRouter } from "./routers/users";
 import { HealthRouter } from "./routers/health";
 import { BoatRouter } from "./routers/boats";
 import { LogRouter } from "./routers/logs";
+import { TaskRouter } from "./routers/tasks";
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use("/", HealthRouter);
 app.use("/users", UserRouter);
 app.use("/boat", BoatRouter);
 app.use("/logs", LogRouter);
+app.use("/tasks", TaskRouter);
 
 app.use((err, req: Request, res: Response, next: NextFunction) => {
   if (err) {
