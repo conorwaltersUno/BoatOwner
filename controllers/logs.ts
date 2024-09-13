@@ -16,10 +16,10 @@ const internalServerError = 500;
 // Get all logs
 async function getAllLogs(req: Request, res: Response) {
   try {
-    const logs: LogDTO[] = await LogService.getAllLogs();
+    const logs: LogDTO[] | null = await LogService.getAllLogs();
 
-    if (!logs.length) {
-      return res.status(204).json([]);
+    if (!logs.length || !logs) {
+      return res.status(204).json("No logs found");
     }
 
     return res.status(okStatus).json(logs);

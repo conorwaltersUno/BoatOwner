@@ -130,4 +130,32 @@ export const definitions = {
   getTaskByIdResponse: { $ref: "#/definitions/taskDTO" },
   createTaskResponse: { $ref: "#/definitions/taskDTO" },
   updateTaskResponse: { $ref: "#/definitions/taskDTO" },
+
+  //expenses defintions
+  expensesDTO: {
+    id: 1,
+    boat_id: 1,
+    expense_type: "Fuel",
+    amount: 500,
+    expense_date: "2023-08-01T09:00:00Z",
+    created_on: "2023-08-01T09:00:00Z",
+  },
+  createExpenseDTO: {
+    expense_type: "Fuel",
+    amount: 500,
+    expense_date: "2023-08-01T09:00:00Z",
+    created_on: "2023-08-01T09:00:00Z",
+  },
+  updateExpenseDTO: {
+    boat_id: 1,
+    expense_type: "Fuel",
+    amount: 500,
+    expense_date: "2023-08-01T09:00:00Z",
+    created_on: "2023-08-01T09:00:00Z",
+  },
+  getAllExpensesResponse: [{ $ref: "#/definitions/expensesDTO" }],
+  getExpenseByIdResponse: { $ref: "#/definitions/expensesDTO" },
+  getExpensesByBoatIdResponse: [{ $ref: "#/definitions/expensesDTO" }],
+  createExpenseResponse: { $ref: "#/definitions/expensesDTO" },
+  updateExpenseResponse: { $ref: "#/definitions/expensesDTO" },
 };

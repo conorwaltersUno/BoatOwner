@@ -12,7 +12,12 @@ const internalServerError = 500;
 // Get all tasks
 async function getAllTasks(req: Request, res: Response) {
   try {
-    const tasks: TaskDTO[] = await TaskService.getAllTasks();
+    const tasks: TaskDTO[] | null = await TaskService.getAllTasks();
+
+    if (!tasks || tasks.length == 0) {
+      return res.status(noContentStatus).json({ message: "Task not found" });
+    }
+
     return res.status(okStatus).json(tasks);
   } catch (error: any) {
     res.status(internalServerError).json(error.message);
