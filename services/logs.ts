@@ -2,7 +2,7 @@ import { prisma } from "../utilities";
 import { LogDTO, CreateLogDTO, UpdateLogDTO, AddCoordinatesDTO, Coordinate } from "../interfaces/log";
 import { JsonValue } from "type-fest";
 
-async function getAllLogs(): Promise<LogDTO[]> {
+async function getAllLogs(): Promise<LogDTO[] | null> {
   try {
     return await prisma.logs.findMany({
       orderBy: {

@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { ExpenseService } from "../services";
 import { CreateExpenseDTO, ExpenseDTO, UpdateExpenseDTO } from "../interfaces/expense";
-import { param } from "express-validator";
 
 const okStatus = 200;
 const createdStatus = 201;

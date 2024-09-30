@@ -18,7 +18,7 @@ async function getAllLogs(req: Request, res: Response) {
   try {
     const logs: LogDTO[] | null = await LogService.getAllLogs();
 
-    if (!logs.length || !logs) {
+    if (!logs || logs.length == 0) {
       return res.status(204).json("No logs found");
     }
 
@@ -76,7 +76,7 @@ async function createLog(req: Request, res: Response) {
     const newLog: LogDTO = await LogService.createLog(Number(req.params.boat_id), req.body);
 
     return res.status(createdStatus).json(newLog);
-  } catch (error: any) {
+  } catch (error) {
     res.status(internalServerError).json({ message: error.message });
   }
 }

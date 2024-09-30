@@ -10,6 +10,7 @@ import {
 } from "../controllers";
 import { validator } from "../middleware/expressValidator";
 import { body, param } from "express-validator";
+import { auth } from "../middleware/auth";
 
 const UserRouter = Router();
 
