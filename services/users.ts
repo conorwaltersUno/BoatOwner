@@ -70,6 +70,13 @@ async function createUser(data: CreateUserDTO): Promise<UserDTO> {
         created: dayjs().format(),
       },
     });
+    await prisma.boat.create({
+      data: {
+        user_id: newUser.id,
+        name: data.boat_name,
+        model: data.boat_model,
+      },
+    });
 
     return newUser;
   } catch (error: any) {

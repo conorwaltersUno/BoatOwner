@@ -10,7 +10,6 @@ import {
 } from "../controllers";
 import { validator } from "../middleware/expressValidator";
 import { body, param } from "express-validator";
-import { auth } from "../middleware/auth";
 
 const UserRouter = Router();
 
@@ -83,6 +82,8 @@ UserRouter.route("/").post(
             schema: {
               type: 'object',
               properties: {
+                boat_name: { type: 'string', example: 'Gaelforce' },
+                boat_model: { type: 'string', example: 'Sun Odyssey 44i' },
                 email: { type: 'string', example: 'user@example.com' },
                 password: { type: 'string', example: 'P@ssw0rd' }
               },
@@ -107,6 +108,8 @@ UserRouter.route("/").post(
       }
     */
   [
+    body("boat_name").exists().isString().withMessage("This request requires a valid boat name"),
+    body("boat_model").exists().isString().withMessage("This request requires a valid boat model"),
     body("email").exists().isEmail().withMessage("This request requires a valid email"),
     body("password").exists().isString().notEmpty().withMessage("This request requires a valid password"),
   ],

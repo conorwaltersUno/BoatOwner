@@ -84,6 +84,14 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "boat_name": {
+                    "type": "string",
+                    "example": "Gaelforce"
+                  },
+                  "boat_model": {
+                    "type": "string",
+                    "example": "Sun Odyssey 44i"
+                  },
                   "email": {
                     "type": "string",
                     "example": "user@example.com"

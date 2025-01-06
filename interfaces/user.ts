@@ -5,6 +5,8 @@ export interface UserDTO {
 }
 
 export interface CreateUserDTO {
+  boat_name: string;
+  boat_model: string;
   email: string;
   password: string;
 }

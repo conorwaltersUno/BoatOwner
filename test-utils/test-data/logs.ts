@@ -9,11 +9,11 @@ export const MockLog: LogDTO = {
     { x: 10, y: 20 },
     { x: 10, y: 20 },
     { x: 10, y: 20 },
-  ], // JSON value to support array of Coordinate objects
+  ],
   photo_urls: [],
-  log_started: new Date(), // Date type for timestamps
-  log_ended: new Date(), // Date type for timestamps
-  created_on: new Date(), // Date type for timestamps
+  log_started: new Date(),
+  log_ended: new Date(),
+  created_on: new Date(),
   isrecordinglocation: false,
 };
 
@@ -27,11 +27,11 @@ export const MockLogArray: LogDTO[] = [
       { x: 10, y: 20 },
       { x: 10, y: 20 },
       { x: 10, y: 20 },
-    ], // JSON value to support array of Coordinate objects
+    ],
     photo_urls: [],
-    log_started: new Date(), // Date type for timestamps
-    log_ended: new Date(), // Date type for timestamps
-    created_on: new Date(), // Date type for timestamps
+    log_started: new Date(),
+    log_ended: new Date(),
+    created_on: new Date(),
     isrecordinglocation: false,
   },
 ];
@@ -45,8 +45,8 @@ export const MockLogCreate: CreateLogDTO = {
     { x: 10, y: 20 },
   ],
   photo_urls: [],
-  log_started: new Date(), // Date type for timestamps
-  log_ended: new Date(), // Date type for timestamps
-  created_on: new Date(), // Date type for timestamps
+  log_started: new Date(),
+  log_ended: new Date(),
+  created_on: new Date(),
   isrecordinglocation: false,
 };
