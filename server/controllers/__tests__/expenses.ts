@@ -169,7 +169,6 @@ describe("ExpenseController", () => {
       expect(formattedResponseData).toEqual(expectedData);
     });
 
-
     it("should return a 404 error when no expenses are found for the boat", async () => {
       const request = httpMocks.createRequest({
         method: "GET",
@@ -242,7 +241,6 @@ describe("ExpenseController", () => {
       expect(formattedResponseData).toEqual(expectedData);
     });
 
-
     it("should return a 400 error if expense creation fails", async () => {
       const body: CreateExpenseDTO = {
         expense_type: "Fuel",
@@ -311,9 +309,7 @@ describe("ExpenseController", () => {
       const response: MockResponse<Response> = createResponse();
       const returnValue = { id: 1, ...body };
 
-      when(ExpenseService.updateExpense)
-        .calledWith(1, body)
-        .mockReturnValueOnce(Promise.resolve(returnValue));
+      when(ExpenseService.updateExpense).calledWith(1, body).mockReturnValueOnce(Promise.resolve(returnValue));
       await updateExpense(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.OK);
@@ -333,7 +329,6 @@ describe("ExpenseController", () => {
 
       expect(formattedResponseData).toEqual(expectedData);
     });
-
 
     it("should return a 404 error when expense is not found", async () => {
       const body: UpdateExpenseDTO = {
