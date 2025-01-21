@@ -2,7 +2,7 @@ import Router, { RequestHandler } from "express";
 import { getAllTasks, getTaskById, getTasksByBoatId, createTask, updateTask, deleteTask } from "../controllers";
 import { validator } from "../middleware/expressValidator";
 import { body, param } from "express-validator";
-import { auth } from "../middleware/auth";
+// import { auth } from "../middleware/auth";
 
 const TaskRouter = Router();
 
@@ -23,7 +23,7 @@ TaskRouter.route("/").get(
         description: "Internal server error"
       }
     */
-  auth,
+  // auth,
   (async (req, res) => {
     await getAllTasks(req, res);
   }) as RequestHandler
@@ -55,7 +55,7 @@ TaskRouter.route("/:id").get(
         description: "Internal server error"
       }
     */
-  auth,
+  // auth,
   [param("id").isInt().withMessage("ID must be an integer")],
   (req, res, next) => {
     validator(req, res, next);
@@ -91,7 +91,7 @@ TaskRouter.route("/boat/:boat_id/tasks").get(
         description: "Internal server error"
       }
     */
-  auth,
+  // auth,
   [param("boat_id").isInt().withMessage("Boat ID must be an integer")],
   (req, res, next) => {
     validator(req, res, next);
@@ -135,7 +135,7 @@ TaskRouter.route("/:boat_id").post(
         description: "Internal server error"
       }
     */
-  auth,
+  // auth,
   [
     param("boat_id").isInt().withMessage("Boat ID must be an integer"),
     body("description").exists().isString().notEmpty().withMessage("Description is required"),
@@ -191,7 +191,7 @@ TaskRouter.route("/:id").put(
         description: "Internal server error"
       }
     */
-  auth,
+  // auth,
   [
     param("id").isInt().withMessage("ID must be an integer"),
     body("description").optional().isString().notEmpty().withMessage("Description cannot be empty"),
@@ -226,7 +226,7 @@ TaskRouter.route("/:id").delete(
         description: "Internal server error"
       }
     */
-  auth,
+  // auth,
   [param("id").isInt().withMessage("ID must be an integer")],
   (req, res, next) => {
     validator(req, res, next);

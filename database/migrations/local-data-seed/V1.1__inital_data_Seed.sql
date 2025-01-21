@@ -19,7 +19,10 @@ INSERT INTO logs (boat_id, description, crew_members, coordinates, photo_urls, l
 -- Insert data into the tasks table
 INSERT INTO tasks (boat_id, description, status, created_on) VALUES
 (1, 'Clean the deck', 'pending', '2024-07-01 20:00:00'),
-(2, 'Repair the engine', 'in_progress', '2024-07-02 16:00:00'),
+(1, 'Wash the sails', 'inProgress', '2024-07-01 20:00:00'),
+(1, 'Replace Spinnaker ferling line', 'inProgress', '2024-07-01 20:00:00'),
+(1, 'Check standard rigging', 'completed', '2024-07-01 20:00:00'),
+(2, 'Repair the engine', 'inProgress', '2024-07-02 16:00:00'),
 (3, 'Restock supplies', 'completed', '2024-07-03 19:00:00');
 
 -- Insert data into the expenses table

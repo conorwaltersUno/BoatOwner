@@ -10,7 +10,7 @@ import {
   getLogsByBoatId,
   updateLog,
 } from "../controllers/logs";
-import { auth } from "../middleware/auth";
+// import { auth } from "../middleware/auth";
 
 const LogRouter = Router();
 
@@ -31,7 +31,7 @@ LogRouter.route("/").get(
         description: "Internal server error"
       }
     */
-  auth,
+  // auth,
   (async (req, res) => {
     await getAllLogs(req, res);
   }) as RequestHandler
@@ -64,7 +64,7 @@ LogRouter.route("/boat/:boat_id").get(
       }
     */
   [param("boat_id").isInt().withMessage("Boat ID must be an integer")],
-  auth,
+  // auth,
   (req, res, next) => {
     validator(req, res, next);
   },
@@ -100,7 +100,7 @@ LogRouter.route("/:id").get(
       }
     */
   [param("id").isInt().withMessage("ID must be an integer")],
-  auth,
+  // auth,
   (req, res, next) => {
     validator(req, res, next);
   },
@@ -144,7 +144,7 @@ LogRouter.route("/coordinates").post(
     body("log_id").isInt().withMessage("Log ID must be an integer"),
     body("coordinates").isArray().withMessage("Coordinates must be an array"),
   ],
-  auth,
+  // auth,
   (req, res, next) => {
     validator(req, res, next);
   },
@@ -197,7 +197,7 @@ LogRouter.route("/:boat_id").post(
     body("log_ended").isISO8601().withMessage("Log ended must be a valid ISO8601 date"),
     body("isrecordinglocation").isBoolean().withMessage("isRecordingLocation must be a boolean"),
   ],
-  auth,
+  // auth,
   (req, res, next) => {
     validator(req, res, next);
   },
@@ -254,7 +254,7 @@ LogRouter.route("/:id").put(
     body("log_ended").optional().isISO8601().withMessage("Log ended must be a valid ISO8601 date"),
     body("isRecordingLocation").optional().isBoolean().withMessage("isRecordingLocation must be a boolean"),
   ],
-  auth,
+  // auth,
   (req, res, next) => {
     validator(req, res, next);
   },
@@ -285,7 +285,7 @@ LogRouter.route("/:id").delete(
       }
     */
   [param("id").isInt().withMessage("ID must be an integer")],
-  auth,
+  // auth,
   (req, res, next) => {
     validator(req, res, next);
   },

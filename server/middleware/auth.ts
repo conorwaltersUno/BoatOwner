@@ -16,6 +16,7 @@ const auth = async (req, res, next) => {
       next();
     })
     .catch((e) => {
+      //refresh token?
       next(createError.Unauthorized(e.message));
     });
 };

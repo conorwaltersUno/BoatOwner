@@ -2,7 +2,7 @@ import Router, { RequestHandler } from "express";
 import { getAllBoats, getBoatById, createBoat, updateBoat, deleteBoat } from "../controllers";
 import { validator } from "../middleware/expressValidator";
 import { body, param } from "express-validator";
-import { auth } from "../middleware/auth";
+// import { auth } from "../middleware/auth";
 
 const BoatRouter = Router();
 
@@ -23,7 +23,7 @@ BoatRouter.route("/").get(
         description: "Internal server error"
       }
     */
-  auth,
+  // auth,
   (async (req, res) => {
     await getAllBoats(req, res);
   }) as RequestHandler
@@ -56,7 +56,7 @@ BoatRouter.route("/:id").get(
       }
     */
   [param("id").isInt().withMessage("ID must be an integer")],
-  auth,
+  // auth,
   (req, res, next) => {
     validator(req, res, next);
   },
@@ -106,7 +106,7 @@ BoatRouter.route("/").post(
     body("name").exists().isString().notEmpty().withMessage("This request requires a valid name"),
     body("model").exists().isString().notEmpty().withMessage("This request requires a valid model"),
   ],
-  auth,
+  // auth,
   (req, res, next) => {
     validator(req, res, next);
   },
@@ -165,7 +165,7 @@ BoatRouter.route("/:id").put(
     body("name").optional().isString().notEmpty().withMessage("Name cannot be empty"),
     body("model").optional().isString().notEmpty().withMessage("Model cannot be empty"),
   ],
-  auth,
+  // auth,
   (req, res, next) => {
     validator(req, res, next);
   },
@@ -199,7 +199,7 @@ BoatRouter.route("/:id").delete(
   (req, res, next) => {
     validator(req, res, next);
   },
-  auth,
+  // auth,
   (async (req, res) => {
     await deleteBoat(req, res);
   }) as RequestHandler
