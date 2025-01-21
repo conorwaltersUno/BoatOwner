@@ -7,7 +7,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="todo"
         options={{
-          title: "Todo",
+          title: "Todo's",
           tabBarIcon: ({ color, size }) => <FontAwesome name="sort-amount-asc" color={color} size={size} />,
         }}
       />
@@ -28,12 +28,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="calendar"
         options={{
+          title: "Calendar",
           tabBarIcon: ({ color, size }) => <Ionicons name="calendar" color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
+          title: "Settings",
           tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
         }}
       />
