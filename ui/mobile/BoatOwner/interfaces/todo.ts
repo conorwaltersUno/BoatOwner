@@ -5,3 +5,9 @@ export interface TaskDTO {
   status: string;
   created_on: Date;
 }
+
+export interface CreateTaskDTO {
+  description: string;
+  status: string;
+  created_on: string;
+}
