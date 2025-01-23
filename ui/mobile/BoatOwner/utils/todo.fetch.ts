@@ -20,7 +20,7 @@ export const postTask = async (apiUrl: string, boatId: number, task: CreateTaskD
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(task),
+      body: JSON.stringify({ ...task, created_on: new Date().toISOString() }),
     });
 
     if (!response.ok) {

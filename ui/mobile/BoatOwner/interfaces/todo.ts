@@ -9,5 +9,4 @@ export interface TaskDTO {
 export interface CreateTaskDTO {
   description: string;
   status: string;
-  created_on: string;
 }

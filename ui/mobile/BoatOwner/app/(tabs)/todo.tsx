@@ -1,12 +1,15 @@
 import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo";
 import { deleteTask, fetchTasks, postTask } from "@/utils/todo.fetch";
 import Constants from "expo-constants";
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Button, Alert } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Ionicons, FontAwesome } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
+import TaskModal from "../../components/TaskModal";
 
 export default function Todo() {
+  const [isModalVisible, setModalVisible] = useState(false);
+
   const boatId = 1;
   const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
@@ -29,11 +32,7 @@ export default function Todo() {
   });
 
   const addTaskMutation = useMutation({
-    mutationFn: (newTask: { description: string; status: string; created_on: string }) =>
-      postTask(apiUrl, boatId, {
-        ...newTask,
-        created_on: new Date().toISOString(),
-      }),
+    mutationFn: (newTask: CreateTaskDTO) => postTask(apiUrl, boatId, newTask),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
@@ -47,8 +46,8 @@ export default function Todo() {
   });
 
   // This will be updated in the future to get user input for a task
-  const handleAddTask = () => {
-    const newTask: CreateTaskDTO = { description: "New Task", status: "pending", created_on: new Date().toISOString() };
+  const handleAddTask = (description: string, status: string) => {
+    const newTask: CreateTaskDTO = { description: description, status: status };
     addTaskMutation.mutate(newTask, {
       onError: (err: any) => Alert.alert("Error", err?.message || "Failed to add task"),
     });
@@ -100,9 +99,14 @@ export default function Todo() {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.addContainer}>
-        <Button title="Add a task" onPress={handleAddTask}></Button>
-      </View>
+      <>
+        <ScrollView style={styles.container}>
+          <View style={styles.addContainer}>
+            <Button title="Add a task" onPress={() => setModalVisible(true)} />
+          </View>
+        </ScrollView>
+        <TaskModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddTask} />
+      </>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Pending</Text>
