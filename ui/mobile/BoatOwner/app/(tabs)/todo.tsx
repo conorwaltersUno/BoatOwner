@@ -45,7 +45,6 @@ export default function Todo() {
     },
   });
 
-  // This will be updated in the future to get user input for a task
   const handleAddTask = (description: string, status: string) => {
     const newTask: CreateTaskDTO = { description: description, status: status };
     addTaskMutation.mutate(newTask, {
@@ -54,9 +53,21 @@ export default function Todo() {
   };
 
   const handleDeleteTask = (id: number) => {
-    deleteMutation.mutate(id, {
-      onError: (err: any) => Alert.alert("Error", err?.message || "Failed to add task"),
-    });
+    Alert.alert("Confirm Deletion", "Are you sure you want to delete this task?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          deleteMutation.mutate(id, {
+            onError: (err: any) => Alert.alert("Error", err?.message || "Failed to delete task"),
+          });
+        },
+      },
+    ]);
   };
 
   const pendingTasks = tasks.filter((task) => task.status === "pending");
