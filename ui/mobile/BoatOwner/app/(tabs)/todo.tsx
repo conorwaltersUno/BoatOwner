@@ -1,11 +1,12 @@
 import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo";
-import { deleteTask, fetchTasks, postTask } from "@/utils/todo.fetch";
+import { deleteTask, fetchTasks, postTask, updateTask } from "@/utils/todo.fetch";
 import Constants from "expo-constants";
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Button, Alert } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FontAwesome } from "@expo/vector-icons";
 import TaskModal from "../../components/TaskModal";
+import { PanGestureHandler, State } from "react-native-gesture-handler";
 
 export default function Todo() {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -45,8 +46,19 @@ export default function Todo() {
     },
   });
 
+  const updateTaskMutation = useMutation({
+    mutationFn: (task: TaskDTO) => updateTask(apiUrl, task.id, task.status, task.description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (err: any) => {
+      console.log("here3");
+      Alert.alert("Error", err?.message || "Failed to update task");
+    },
+  });
+
   const handleAddTask = (description: string, status: string) => {
-    const newTask: CreateTaskDTO = { description: description, status: status };
+    const newTask: CreateTaskDTO = { description, status };
     addTaskMutation.mutate(newTask, {
       onError: (err: any) => Alert.alert("Error", err?.message || "Failed to add task"),
     });
@@ -70,8 +82,14 @@ export default function Todo() {
     ]);
   };
 
+  const handleCompleteTask = (task: TaskDTO) => {
+    console.log("here");
+    updateTaskMutation.mutate(task, {
+      onError: (err: any) => Alert.alert("Error", err?.message || "Failed to move task to completed task"),
+    });
+  };
+
   const pendingTasks = tasks.filter((task) => task.status === "pending");
-  const inProgressTasks = tasks.filter((task) => task.status === "inProgress");
   const completedTasks = tasks.filter((task) => task.status === "completed");
 
   if (isLoading) {
@@ -90,22 +108,35 @@ export default function Todo() {
     );
   }
 
-  const renderTaskCard = (task: TaskDTO) => (
-    <View key={task.id} style={styles.taskCard}>
-      <View style={styles.taskContent}>
-        <View>
-          <Text style={styles.taskDescription}>{task.description}</Text>
-          <Text style={styles.taskStatus}>Status: {task.status}</Text>
+  const renderDraggableTaskCard = (task: TaskDTO) => (
+    <PanGestureHandler
+      key={task.id}
+      onHandlerStateChange={({ nativeEvent }) => {
+        if (nativeEvent.state === State.END && nativeEvent.translationX > 100) {
+          task.status = "completed";
+          handleCompleteTask(task);
+        } else if (nativeEvent.state === State.END && nativeEvent.translationX < 100) {
+          task.status = "pending";
+          handleCompleteTask(task);
+        }
+      }}
+    >
+      <View style={styles.taskCard}>
+        <View style={styles.taskContent}>
+          <View>
+            <Text style={styles.taskDescription}>{task.description}</Text>
+            <Text style={styles.taskStatus}>Status: {task.status}</Text>
+          </View>
+          <FontAwesome
+            name="trash"
+            color="red"
+            size={20}
+            onPress={() => handleDeleteTask(task.id)}
+            style={styles.deleteIcon}
+          />
         </View>
-        <FontAwesome
-          name="trash"
-          color="red"
-          size={20}
-          onPress={() => handleDeleteTask(task.id)}
-          style={styles.deleteIcon}
-        />
       </View>
-    </View>
+    </PanGestureHandler>
   );
 
   return (
@@ -122,25 +153,16 @@ export default function Todo() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Pending</Text>
         {pendingTasks.length > 0 ? (
-          pendingTasks.map(renderTaskCard)
+          pendingTasks.map(renderDraggableTaskCard)
         ) : (
           <Text style={styles.noTasksText}>No pending tasks</Text>
         )}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>In Progress</Text>
-        {inProgressTasks.length > 0 ? (
-          inProgressTasks.map(renderTaskCard)
-        ) : (
-          <Text style={styles.noTasksText}>No in-progress tasks</Text>
-        )}
-      </View>
-
-      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Completed</Text>
         {completedTasks.length > 0 ? (
-          completedTasks.map(renderTaskCard)
+          completedTasks.map(renderDraggableTaskCard)
         ) : (
           <Text style={styles.noTasksText}>No completed tasks</Text>
         )}

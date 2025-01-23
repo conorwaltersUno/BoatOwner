@@ -35,6 +35,28 @@ export const postTask = async (apiUrl: string, boatId: number, task: CreateTaskD
   }
 };
 
+export const updateTask = async (apiUrl: string, taskId: number, status: string, description: string) => {
+  try {
+    const response = await fetch(`${apiUrl}/tasks/${taskId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: status, description: description }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update task: ${response.statusText}`);
+    }
+
+    const data: TaskDTO = await response.json();
+    return data;
+  } catch (err: any) {
+    console.error("Error updating task:", err.message);
+    throw err;
+  }
+};
+
 export const deleteTask = async (apiUrl: string, taskId: number) => {
   try {
     const response = await fetch(`${apiUrl}/tasks/${taskId}`, {

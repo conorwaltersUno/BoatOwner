@@ -10,7 +10,6 @@ import {
   TouchableWithoutFeedback,
   Alert,
 } from "react-native";
-import { Dropdown } from "react-native-element-dropdown";
 
 interface TaskModalProps {
   visible: boolean;
@@ -20,39 +19,28 @@ interface TaskModalProps {
 
 const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => {
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState("");
   const [error, setError] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false); // Track dropdown state
-
-  const statusOptions = [
-    { label: "Pending", value: "pending" },
-    { label: "In Progress", value: "inProgress" },
-  ];
 
   const handleAddTask = () => {
-    if (!description.trim() || !status.trim()) {
-      setError("Both fields are required.");
+    if (!description.trim()) {
+      setError("Description is required.");
       return;
     }
     setError("");
-    onSubmit(description, status);
+    onSubmit(description, "pending"); // Set default status as 'pending'
     setDescription("");
-    setStatus("");
     onClose();
   };
 
   const handleClose = () => {
     setError("");
     setDescription("");
-    setStatus("");
     onClose();
   };
 
   const handleOutsideTap = () => {
-    // Close the modal when tapping outside the modal content
     setError("");
     setDescription("");
-    setStatus("");
     onClose();
   };
 
@@ -71,20 +59,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => 
                 onChangeText={(text) => setDescription(text)}
               />
 
-              <Dropdown
-                style={styles.dropdown}
-                containerStyle={styles.dropdownContainer}
-                data={statusOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Status"
-                value={status}
-                onFocus={() => setDropdownOpen(true)}
-                onBlur={() => setDropdownOpen(false)}
-                onChange={(item) => setStatus(item.value)}
-              />
-
-              <View style={dropdownOpen ? styles.buttonContainerExpandedDropDown : styles.buttonContainer}>
+              <View style={styles.buttonContainer}>
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
                 <Button title="Add Task" onPress={handleAddTask} color="#4CAF50" />
                 <TouchableOpacity onPress={handleClose} style={styles.cancelButton}>
@@ -118,18 +93,6 @@ const styles = StyleSheet.create({
     elevation: 5,
     maxHeight: "60%",
   },
-  expandedModalContainer: {
-    width: "80%",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    flexDirection: "column",
-    height: "50%",
-  },
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
@@ -144,17 +107,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     fontSize: 16,
   },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
-  },
-  dropdownContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 5,
-  },
   errorText: {
     color: "red",
     marginBottom: 15,
@@ -162,9 +114,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 10,
-  },
-  buttonContainerExpandedDropDown: {
-    marginTop: 150,
   },
   cancelButton: {
     marginTop: 10,
