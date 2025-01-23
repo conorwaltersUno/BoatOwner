@@ -20,7 +20,6 @@ export default function Todo() {
     : `https://${apiBaseUrl}:3010`;
 
   const queryClient = useQueryClient();
-
   const {
     data: tasks = [],
     isLoading,
@@ -52,7 +51,6 @@ export default function Todo() {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
     onError: (err: any) => {
-      console.log("here3");
       Alert.alert("Error", err?.message || "Failed to update task");
     },
   });
@@ -83,7 +81,6 @@ export default function Todo() {
   };
 
   const handleCompleteTask = (task: TaskDTO) => {
-    console.log("here");
     updateTaskMutation.mutate(task, {
       onError: (err: any) => Alert.alert("Error", err?.message || "Failed to move task to completed task"),
     });
@@ -124,7 +121,9 @@ export default function Todo() {
       <View style={styles.taskCard}>
         <View style={styles.taskContent}>
           <View>
-            <Text style={styles.taskDescription}>{task.description}</Text>
+            <Text style={[styles.taskDescription, task.status === "completed" && styles.completedTask]}>
+              {task.description}
+            </Text>
             <Text style={styles.taskStatus}>Status: {task.status}</Text>
           </View>
           <FontAwesome
@@ -212,6 +211,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     marginBottom: 5,
+  },
+  completedTask: {
+    textDecorationLine: "line-through",
+    color: "gray",
   },
   taskStatus: {
     fontSize: 14,
