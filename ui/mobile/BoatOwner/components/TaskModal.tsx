@@ -8,7 +8,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Alert,
 } from "react-native";
 
 interface TaskModalProps {
@@ -77,14 +76,16 @@ const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContainer: {
     width: "80%",
-    backgroundColor: "#fff",
+    backgroundColor: "#F7F7F9",
     borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#000000",
     padding: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#000000",
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,

@@ -2,6 +2,10 @@
 
 BoatOwner
 
+## Trello board to track work
+
+https://trello.com/b/7GH6OZzf/boatowner
+
 ## What is the purpose of the application?
 
 Owning a boat can be quite challenging, requiring attention to numerous details ranging from maintenance and upkeep to managing finances and keeping track of all the small tasks that need to be completed throughout the year. Finding an effective way to organize and manage all this information can be daunting for any boat owner.

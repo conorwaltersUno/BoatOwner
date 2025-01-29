@@ -1,12 +1,13 @@
-import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo";
-import { deleteTask, fetchTasks, postTask, updateTask } from "@/utils/todo.fetch";
-import Constants from "expo-constants";
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Button, Alert } from "react-native";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { GestureHandlerGestureEvent, PanGestureHandler, State } from "react-native-gesture-handler";
 import { FontAwesome } from "@expo/vector-icons";
+
 import TaskModal from "../../components/TaskModal";
-import { PanGestureHandler, State } from "react-native-gesture-handler";
+import { useAddTask, useGetTasks, useDeleteTask, useUpdateTask } from "../../hooks/index";
+
+import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo";
+import Constants from "expo-constants";
 
 export default function Todo() {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -16,50 +17,18 @@ export default function Todo() {
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
 
   const apiUrl = isLocalDev
-    ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + ":3010"
+    ? "http://" + Constants.expoConfig?.hostUri!.split(":").shift() + ":3010"
     : `https://${apiBaseUrl}:3010`;
 
-  const queryClient = useQueryClient();
-  const {
-    data: tasks = [],
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: () => fetchTasks(apiUrl, boatId),
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const addTaskMutation = useMutation({
-    mutationFn: (newTask: CreateTaskDTO) => postTask(apiUrl, boatId, newTask),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteTask(apiUrl, id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-  });
-
-  const updateTaskMutation = useMutation({
-    mutationFn: (task: TaskDTO) => updateTask(apiUrl, task.id, task.status, task.description),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-    },
-    onError: (err: any) => {
-      Alert.alert("Error", err?.message || "Failed to update task");
-    },
-  });
+  // Using custom hooks for queries and mutations
+  const { data: tasks = [], isLoading, isError, error } = useGetTasks(apiUrl, boatId);
+  const { mutate: addTask } = useAddTask(apiUrl, boatId);
+  const { mutate: deleteTaskMutation } = useDeleteTask(apiUrl);
+  const { mutate: updateTaskMutation } = useUpdateTask(apiUrl);
 
   const handleAddTask = (description: string, status: string) => {
     const newTask: CreateTaskDTO = { description, status };
-    addTaskMutation.mutate(newTask, {
-      onError: (err: any) => Alert.alert("Error", err?.message || "Failed to add task"),
-    });
+    addTask(newTask);
   };
 
   const handleDeleteTask = (id: number) => {
@@ -71,19 +40,13 @@ export default function Todo() {
       {
         text: "Delete",
         style: "destructive",
-        onPress: () => {
-          deleteMutation.mutate(id, {
-            onError: (err: any) => Alert.alert("Error", err?.message || "Failed to delete task"),
-          });
-        },
+        onPress: () => deleteTaskMutation(id),
       },
     ]);
   };
 
-  const handleCompleteTask = (task: TaskDTO) => {
-    updateTaskMutation.mutate(task, {
-      onError: (err: any) => Alert.alert("Error", err?.message || "Failed to move task to completed task"),
-    });
+  const handleUpdateTask = (task: TaskDTO) => {
+    updateTaskMutation(task);
   };
 
   const pendingTasks = tasks.filter((task) => task.status === "pending");
@@ -105,52 +68,64 @@ export default function Todo() {
     );
   }
 
-  const renderDraggableTaskCard = (task: TaskDTO) => (
-    <PanGestureHandler
-      key={task.id}
-      onHandlerStateChange={({ nativeEvent }) => {
-        if (nativeEvent.state === State.END && nativeEvent.translationX > 100) {
-          task.status = "completed";
-          handleCompleteTask(task);
-        } else if (nativeEvent.state === State.END && nativeEvent.translationX < 100) {
-          task.status = "pending";
-          handleCompleteTask(task);
-        }
-      }}
-    >
-      <View style={styles.taskCard}>
-        <View style={styles.taskContent}>
-          <View>
-            <Text style={[styles.taskDescription, task.status === "completed" && styles.completedTask]}>
-              {task.description}
-            </Text>
-            <Text style={styles.taskStatus}>Status: {task.status}</Text>
+  const renderDraggableTaskCard = (task: TaskDTO) => {
+    let startY: any = 0;
+
+    return (
+      <PanGestureHandler
+        key={task.id}
+        onGestureEvent={({ nativeEvent }: GestureHandlerGestureEvent) => {
+          if (nativeEvent.state === State.BEGAN) {
+            startY = nativeEvent.translationY;
+          }
+        }}
+        onHandlerStateChange={({ nativeEvent }) => {
+          const isVerticalSwipe = Math.abs(nativeEvent.translationY - startY) > Math.abs(nativeEvent.translationX);
+
+          if (!isVerticalSwipe && nativeEvent.state === State.END) {
+            if (nativeEvent.translationX > 100) {
+              task.status = "completed";
+              handleUpdateTask(task);
+            } else if (nativeEvent.translationX < -100) {
+              task.status = "pending";
+              handleUpdateTask(task);
+            }
+          }
+        }}
+        shouldCancelWhenOutside={false}
+      >
+        <View style={styles.taskCard}>
+          <View style={styles.taskContent}>
+            <View>
+              <Text style={[styles.taskDescription, task.status === "completed" && styles.completedTask]}>
+                {task.description}
+              </Text>
+              <Text style={styles.taskStatus}>Status: {task.status}</Text>
+            </View>
+            <FontAwesome
+              name="trash"
+              color="red"
+              size={20}
+              onPress={() => handleDeleteTask(task.id)}
+              style={styles.deleteIcon}
+            />
           </View>
-          <FontAwesome
-            name="trash"
-            color="red"
-            size={20}
-            onPress={() => handleDeleteTask(task.id)}
-            style={styles.deleteIcon}
-          />
         </View>
-      </View>
-    </PanGestureHandler>
-  );
+      </PanGestureHandler>
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
-      <>
-        <ScrollView style={styles.container}>
-          <View style={styles.addContainer}>
-            <Button title="Add a task" onPress={() => setModalVisible(true)} />
-          </View>
-        </ScrollView>
-        <TaskModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddTask} />
-      </>
+      <ScrollView style={styles.container}>
+        <View style={styles.addContainer}>
+          <Button title="Add a task" onPress={() => setModalVisible(true)} />
+        </View>
+      </ScrollView>
+      <TaskModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddTask} />
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Pending</Text>
+        <Text style={styles.sectionTitle}>Working on it</Text>
         {pendingTasks.length > 0 ? (
           pendingTasks.map(renderDraggableTaskCard)
         ) : (

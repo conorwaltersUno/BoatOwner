@@ -1,8 +1,9 @@
+import { APIRoutes } from "@/constants/APIRoutes";
 import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo";
 
 export const fetchTasks = async (apiUrl: string, boatId: number) => {
   try {
-    const response = await fetch(`${apiUrl}/tasks/boat/${boatId}/tasks`);
+    const response = await fetch(`${apiUrl}${APIRoutes.tasks}/boat/${boatId}/tasks`);
     if (!response.ok) {
       throw new Error(`Failed to fetch tasks: ${response.statusText}`);
     }
@@ -15,7 +16,7 @@ export const fetchTasks = async (apiUrl: string, boatId: number) => {
 
 export const postTask = async (apiUrl: string, boatId: number, task: CreateTaskDTO) => {
   try {
-    const response = await fetch(`${apiUrl}/tasks/${boatId}`, {
+    const response = await fetch(`${apiUrl}${APIRoutes.tasks}/${boatId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -37,7 +38,7 @@ export const postTask = async (apiUrl: string, boatId: number, task: CreateTaskD
 
 export const updateTask = async (apiUrl: string, taskId: number, status: string, description: string) => {
   try {
-    const response = await fetch(`${apiUrl}/tasks/${taskId}`, {
+    const response = await fetch(`${apiUrl}${APIRoutes.tasks}/${taskId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -59,7 +60,7 @@ export const updateTask = async (apiUrl: string, taskId: number, status: string,
 
 export const deleteTask = async (apiUrl: string, taskId: number) => {
   try {
-    const response = await fetch(`${apiUrl}/tasks/${taskId}`, {
+    const response = await fetch(`${apiUrl}${APIRoutes.tasks}/${taskId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
