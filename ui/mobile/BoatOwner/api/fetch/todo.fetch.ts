@@ -1,5 +1,5 @@
 import { APIRoutes } from "@/constants/APIRoutes";
-import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo";
+import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo/todo";
 
 export const fetchTasks = async (apiUrl: string, boatId: number) => {
   try {

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateTask } from "@/api/fetch/todo.fetch";
-import { TaskDTO } from "@/interfaces/todo";
+import { TaskDTO } from "@/interfaces/todo/todo";
 import { QUERYKEYS } from "@/constants/query";
 
 function useUpdateTask(apiUrl: string) {

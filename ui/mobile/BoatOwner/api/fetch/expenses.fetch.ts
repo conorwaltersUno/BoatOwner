@@ -1,4 +1,4 @@
-import { CreateExpenseDTO, ExpenseDTO } from "@/interfaces/expense";
+import { CreateExpenseDTO, ExpenseDTO } from "@/interfaces/expenses/expense";
 
 export const fetchExpenses = async (apiUrl: string, boatId: number) => {
   try {

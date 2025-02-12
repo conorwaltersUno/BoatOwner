@@ -6,7 +6,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import TaskModal from "../../components/TaskModal";
 import { useAddTask, useGetTasks, useDeleteTask, useUpdateTask } from "../../hooks/index";
 
-import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo";
+import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo/todo";
 import Constants from "expo-constants";
 
 export default function Todo() {

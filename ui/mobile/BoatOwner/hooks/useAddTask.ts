@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CreateTaskDTO } from "@/interfaces/todo";
+import { CreateTaskDTO } from "@/interfaces/todo/todo";
 import { postTask } from "@/api/fetch/todo.fetch";
 import { QUERYKEYS } from "@/constants/query";
 

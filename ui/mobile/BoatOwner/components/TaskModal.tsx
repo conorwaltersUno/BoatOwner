@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from "react-native";
-import { TaskModalProps } from "@/interfaces/taskModal";
+import { TaskModalProps } from "@/interfaces/todo/taskModal";
 
 const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => {
   const validationSchema = Yup.object().shape({

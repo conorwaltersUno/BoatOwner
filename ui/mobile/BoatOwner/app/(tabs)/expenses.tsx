@@ -1,4 +1,4 @@
-import { CreateExpenseDTO } from "@/interfaces/expense";
+import { CreateExpenseDTO } from "@/interfaces/expenses/expense";
 import { addExpense, deleteExpense, fetchExpenses } from "../../api/fetch/expenses.fetch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
