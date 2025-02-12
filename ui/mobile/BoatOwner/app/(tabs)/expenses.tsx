@@ -1,5 +1,5 @@
 import { CreateExpenseDTO } from "@/interfaces/expense";
-import { addExpense, deleteExpense, fetchExpenses } from "@/utils/expenses.fetch";
+import { addExpense, deleteExpense, fetchExpenses } from "../../api/fetch/expenses.fetch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";

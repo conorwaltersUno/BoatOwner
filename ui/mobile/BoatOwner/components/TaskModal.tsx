@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
+import { Formik } from "formik";
+import * as Yup from "yup";
 import {
   Modal,
   View,
@@ -9,62 +11,51 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from "react-native";
-
-interface TaskModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onSubmit: (description: string, status: string) => void;
-}
+import { TaskModalProps } from "@/interfaces/taskModal";
 
 const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => {
-  const [description, setDescription] = useState("");
-  const [error, setError] = useState("");
-
-  const handleAddTask = () => {
-    if (!description.trim()) {
-      setError("Description is required.");
-      return;
-    }
-    setError("");
-    onSubmit(description, "pending"); // Set default status as 'pending'
-    setDescription("");
-    onClose();
-  };
-
-  const handleClose = () => {
-    setError("");
-    setDescription("");
-    onClose();
-  };
-
-  const handleOutsideTap = () => {
-    setError("");
-    setDescription("");
-    onClose();
-  };
+  const validationSchema = Yup.object().shape({
+    description: Yup.string().trim().required("Description is required."),
+  });
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <TouchableWithoutFeedback onPress={handleOutsideTap}>
+      <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>Add a New Task</Text>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Description"
-                value={description}
-                onChangeText={(text) => setDescription(text)}
-              />
-
-              <View style={styles.buttonContainer}>
-                {error ? <Text style={styles.errorText}>{error}</Text> : null}
-                <Button title="Add Task" onPress={handleAddTask} color="#4CAF50" />
-                <TouchableOpacity onPress={handleClose} style={styles.cancelButton}>
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
+              <Formik
+                initialValues={{ description: "" }}
+                validationSchema={validationSchema}
+                onSubmit={(values, { resetForm }) => {
+                  onSubmit(values.description, "pending");
+                  resetForm();
+                  onClose();
+                }}
+              >
+                {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+                  <>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Description"
+                      value={values.description}
+                      onChangeText={handleChange("description")}
+                      onBlur={handleBlur("description")}
+                    />
+                    {errors.description && touched.description && (
+                      <Text style={styles.errorText}>{errors.description}</Text>
+                    )}
+                    <View style={styles.buttonContainer}>
+                      <Button title="Add Task" onPress={() => handleSubmit()} color="#4CAF50" />
+                      <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
+                        <Text style={styles.cancelText}>Cancel</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </Formik>
             </View>
           </TouchableWithoutFeedback>
         </View>

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteTask } from "@/utils/todo.fetch";
+import { deleteTask } from "@/api/fetch/todo.fetch";
 import { QUERYKEYS } from "@/constants/query";
 
 function useDeleteTask(apiUrl: string) {

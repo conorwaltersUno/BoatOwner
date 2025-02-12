@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CreateTaskDTO } from "@/interfaces/todo";
-import { postTask } from "@/utils/todo.fetch";
+import { postTask } from "@/api/fetch/todo.fetch";
 import { QUERYKEYS } from "@/constants/query";
 
 function useAddTask(apiUrl: string, boatId: number) {

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Button, Alert } from "react-native";
-import { GestureHandlerGestureEvent, PanGestureHandler, State } from "react-native-gesture-handler";
+import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { FontAwesome } from "@expo/vector-icons";
 
 import TaskModal from "../../components/TaskModal";
@@ -11,7 +11,7 @@ import Constants from "expo-constants";
 
 export default function Todo() {
   const [isModalVisible, setModalVisible] = useState(false);
-
+  //will get this from user -> boat_id in future when auth implemented
   const boatId = 1;
   const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
@@ -20,7 +20,6 @@ export default function Todo() {
     ? "http://" + Constants.expoConfig?.hostUri!.split(":").shift() + ":3010"
     : `https://${apiBaseUrl}:3010`;
 
-  // Using custom hooks for queries and mutations
   const { data: tasks = [], isLoading, isError, error } = useGetTasks(apiUrl, boatId);
   const { mutate: addTask } = useAddTask(apiUrl, boatId);
   const { mutate: deleteTaskMutation } = useDeleteTask(apiUrl);
@@ -68,52 +67,38 @@ export default function Todo() {
     );
   }
 
-  const renderDraggableTaskCard = (task: TaskDTO) => {
-    let startY: any = 0;
-
-    return (
-      <PanGestureHandler
-        key={task.id}
-        onGestureEvent={({ nativeEvent }: GestureHandlerGestureEvent) => {
-          if (nativeEvent.state === State.BEGAN) {
-            startY = nativeEvent.translationY;
-          }
-        }}
-        onHandlerStateChange={({ nativeEvent }) => {
-          const isVerticalSwipe = Math.abs(nativeEvent.translationY - startY) > Math.abs(nativeEvent.translationX);
-
-          if (!isVerticalSwipe && nativeEvent.state === State.END) {
-            if (nativeEvent.translationX > 100) {
-              task.status = "completed";
-              handleUpdateTask(task);
-            } else if (nativeEvent.translationX < -100) {
-              task.status = "pending";
-              handleUpdateTask(task);
-            }
-          }
-        }}
-        shouldCancelWhenOutside={false}
-      >
-        <View style={styles.taskCard}>
-          <View style={styles.taskContent}>
-            <View>
-              <Text style={[styles.taskDescription, task.status === "completed" && styles.completedTask]}>
-                {task.description}
-              </Text>
-              <Text style={styles.taskStatus}>Status: {task.status}</Text>
-            </View>
-            <FontAwesome
-              name="trash"
-              color="red"
-              size={20}
-              onPress={() => handleDeleteTask(task.id)}
-              style={styles.deleteIcon}
-            />
+  const renderDraggableTaskCard = (task: TaskDTO) => (
+    <PanGestureHandler
+      key={task.id}
+      onHandlerStateChange={({ nativeEvent }) => {
+        if (nativeEvent.state === State.END && nativeEvent.translationX > 100) {
+          task.status = "completed";
+          handleUpdateTask(task);
+        } else if (nativeEvent.state === State.END && nativeEvent.translationX < 100) {
+          task.status = "pending";
+          handleUpdateTask(task);
+        }
+      }}
+    >
+      <View style={styles.taskCard}>
+        <View style={styles.taskContent}>
+          <View>
+            <Text style={[styles.taskDescription, task.status === "completed" && styles.completedTask]}>
+              {task.description}
+            </Text>
+            <Text style={styles.taskStatus}>Status: {task.status}</Text>
           </View>
+          <FontAwesome
+            name="trash"
+            color="red"
+            size={20}
+            onPress={() => handleDeleteTask(task.id)}
+            style={styles.deleteIcon}
+          />
         </View>
-      </PanGestureHandler>
-    );
-  };
+      </View>
+    </PanGestureHandler>
+  );
 
   return (
     <ScrollView style={styles.container}>
