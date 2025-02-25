@@ -31,6 +31,7 @@ CREATE TABLE logs (
         REFERENCES boat(id)
 );
 
+
 CREATE TABLE tasks (
     id SERIAL PRIMARY KEY,
     boat_id SERIAL NOT NULL,
