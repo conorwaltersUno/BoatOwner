@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Button, Alert } 
 import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { FontAwesome } from "@expo/vector-icons";
 
-import TaskModal from "../../components/TaskModal";
+import TaskModal from "../../components/TaskModal/TaskModal";
 import { useAddTask, useGetTasks, useDeleteTask, useUpdateTask } from "../../hooks/index";
 
 import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo/todo";
