@@ -9,7 +9,7 @@ on:
 
 defaults:
   run:
-    working-directory: ./Server
+    working-directory: ./server
 
 jobs:
   deploy:
