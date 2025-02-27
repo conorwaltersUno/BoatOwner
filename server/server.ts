@@ -1,10 +1,10 @@
 import { app } from "./app";
 import http from "http";
 
-const httpServer = http.createServer();
+const httpsServer = http.createServer(app);
 
 const PORT = process.env.PORT || 3010;
 
-httpServer.listen(PORT, async () => {
+httpsServer.listen(PORT, async () => {
   console.log(`Server listening on port ${PORT}`);
 });
