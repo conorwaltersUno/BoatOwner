@@ -17,7 +17,7 @@
     "healthCheck": {
       "healthyThreshold": 2,
       "unhealthyThreshold": 10,
-      "timeoutSeconds": 5,
+      "timeoutSeconds": 10,
       "intervalSeconds": 60,
       "path": "/health",
       "successCodes": "200-499"
