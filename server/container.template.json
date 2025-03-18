@@ -15,11 +15,11 @@
     "containerName": "app",
     "containerPort": 3001,
     "healthCheck": {
-      "healthyThreshold": 10,
+      "healthyThreshold": 2,
       "unhealthyThreshold": 10,
       "timeoutSeconds": 10,
-      "intervalSeconds": 60,
-      "path": "/",
+      "intervalSeconds": 15,
+      "path": "/health",
       "successCodes": "200-499"
     }
   }

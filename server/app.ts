@@ -22,7 +22,7 @@ app.use("/boat", BoatRouter);
 app.use("/logs", LogRouter);
 app.use("/tasks", TaskRouter);
 app.use("/expenses", ExpenseRouter);
-app.use("/", HealthRouter);
+app.use("/health", HealthRouter);
 
 app.use((err, req: Request, res: Response, next: NextFunction) => {
   if (err) {
