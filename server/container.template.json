@@ -15,7 +15,7 @@
     "containerName": "app",
     "containerPort": 3001,
     "healthCheck": {
-      "healthyThreshold": 2,
+      "healthyThreshold": 10,
       "unhealthyThreshold": 10,
       "timeoutSeconds": 10,
       "intervalSeconds": 60,
