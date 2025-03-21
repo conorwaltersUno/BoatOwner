@@ -8,6 +8,7 @@ import { useAddTask, useGetTasks, useDeleteTask, useUpdateTask } from "../../hoo
 
 import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo/todo";
 import Constants from "expo-constants";
+import { APIPort } from "@/constants/APIPort";
 
 export default function Todo() {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -17,8 +18,8 @@ export default function Todo() {
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
 
   const apiUrl = isLocalDev
-    ? "http://" + Constants.expoConfig?.hostUri!.split(":").shift() + ":3010"
-    : `https://${apiBaseUrl}:3010`;
+    ? "http://" + Constants.expoConfig?.hostUri!.split(":").shift() + `:${APIPort.localPort}`
+    : `https://${apiBaseUrl}:${APIPort.localPort}`;
 
   const { data: tasks = [], isLoading, isError, error } = useGetTasks(apiUrl, boatId);
   const { mutate: addTask } = useAddTask(apiUrl, boatId);

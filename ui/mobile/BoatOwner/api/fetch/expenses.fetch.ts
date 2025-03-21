@@ -13,23 +13,27 @@ export const fetchExpenses = async (apiUrl: string, boatId: number) => {
   }
 };
 
-export const addExpense = async (apiUrl: string, boatId: number, expense: CreateExpenseDTO) => {
+export const postExpense = async (apiUrl: string, boatId: number, expense: CreateExpenseDTO) => {
   try {
     const response = await fetch(`${apiUrl}/expenses/${boatId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ...expense, date: new Date().toISOString() }),
+      body: JSON.stringify({
+        ...expense,
+        amount: Number(expense.amount),
+      }),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to add expense: ${response.statusText}`);
+      throw new Error(`Failed to add expense: ${response}`);
     }
 
     const data: ExpenseDTO = await response.json();
     return data;
   } catch (err: any) {
+    console.log(err.message);
     console.error("Error adding expense:", err.message);
     throw err;
   }

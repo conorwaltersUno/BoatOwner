@@ -43,7 +43,6 @@ async function getExpensesByBoatId(boatId: number): Promise<ExpenseDTO[]> {
 
 async function createExpense(data: CreateExpenseDTO): Promise<ExpenseDTO> {
   try {
-    console.log(data);
     const newExpense = await prisma.expenses.create({
       data: {
         boat_id: data.boat_id,
