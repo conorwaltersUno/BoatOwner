@@ -1,6 +1,4 @@
-import { CreateExpenseDTO, ExpenseDTO } from "@/interfaces/expenses/expense";
-import { fetchExpenses } from "../../api/fetch/expenses.fetch";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CreateExpenseDTO, ExpenseDTO, FormattedExpensesForPieChart } from "@/interfaces/expenses/expense";
 import Constants from "expo-constants";
 import {
   View,
@@ -10,12 +8,14 @@ import {
   TouchableWithoutFeedback,
   SafeAreaView,
   Button,
+  ScrollView, // Add ScrollView
 } from "react-native";
 import { APIPort } from "@/constants/APIPort";
-import { PieChart } from "react-native-gifted-charts";
 import React, { useState } from "react";
 import { useAddExpense, useGetExpenses } from "../../hooks/index";
-import AddExpenseModal from "@/components/ExpenseModal/AddExpenseModal";
+import AddExpenseModal from "@/components/AddExpenseModal";
+import ExpenseTable from "@/components/ExpenseTable";
+import ExpensesPieChart from "@/components/ExpensesPieChart";
 
 const COLORS = ["#4E8098", "#00A9A5", "#0B5351", "#092327", "#90C2E7"];
 
@@ -24,7 +24,7 @@ export default function Expenses() {
   const boatId = 1;
   const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
-  const [selectedExpense, setSelectedExpense] = useState<ExpenseDTO | null>(null);
+  const [selectedExpenseType, setSelectedExpenseType] = useState<string | null>(null);
 
   const apiUrl = isLocalDev
     ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + `:${APIPort.localPort}`
@@ -35,6 +35,20 @@ export default function Expenses() {
 
   const handleAddExpense = async (newExpense: CreateExpenseDTO) => {
     addExpense(newExpense);
+  };
+
+  const formattedData: FormattedExpensesForPieChart[] = expenses.map((expense: ExpenseDTO, index: number) => ({
+    value: expense.amount,
+    color: COLORS[index % COLORS.length],
+    text: expense.expense_type,
+    textColor: "white",
+    onPress: () => {
+      setSelectedExpenseType(expense.expense_type);
+    },
+  }));
+
+  const handleOutsidePress = () => {
+    setSelectedExpenseType(null);
   };
 
   if (isLoading) {
@@ -61,58 +75,45 @@ export default function Expenses() {
     );
   }
 
-  const formattedData = expenses.map((expense: ExpenseDTO, index: number) => ({
-    value: expense.amount,
-    color: COLORS[index % COLORS.length],
-    text: expense.expense_type,
-    textColor: "white",
-    onPress: () => setSelectedExpense(expense),
-  }));
-
-  const handleOutsidePress = () => {
-    setSelectedExpense(null);
-  };
-
   return (
-    <TouchableWithoutFeedback onPress={handleOutsidePress}>
-      <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <TouchableWithoutFeedback onPress={handleOutsidePress}>
         <View style={styles.pieContainer}>
-          <PieChart
-            data={formattedData}
-            donut
-            textSize={12}
-            radius={160}
-            focusOnPress
-            innerRadius={80}
-            edgesPressable={true}
-            centerLabelComponent={() =>
-              selectedExpense ? (
-                <Text style={styles.centerLabel}>{`${selectedExpense.expense_type}\n$${selectedExpense.amount}`}</Text>
-              ) : (
-                <Text style={styles.centerLabel}>Select an Expense</Text>
-              )
-            }
-          />
+          <ExpensesPieChart expenses={formattedData} selectedExpenseType={selectedExpenseType}></ExpensesPieChart>
         </View>
-        <View>
-          <Button title="Add a new expense" onPress={() => setModalVisible(true)} />
-        </View>
-        <AddExpenseModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddExpense} />
-        <View style={styles.informationContainer}>
-          {selectedExpense ? (
-            <Text>{`Expense Type: ${selectedExpense.expense_type}, Amount: ${selectedExpense.amount}`}</Text>
-          ) : (
-            <Text>Select an expense to view details</Text>
-          )}
-        </View>
-      </SafeAreaView>
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
+      <View>
+        <Button title="Add a new expense" onPress={() => setModalVisible(true)} />
+      </View>
+      <AddExpenseModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddExpense} />
+      <View style={styles.informationContainer}>
+        {selectedExpenseType ? (
+          <ScrollView horizontal style={styles.tableContainer}>
+            <ExpenseTable expenses={expenses} selectedExpenseType={selectedExpenseType} />
+          </ScrollView>
+        ) : (
+          <Text>Select an expense to view details</Text>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  expenseItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    marginBottom: 10,
+  },
+  totalText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 5,
+    textAlign: "center",
   },
   pieContainer: {
     flex: 1,
@@ -138,5 +139,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     color: "#000",
+  },
+  tableContainer: {
+    maxHeight: "60%", // Adjust the height to make the table scrollable vertically
   },
 });

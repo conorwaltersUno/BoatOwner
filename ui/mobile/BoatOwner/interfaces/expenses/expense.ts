@@ -12,3 +12,11 @@ export interface CreateExpenseDTO {
   amount: number;
   expense_date: Date;
 }
+
+export interface FormattedExpensesForPieChart {
+  value: number;
+  color: string;
+  text: string;
+  textColor: string;
+  onPress: () => void;
+}
