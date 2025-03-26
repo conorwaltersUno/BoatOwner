@@ -22,7 +22,7 @@ model expenses {
   id           Int      @id @default(autoincrement())
   boat_id      Int      @default(autoincrement())
   expense_type String   @db.VarChar(255)
-  amount       Int
+  amount       Decimal  @db.Decimal(10, 2)
   expense_date DateTime @db.Timestamp(6)
   created_on   DateTime @default(now()) @db.Timestamp(6)
   boat         boat     @relation(fields: [boat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_boat")
@@ -68,7 +68,7 @@ model tasks {
 
 model user {
   id       Int      @id @default(autoincrement())
-  email    String   @db.VarChar(255)
+  email    String   @unique @db.VarChar(255)
   password String   @db.VarChar(255)
   created  DateTime @default(now()) @db.Timestamp(6)
   boat     boat[]

@@ -8,7 +8,7 @@ import {
   TouchableWithoutFeedback,
   SafeAreaView,
   Button,
-  ScrollView, // Add ScrollView
+  ScrollView,
 } from "react-native";
 import { APIPort } from "@/constants/APIPort";
 import React, { useState } from "react";
@@ -37,15 +37,28 @@ export default function Expenses() {
     addExpense(newExpense);
   };
 
-  const formattedData: FormattedExpensesForPieChart[] = expenses.map((expense: ExpenseDTO, index: number) => ({
-    value: expense.amount,
-    color: COLORS[index % COLORS.length],
-    text: expense.expense_type,
-    textColor: "white",
-    onPress: () => {
-      setSelectedExpenseType(expense.expense_type);
-    },
-  }));
+  let total = 0;
+  expenses.forEach((ex) => {
+    total += parseFloat(String(ex.amount));
+  });
+
+  const groupedExpenses = expenses.reduce<Record<string, number>>((acc, expense) => {
+    const amount = parseFloat(String(expense.amount));
+    acc[expense.expense_type] = (acc[expense.expense_type] || 0) + amount;
+    return acc;
+  }, {});
+
+  const formattedData: FormattedExpensesForPieChart[] = Object.entries(groupedExpenses).map(
+    ([type, amount], index) => ({
+      value: amount,
+      color: COLORS[index % COLORS.length],
+      text: type,
+      textColor: "white",
+      onPress: () => {
+        setSelectedExpenseType(type);
+      },
+    })
+  );
 
   const handleOutsidePress = () => {
     setSelectedExpenseType(null);
@@ -79,7 +92,11 @@ export default function Expenses() {
     <SafeAreaView style={styles.container}>
       <TouchableWithoutFeedback onPress={handleOutsidePress}>
         <View style={styles.pieContainer}>
-          <ExpensesPieChart expenses={formattedData} selectedExpenseType={selectedExpenseType}></ExpensesPieChart>
+          <ExpensesPieChart
+            expenses={formattedData}
+            selectedExpenseType={selectedExpenseType}
+            total={total}
+          ></ExpensesPieChart>
         </View>
       </TouchableWithoutFeedback>
       <View>
@@ -141,6 +158,6 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   tableContainer: {
-    maxHeight: "60%", // Adjust the height to make the table scrollable vertically
+    maxHeight: "95%",
   },
 });

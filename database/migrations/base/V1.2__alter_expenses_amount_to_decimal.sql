@@ -1,0 +1,2 @@
+ALTER TABLE expenses
+ALTER COLUMN amount TYPE DECIMAL(10,2);

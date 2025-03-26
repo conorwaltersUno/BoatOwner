@@ -27,7 +27,7 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
 
   const handleDateChange = (event: any, selectedDate: Date | undefined, setFieldValue: any) => {
     if (event.type === "set" && selectedDate) {
-      // Only update the date if a date is selected (not canceled)
+      //update the date if a date is selected, not canceled
       setFieldValue("expense_date", selectedDate);
     }
   };
@@ -41,7 +41,7 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
               <Text style={styles.modalTitle}>Add a New Expense</Text>
 
               <Formik
-                initialValues={{ expense_type: "", amount: 0, expense_date: new Date() }}
+                initialValues={{ expense_type: "", amount: 0.0, expense_date: new Date() }}
                 validationSchema={validationSchema}
                 onSubmit={(values: CreateExpenseDTO, { resetForm }) => {
                   onSubmit(values);
@@ -51,7 +51,6 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
               >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
                   <>
-                    {/* Expense Type */}
                     <TextInput
                       style={styles.input}
                       placeholder="Expense Type"
@@ -63,7 +62,6 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
                       <Text style={styles.errorText}>{errors.expense_type}</Text>
                     )}
 
-                    {/* Amount */}
                     <TextInput
                       style={styles.input}
                       placeholder="Amount"
@@ -74,7 +72,6 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
                     />
                     {errors.amount && touched.amount && <Text style={styles.errorText}>{errors.amount}</Text>}
 
-                    {/* Expense Date with Date Picker */}
                     <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)}>
                       <View pointerEvents="none">
                         <TextInput
@@ -98,10 +95,20 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
                       />
                     )}
 
-                    {/* Buttons */}
                     <View style={styles.buttonContainer}>
-                      <Button title="Add Expense" onPress={() => handleSubmit()} color="#4CAF50" />
-                      <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
+                      <Button
+                        title="Add Expense"
+                        onPress={() => {
+                          setShowDatePicker(false), handleSubmit();
+                        }}
+                        color="#4CAF50"
+                      />
+                      <TouchableOpacity
+                        onPress={() => {
+                          setShowDatePicker(false), onClose();
+                        }}
+                        style={styles.cancelButton}
+                      >
                         <Text style={styles.cancelText}>Cancel</Text>
                       </TouchableOpacity>
                     </View>

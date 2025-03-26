@@ -9,7 +9,7 @@ export const fetchExpenses = async (apiUrl: string, boatId: number) => {
     const data: ExpenseDTO[] = await response.json();
     return data;
   } catch (err: any) {
-    console.log(err);
+    throw new Error(`Failed to fetch expenses: ${err.message}`);
   }
 };
 
@@ -25,7 +25,6 @@ export const postExpense = async (apiUrl: string, boatId: number, expense: Creat
         amount: Number(expense.amount),
       }),
     });
-
     if (!response.ok) {
       throw new Error(`Failed to add expense: ${response}`);
     }
@@ -33,9 +32,7 @@ export const postExpense = async (apiUrl: string, boatId: number, expense: Creat
     const data: ExpenseDTO = await response.json();
     return data;
   } catch (err: any) {
-    console.log(err.message);
-    console.error("Error adding expense:", err.message);
-    throw err;
+    throw new Error(`Failed to add expense: ${err.message}`);
   }
 };
 
@@ -52,7 +49,6 @@ export const deleteExpense = async (apiUrl: string, expenseId: number) => {
       throw new Error(`Failed to delete expense: ${response.statusText}`);
     }
   } catch (err: any) {
-    console.error("Error deleting expense:", err.message);
-    throw err;
+    throw new Error(`Failed to delete expense: ${err.message}`);
   }
 };
