@@ -11,24 +11,37 @@ interface ExpenseTableProps {
 
 const screenWidth = Dimensions.get("window").width;
 
-const formatDate = (dateString: string) => {
-  return dateString.split("T")[0];
-};
+const formatDate = (dateString: string) => dateString.split("T")[0];
 
 const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseType, setSelectedExpenseType }) => {
   const [modalVisibility, setModalVisibility] = useState<boolean>(false);
   const [selectedExpenseForEdit, setselectedExpenseForEdit] = useState<ExpenseDTO | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
 
   const handleEditButtonClick = (item: ExpenseDTO) => {
     setselectedExpenseForEdit(item);
     setModalVisibility(true);
   };
 
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
   const filteredExpenses = expenses.filter((expense) => expense.expense_type === selectedExpenseType);
+
+  const sortedExpenses = sortOrder
+    ? [...filteredExpenses].sort((a, b) => {
+        const dateA = new Date(a.expense_date).getTime();
+        const dateB = new Date(b.expense_date).getTime();
+        return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+      })
+    : filteredExpenses;
 
   const renderHeader = () => (
     <View style={styles.headerRow}>
-      <Text style={styles.headerCell}>Date</Text>
+      <TouchableOpacity onPress={toggleSortOrder} style={styles.sortableHeaderCell}>
+        <Text style={styles.headerCell}>Date {sortOrder === "asc" ? "↑" : sortOrder === "desc" ? "↓" : ""}</Text>
+      </TouchableOpacity>
       <Text style={styles.headerCell}>Amount</Text>
       <Text style={styles.headerCell}>Actions</Text>
     </View>
@@ -48,11 +61,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseTy
     <View style={styles.container}>
       <Text style={styles.title}>{selectedExpenseType}</Text>
       {renderHeader()}
-      <FlatList
-        data={filteredExpenses}
-        renderItem={renderExpenseRow}
-        keyExtractor={(item, index) => index.toString()}
-      />
+      <FlatList data={sortedExpenses} renderItem={renderExpenseRow} keyExtractor={(item, index) => index.toString()} />
       <EditExpenseModal
         modalVisibility={modalVisibility}
         expense={selectedExpenseForEdit}
@@ -86,6 +95,10 @@ const styles = StyleSheet.create({
   headerCell: {
     flex: 1,
     fontWeight: "bold",
+    textAlign: "center",
+  },
+  sortableHeaderCell: {
+    flex: 1,
     textAlign: "center",
   },
   row: {

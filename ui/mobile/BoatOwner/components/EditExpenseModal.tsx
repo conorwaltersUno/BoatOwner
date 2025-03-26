@@ -34,9 +34,9 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 
   if (!expense) return null;
 
-  const handleUpdateExpense = async (expense: UpdateExpenseDTO) => {
-    updateExpense(expense);
-    setSelectedExpenseType(null);
+  const handleUpdateExpense = async (expenseToUpdate: UpdateExpenseDTO) => {
+    updateExpense(expenseToUpdate);
+    setSelectedExpenseType(expenseToUpdate.expense_type);
     setModalVisibility(false);
   };
 
