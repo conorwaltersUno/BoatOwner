@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERYKEYS } from "@/constants/query";
-import { CreateExpenseDTO, ExpenseDTO } from "@/interfaces/expenses/expense";
-import { postExpense } from "@/api/fetch/expenses.fetch";
+import { ExpenseDTO, UpdateExpenseDTO } from "../interfaces/expenses/expense";
+import { updateExpense } from "@/api/fetch/expenses.fetch";
 
-function useAddExpense(boatId: number) {
+function useUpdateExpense() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (newExpense: CreateExpenseDTO) => postExpense(boatId, newExpense),
+    mutationFn: (newExpense: UpdateExpenseDTO) => updateExpense(newExpense),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERYKEYS.EXPENSES] });
     },
@@ -17,4 +17,4 @@ function useAddExpense(boatId: number) {
   });
 }
 
-export { useAddExpense };
+export { useUpdateExpense };

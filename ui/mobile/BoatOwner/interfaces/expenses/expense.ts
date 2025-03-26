@@ -13,6 +13,13 @@ export interface CreateExpenseDTO {
   expense_date: Date;
 }
 
+export interface UpdateExpenseDTO {
+  id: number;
+  expense_type: string;
+  amount: number;
+  expense_date: Date;
+}
+
 export interface FormattedExpensesForPieChart {
   value: number;
   color: string;

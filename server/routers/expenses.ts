@@ -201,9 +201,13 @@ ExpenseRouter.route("/:id").put(
   // auth,
   [
     param("id").isInt().withMessage("ID must be an integer"),
-    body("boat_id").isInt().withMessage("Boat ID must be an integer"),
     body("expense_type").optional().isString().notEmpty().withMessage("Expense type cannot be empty"),
     body("amount").optional().isFloat({ gt: 0 }).withMessage("Amount must be greater than zero"),
+    body("expense_date")
+      .exists()
+      .isISO8601()
+      .toDate()
+      .withMessage("Expense date is required and must be a valid ISO8601 date"),
   ],
   (req, res, next) => {
     validator(req, res, next);

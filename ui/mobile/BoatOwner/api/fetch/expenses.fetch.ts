@@ -1,6 +1,15 @@
-import { CreateExpenseDTO, ExpenseDTO } from "@/interfaces/expenses/expense";
+import { CreateExpenseDTO, ExpenseDTO, UpdateExpenseDTO } from "@/interfaces/expenses/expense";
+import Constants from "expo-constants";
+import { APIPort } from "@/constants/APIPort";
 
-export const fetchExpenses = async (apiUrl: string, boatId: number) => {
+const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
+const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
+
+const apiUrl = isLocalDev
+  ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + `:${APIPort.localPort}`
+  : `https://${apiBaseUrl}:${APIPort.localPort}`;
+
+export const fetchExpenses = async (boatId: number) => {
   try {
     const response = await fetch(`${apiUrl}/expenses/boat/${boatId}/expenses`);
     if (!response.ok) {
@@ -13,7 +22,7 @@ export const fetchExpenses = async (apiUrl: string, boatId: number) => {
   }
 };
 
-export const postExpense = async (apiUrl: string, boatId: number, expense: CreateExpenseDTO) => {
+export const postExpense = async (boatId: number, expense: CreateExpenseDTO) => {
   try {
     const response = await fetch(`${apiUrl}/expenses/${boatId}`, {
       method: "POST",
@@ -33,6 +42,31 @@ export const postExpense = async (apiUrl: string, boatId: number, expense: Creat
     return data;
   } catch (err: any) {
     throw new Error(`Failed to add expense: ${err.message}`);
+  }
+};
+
+export const updateExpense = async (expense: UpdateExpenseDTO) => {
+  try {
+    const response = await fetch(`${apiUrl}/expenses/${expense.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: expense.id,
+        expense_type: expense.expense_type,
+        amount: expense.amount,
+        expense_date: expense.expense_date,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to update expense: ${response}`);
+    }
+
+    const data: ExpenseDTO = await response.json();
+    return data;
+  } catch (err: any) {
+    throw new Error(`Failed to update expense: ${err.message}`);
   }
 };
 

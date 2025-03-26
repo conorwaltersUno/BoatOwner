@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import { ExpenseDTO } from "../interfaces/expenses/expense";
+import EditExpenseModal from "./EditExpenseModal";
 
 interface ExpenseTableProps {
   expenses: ExpenseDTO[];
   selectedExpenseType: string;
+  setSelectedExpenseType: Dispatch<SetStateAction<string | null>>;
 }
 
 const screenWidth = Dimensions.get("window").width;
@@ -13,11 +15,13 @@ const formatDate = (dateString: string) => {
   return dateString.split("T")[0];
 };
 
-const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseType }) => {
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
+const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseType, setSelectedExpenseType }) => {
+  const [modalVisibility, setModalVisibility] = useState<boolean>(false);
+  const [selectedExpenseForEdit, setselectedExpenseForEdit] = useState<ExpenseDTO | null>(null);
 
-  const handleEditButtonClick = () => {
-    setModalVisible(!modalVisible);
+  const handleEditButtonClick = (item: ExpenseDTO) => {
+    setselectedExpenseForEdit(item);
+    setModalVisibility(true);
   };
 
   const filteredExpenses = expenses.filter((expense) => expense.expense_type === selectedExpenseType);
@@ -34,7 +38,7 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseTy
     <View style={styles.row}>
       <Text style={styles.dateCell}>{formatDate(item.expense_date)}</Text>
       <Text style={styles.amountCell}>${item.amount}</Text>
-      <TouchableOpacity onPress={handleEditButtonClick}>
+      <TouchableOpacity onPress={() => handleEditButtonClick(item)}>
         <Text style={styles.editButton}>Edit</Text>
       </TouchableOpacity>
     </View>
@@ -48,6 +52,12 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseTy
         data={filteredExpenses}
         renderItem={renderExpenseRow}
         keyExtractor={(item, index) => index.toString()}
+      />
+      <EditExpenseModal
+        modalVisibility={modalVisibility}
+        expense={selectedExpenseForEdit}
+        setModalVisibility={setModalVisibility}
+        setSelectedExpenseType={setSelectedExpenseType}
       />
     </View>
   );

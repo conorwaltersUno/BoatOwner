@@ -10,7 +10,8 @@ export const fetchTasks = async (apiUrl: string, boatId: number) => {
     const data: TaskDTO[] = await response.json();
     return data;
   } catch (err: any) {
-    console.log(err);
+    console.error("Error fetchings tasks:", err.message);
+    throw err;
   }
 };
 
@@ -68,10 +69,10 @@ export const deleteTask = async (apiUrl: string, taskId: number) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to create task: ${response.statusText}`);
+      throw new Error(`Failed to delete task: ${response.statusText}`);
     }
   } catch (err: any) {
-    console.error("Error creating task:", err.message);
+    console.error("Error deletings task:", err.message);
     throw err;
   }
 };

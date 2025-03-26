@@ -18,8 +18,8 @@ export interface CreateExpenseDTO {
 }
 
 export interface UpdateExpenseDTO {
+  id: number;
   expense_type: string;
   amount: Decimal;
   expense_date: Date;
-  created_on: Date;
 }
