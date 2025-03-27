@@ -2,6 +2,7 @@ import React, { Dispatch, SetStateAction, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import { ExpenseDTO } from "../interfaces/expenses/expense";
 import EditExpenseModal from "./EditExpenseModal";
+import { MaterialIcons } from "@expo/vector-icons";
 
 interface ExpenseTableProps {
   expenses: ExpenseDTO[];
@@ -16,33 +17,62 @@ const formatDate = (dateString: string) => dateString.split("T")[0];
 const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseType, setSelectedExpenseType }) => {
   const [modalVisibility, setModalVisibility] = useState<boolean>(false);
   const [selectedExpenseForEdit, setselectedExpenseForEdit] = useState<ExpenseDTO | null>(null);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: "expense_date" | "amount"; order: "asc" | "desc" } | null>(null);
 
   const handleEditButtonClick = (item: ExpenseDTO) => {
     setselectedExpenseForEdit(item);
     setModalVisibility(true);
   };
 
-  const toggleSortOrder = () => {
-    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  const toggleSortOrder = (key: "expense_date" | "amount") => {
+    setSortConfig((prev) => {
+      if (prev && prev.key === key) {
+        return { key, order: prev.order === "asc" ? "desc" : "asc" };
+      }
+      return { key, order: "asc" };
+    });
   };
 
   const filteredExpenses = expenses.filter((expense) => expense.expense_type === selectedExpenseType);
 
-  const sortedExpenses = sortOrder
+  const sortedExpenses = sortConfig
     ? [...filteredExpenses].sort((a, b) => {
-        const dateA = new Date(a.expense_date).getTime();
-        const dateB = new Date(b.expense_date).getTime();
-        return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+        const valueA = sortConfig.key === "expense_date" ? new Date(a.expense_date).getTime() : a.amount;
+        const valueB = sortConfig.key === "expense_date" ? new Date(b.expense_date).getTime() : b.amount;
+        return sortConfig.order === "asc" ? valueA - valueB : valueB - valueA;
       })
     : filteredExpenses;
 
   const renderHeader = () => (
     <View style={styles.headerRow}>
-      <TouchableOpacity onPress={toggleSortOrder} style={styles.sortableHeaderCell}>
-        <Text style={styles.headerCell}>Date {sortOrder === "asc" ? "↑" : sortOrder === "desc" ? "↓" : ""}</Text>
+      <TouchableOpacity onPress={() => toggleSortOrder("expense_date")} style={styles.sortableHeaderCell}>
+        <Text style={styles.headerCell}>Date</Text>
+        <MaterialIcons
+          name={
+            sortConfig?.key === "expense_date"
+              ? sortConfig.order === "asc"
+                ? "arrow-upward"
+                : "arrow-downward"
+              : "swap-vert"
+          }
+          size={20}
+          color="black"
+        />
       </TouchableOpacity>
-      <Text style={styles.headerCell}>Amount</Text>
+      <TouchableOpacity onPress={() => toggleSortOrder("amount")} style={styles.sortableHeaderCell}>
+        <Text style={styles.headerCell}>Amount</Text>
+        <MaterialIcons
+          name={
+            sortConfig?.key === "amount"
+              ? sortConfig.order === "asc"
+                ? "arrow-upward"
+                : "arrow-downward"
+              : "swap-vert"
+          }
+          size={20}
+          color="black"
+        />
+      </TouchableOpacity>
       <Text style={styles.headerCell}>Actions</Text>
     </View>
   );
@@ -99,7 +129,9 @@ const styles = StyleSheet.create({
   },
   sortableHeaderCell: {
     flex: 1,
-    textAlign: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   row: {
     flexDirection: "row",
