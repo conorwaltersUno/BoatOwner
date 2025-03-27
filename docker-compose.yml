@@ -20,6 +20,22 @@ services:
       - ./database:/flyway/sql
     depends_on:
       - db
+  api:
+    profiles: ["dev"]
+    build:
+      context: ./server
+      dockerfile: dockerfile.local
+    volumes:
+      - ./server:/app
+    ports:
+      - "3001:3001"
+    depends_on:
+      - flyway
+    environment:
+      DATABASE_URL: "postgres://user:password@db:5432/postgres?schema=public"
+      ACCESS_TOKEN_SECRET: "q4yQNhc7qU"
+      REFRESH_TOKEN_SECRET: "O0KwrXUFWx"
+
 volumes:
   db:
     name: boatownr_db
