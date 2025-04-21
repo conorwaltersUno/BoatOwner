@@ -668,3 +668,13 @@ Deletes an expense
 Response: 204 No Content
 
 Response: 404 Not Found (if expense with the given id does not exist)
+
+CMD's to get docker running locally
+
+```
+docker compose --profile dev up
+```
+
+```
+make start_backend_docker
+```
