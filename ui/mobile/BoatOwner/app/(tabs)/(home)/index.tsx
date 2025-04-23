@@ -1,7 +1,8 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import MapView, { Polyline, Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
+import { MaterialIcons } from "@expo/vector-icons";
 
 export default function HomeScreen() {
   const mapRef = useRef<MapView>(null);
@@ -15,6 +16,7 @@ export default function HomeScreen() {
     { index: number; latitude: number; longitude: number; timestamp: string }[]
   >([]);
   const [zoomLevel, setZoomLevel] = useState({ latitudeDelta: 0.01, longitudeDelta: 0.01 });
+  const [isFollowingUser, setIsFollowingUser] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -74,7 +76,10 @@ export default function HomeScreen() {
         };
 
         setRegion(newRegion);
-        mapRef.current?.animateToRegion(newRegion, 500);
+
+        if (isFollowingUser) {
+          mapRef.current?.animateToRegion(newRegion, 500);
+        }
 
         setLocations((prev) => [
           ...prev,
@@ -129,7 +134,7 @@ export default function HomeScreen() {
           provider={PROVIDER_DEFAULT}
           initialRegion={region}
           showsUserLocation
-          followsUserLocation={false}
+          followsUserLocation={isFollowingUser}
           onRegionChangeComplete={(newRegion) => {
             setRegion(newRegion);
             setZoomLevel({
@@ -137,6 +142,7 @@ export default function HomeScreen() {
               longitudeDelta: newRegion.longitudeDelta,
             });
           }}
+          onPanDrag={() => setIsFollowingUser(false)}
         >
           {locations.length > 1 && (
             <Polyline
@@ -151,48 +157,124 @@ export default function HomeScreen() {
         </MapView>
       )}
 
-      <View style={styles.middle}>
+      <View style={styles.controlPanel}>
         {!watcher ? (
           <TouchableOpacity style={styles.logButton} onPress={startLogging}>
-            <Text style={styles.detailsButtonText}>Begin Log</Text>
+            <Text style={styles.detailsButtonText}>Start Logging</Text>
           </TouchableOpacity>
         ) : (
-          <>
-            <TouchableOpacity style={[styles.logButton, { backgroundColor: "#FF3B30" }]} onPress={stopLogging}>
-              <Text style={styles.detailsButtonText}>Stop Log</Text>
-            </TouchableOpacity>
-            <Text style={styles.timerText}>{formatTime(seconds)}</Text>
-          </>
+          <TouchableOpacity style={[styles.logButton, styles.stopButton]} onPress={stopLogging}>
+            <Text style={styles.detailsButtonText}>Stop Logging</Text>
+          </TouchableOpacity>
         )}
+
+        <TouchableOpacity
+          style={styles.recenterButton}
+          onPress={() => {
+            Location.getCurrentPositionAsync({}).then((currentLocation) => {
+              const newRegion = {
+                latitude: currentLocation.coords.latitude,
+                longitude: currentLocation.coords.longitude,
+                latitudeDelta: zoomLevel.latitudeDelta,
+                longitudeDelta: zoomLevel.longitudeDelta,
+              };
+              setRegion(newRegion);
+              mapRef.current?.animateToRegion(newRegion, 500);
+              setIsFollowingUser(true);
+            });
+          }}
+        >
+          <MaterialIcons name="my-location" size={24} color="#007AFF" />
+        </TouchableOpacity>
       </View>
+
+      {watcher && (
+        <View style={styles.timerContainer}>
+          <Text style={styles.timerText}>{formatTime(seconds)}</Text>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  map: { flex: 3 },
-  middle: {
-    flex: 1,
+  map: { flex: 1 },
+  controlPanelRow: {
+    position: "absolute",
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    paddingBottom: 20,
+    gap: 15,
+  },
+  controlPanel: {
+    position: "absolute",
+    bottom: 40,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  recenterButton: {
+    position: "absolute",
+    right: 30,
+    bottom: 40,
+    width: 50,
+    height: 50,
+    backgroundColor: "#fff",
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  recenterButtonInline: {
+    width: 50,
+    height: 50,
+    backgroundColor: "#fff",
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
   },
   logButton: {
     backgroundColor: "#34C759",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    marginBottom: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  stopButton: {
+    backgroundColor: "#FF3B30",
   },
   detailsButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
+  timerContainer: {
+    position: "absolute",
+    bottom: 100,
+    alignSelf: "center",
+  },
   timerText: {
     fontSize: 18,
     fontWeight: "600",
-    marginTop: 5,
+    color: "#333",
   },
 });

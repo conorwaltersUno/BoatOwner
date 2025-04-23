@@ -15,7 +15,6 @@ export interface LogDTO {
   log_started: Date; // Date type for timestamps
   log_ended: Date; // Date type for timestamps
   created_on: Date; // Date type for timestamps
-  isrecordinglocation: boolean;
 }
 
 export interface CreateLogDTO {
@@ -26,7 +25,6 @@ export interface CreateLogDTO {
   log_started: Date; // Date type for timestamps
   log_ended: Date; // Date type for timestamps
   created_on: Date; // Date type for timestamps
-  isrecordinglocation: boolean;
 }
 
 export interface UpdateLogDTO {
@@ -37,7 +35,6 @@ export interface UpdateLogDTO {
   photo_urls?: string[];
   log_started?: Date; // Date type for timestamps
   log_ended?: Date; // Date type for timestamps
-  isrecordinglocation?: boolean;
 }
 
 export interface AddCoordinatesDTO {

@@ -195,7 +195,6 @@ LogRouter.route("/:boat_id").post(
     body("photo_urls").isArray().withMessage("Photo URLs must be an array"),
     body("log_started").isISO8601().withMessage("Log started must be a valid ISO8601 date"),
     body("log_ended").isISO8601().withMessage("Log ended must be a valid ISO8601 date"),
-    body("isrecordinglocation").isBoolean().withMessage("isRecordingLocation must be a boolean"),
   ],
   // auth,
   (req, res, next) => {

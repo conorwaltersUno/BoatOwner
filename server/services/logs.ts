@@ -53,7 +53,6 @@ async function createLog(boatId: number, data: CreateLogDTO): Promise<LogDTO> {
         log_started: data.log_started,
         log_ended: data.log_ended,
         created_on: data.created_on,
-        isrecordinglocation: data.isrecordinglocation,
       },
     });
 
@@ -77,7 +76,6 @@ async function updateLog(logId: number, data: UpdateLogDTO): Promise<LogDTO | nu
         photo_urls: data.photo_urls,
         log_started: data.log_started,
         log_ended: data.log_ended,
-        isrecordinglocation: data.isrecordinglocation,
       },
     });
 
@@ -96,7 +94,6 @@ async function addCoordinates(data: AddCoordinatesDTO): Promise<LogDTO | null> {
       },
       select: {
         coordinates: true,
-        isrecordinglocation: true,
       },
     });
 

@@ -11,10 +11,10 @@ INSERT INTO boat (user_id, name, model) VALUES
 (1, 'Wave Rider', 'Model C');
 
 -- Insert data into the logs table
-INSERT INTO logs (boat_id, description, crew_members, coordinates, photo_urls, log_started, log_ended, created_on, isRecordingLocation) VALUES
-(1, 'First trip', ARRAY['Alice', 'Bob'], '[{"x":10,"y":20},{"x":10,"y":20},{"x":10,"y":20}]', ARRAY['http://example.com/photo1.jpg', 'http://example.com/photo2.jpg'], '2024-07-01 08:00:00', '2024-07-01 18:00:00', '2024-07-01 19:00:00', TRUE),
-(2, 'Fishing expedition', ARRAY['Charlie', 'Dave'], '[{"x":10,"y":20},{"x":10,"y":20},{"x":10,"y":20}]', ARRAY['http://example.com/photo3.jpg', 'http://example.com/photo4.jpg'], '2024-07-02 06:00:00', '2024-07-02 14:00:00', '2024-07-02 15:00:00', TRUE),
-(3, 'Weekend cruise', ARRAY['Eve', 'Frank'], '[{"x":10,"y":20},{"x":10,"y":20},{"x":10,"y":20}]', ARRAY['http://example.com/photo5.jpg', 'http://example.com/photo6.jpg'], '2024-07-03 09:00:00', '2024-07-03 17:00:00', '2024-07-03 18:00:00', FALSE);
+INSERT INTO logs (boat_id, description, crew_members, coordinates, photo_urls, log_started, log_ended, created_on) VALUES
+(1, 'First trip', ARRAY['Alice', 'Bob'], '[{"x":10,"y":20},{"x":10,"y":20},{"x":10,"y":20}]', ARRAY['http://example.com/photo1.jpg', 'http://example.com/photo2.jpg'], '2024-07-01 08:00:00', '2024-07-01 18:00:00', '2024-07-01 19:00:00'),
+(2, 'Fishing expedition', ARRAY['Charlie', 'Dave'], '[{"x":10,"y":20},{"x":10,"y":20},{"x":10,"y":20}]', ARRAY['http://example.com/photo3.jpg', 'http://example.com/photo4.jpg'], '2024-07-02 06:00:00', '2024-07-02 14:00:00', '2024-07-02 15:00:00'),
+(3, 'Weekend cruise', ARRAY['Eve', 'Frank'], '[{"x":10,"y":20},{"x":10,"y":20},{"x":10,"y":20}]', ARRAY['http://example.com/photo5.jpg', 'http://example.com/photo6.jpg'], '2024-07-03 09:00:00', '2024-07-03 17:00:00', '2024-07-03 18:00:00');
 
 -- Insert data into the tasks table
 INSERT INTO tasks (boat_id, description, status, created_on) VALUES
