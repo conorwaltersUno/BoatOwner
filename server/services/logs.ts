@@ -1,5 +1,5 @@
 import { prisma } from "../utilities";
-import { LogDTO, CreateLogDTO, UpdateLogDTO, AddCoordinatesDTO, Coordinate } from "../interfaces/log";
+import { LogDTO, CreateLogDTO, UpdateLogDTO } from "../interfaces/log";
 import { JsonValue } from "type-fest";
 
 async function getAllLogs(): Promise<LogDTO[] | null> {
@@ -49,7 +49,6 @@ async function createLog(boatId: number, data: CreateLogDTO): Promise<LogDTO> {
         description: data.description,
         crew_members: data.crew_members,
         coordinates: data.coordinates,
-        photo_urls: data.photo_urls,
         log_started: data.log_started,
         log_ended: data.log_ended,
         created_on: data.created_on,
@@ -73,7 +72,6 @@ async function updateLog(logId: number, data: UpdateLogDTO): Promise<LogDTO | nu
         description: data.description,
         crew_members: data.crew_members,
         coordinates: data.coordinates,
-        photo_urls: data.photo_urls,
         log_started: data.log_started,
         log_ended: data.log_ended,
       },
@@ -82,44 +80,6 @@ async function updateLog(logId: number, data: UpdateLogDTO): Promise<LogDTO | nu
     return updatedLog;
   } catch (error: any) {
     throw new Error(`Error updating log with id: ${logId} - ${error.message}`);
-  }
-}
-
-async function addCoordinates(data: AddCoordinatesDTO): Promise<LogDTO | null> {
-  try {
-    // Fetch the current log to get existing coordinates
-    const currentLog = await prisma.logs.findUnique({
-      where: {
-        id: data.log_id,
-      },
-      select: {
-        coordinates: true,
-      },
-    });
-
-    if (!currentLog) {
-      throw new Error(`Log with id: ${data.log_id} not found`);
-    }
-
-    const existingCoordinates = currentLog.coordinates as JsonValue;
-    const newCoordinates = data.coordinates as JsonValue[];
-
-    const existingCoordsArray = Array.isArray(existingCoordinates) ? existingCoordinates : [];
-
-    const updatedCoordinates: JsonValue = [...existingCoordsArray, ...newCoordinates];
-
-    const updatedLog = await prisma.logs.update({
-      where: {
-        id: data.log_id,
-      },
-      data: {
-        coordinates: updatedCoordinates,
-      },
-    });
-
-    return updatedLog;
-  } catch (error: any) {
-    throw new Error(`Error adding coordinates to log with id: ${data.log_id} - ${error.message}`);
   }
 }
 
@@ -143,7 +103,6 @@ const LogService = {
   getLogsByBoatId,
   createLog,
   updateLog,
-  addCoordinates,
   deleteLog,
 };
 

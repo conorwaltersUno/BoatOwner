@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import MapView, { Polyline, Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
+import LoggingModal from "../../../components/SaveLogModal";
 
 export default function HomeScreen() {
   const mapRef = useRef<MapView>(null);
@@ -11,12 +12,15 @@ export default function HomeScreen() {
   const [watcher, setWatcher] = useState<Location.LocationSubscription | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
+  const [endTime, setEndTime] = useState<Date | null>(null);
+
   const [seconds, setSeconds] = useState(0);
   const [locations, setLocations] = useState<
     { index: number; latitude: number; longitude: number; timestamp: string }[]
   >([]);
   const [zoomLevel, setZoomLevel] = useState({ latitudeDelta: 0.01, longitudeDelta: 0.01 });
   const [isFollowingUser, setIsFollowingUser] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -98,23 +102,35 @@ export default function HomeScreen() {
 
   const stopLogging = () => {
     if (watcher) {
+      setEndTime(new Date());
       watcher.remove();
       setWatcher(null);
-
-      const endTime = new Date();
-      const duration = seconds;
-      const finalLocation = location?.coords;
-
-      console.log("🟢 Start Time:", startTime?.toLocaleString());
-      console.log("🛑 End Time:", endTime.toLocaleString());
-      console.log("Duration (sec):", duration);
-      console.log("Final Location:", {
-        latitude: finalLocation?.latitude,
-        longitude: finalLocation?.longitude,
-        accuracy: finalLocation?.accuracy,
-      });
-      console.log("📍 Locations logged:", locations);
+      setModalVisible(true);
     }
+  };
+
+  const resetLoggingState = () => {
+    setLocations([]);
+    setStartTime(null);
+    setSeconds(0);
+    setLocation(null);
+    setIsFollowingUser(true);
+  };
+
+  const handleModalClose = () => {
+    Alert.alert("Confirm", "Are you sure you want to close this log, you will lose any unsaved data?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Yes, Close",
+        onPress: () => {
+          setModalVisible(false);
+          resetLoggingState();
+        },
+      },
+    ]);
   };
 
   const formatTime = (s: number) => {
@@ -193,6 +209,14 @@ export default function HomeScreen() {
           <Text style={styles.timerText}>{formatTime(seconds)}</Text>
         </View>
       )}
+
+      <LoggingModal
+        modalVisibility={modalVisible}
+        setModalVisibility={setModalVisible}
+        locations={locations}
+        startTime={startTime}
+        endTime={endTime}
+      />
     </View>
   );
 }
@@ -218,24 +242,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   recenterButton: {
     position: "absolute",
     right: 30,
     bottom: 40,
-    width: 50,
-    height: 50,
-    backgroundColor: "#fff",
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 6,
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  recenterButtonInline: {
     width: 50,
     height: 50,
     backgroundColor: "#fff",

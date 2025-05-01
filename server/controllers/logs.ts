@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { idText } from "typescript";
 import { BoatDTO } from "../interfaces/boats";
-import { LogDTO, CreateLogDTO, UpdateLogDTO, AddCoordinatesDTO } from "../interfaces/log";
+import { LogDTO, CreateLogDTO, UpdateLogDTO } from "../interfaces/log";
 import { BoatService } from "../services/boats";
 import { LogService } from "../services/logs";
 import { body } from "express-validator";
@@ -96,22 +96,6 @@ async function updateLog(req: Request, res: Response) {
   }
 }
 
-// Add coordinates to a log
-async function addCoordinates(req: Request, res: Response) {
-  try {
-    const logExists = await LogService.getLogById(req.body.log_id);
-    if (!logExists) {
-      return res.status(notFoundStatus).json({ message: "Log not found" });
-    }
-
-    const updatedLog = await LogService.addCoordinates(req.body as AddCoordinatesDTO);
-
-    return res.status(okStatus).json(updatedLog);
-  } catch (error: any) {
-    res.status(internalServerError).json({ message: error.message });
-  }
-}
-
 // Delete a log
 async function deleteLog(req: Request, res: Response) {
   try {
@@ -127,4 +111,4 @@ async function deleteLog(req: Request, res: Response) {
   }
 }
 
-export { getAllLogs, getLogsByBoatId, getLogById, createLog, updateLog, addCoordinates, deleteLog };
+export { getAllLogs, getLogsByBoatId, getLogById, createLog, updateLog, deleteLog };

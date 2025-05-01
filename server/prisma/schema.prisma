@@ -49,7 +49,6 @@ model logs {
   description  String
   crew_members String[]
   coordinates  Json     @db.Json
-  photo_urls   String[]
   log_started  DateTime @db.Timestamp(6)
   log_ended    DateTime @db.Timestamp(6)
   created_on   DateTime @default(now()) @db.Timestamp(6)

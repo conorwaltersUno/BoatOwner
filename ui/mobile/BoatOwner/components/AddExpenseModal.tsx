@@ -27,7 +27,6 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
 
   const handleDateChange = (event: any, selectedDate: Date | undefined, setFieldValue: any) => {
     if (event.type === "set" && selectedDate) {
-      //update the date if a date is selected, not canceled
       setFieldValue("expense_date", selectedDate);
     }
   };

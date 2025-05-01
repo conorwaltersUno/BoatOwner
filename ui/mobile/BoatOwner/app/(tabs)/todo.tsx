@@ -12,19 +12,11 @@ import { APIPort } from "@/constants/APIPort";
 
 export default function Todo() {
   const [isModalVisible, setModalVisible] = useState(false);
-  //will get this from user -> boat_id in future when auth implemented
-  const boatId = 1;
-  const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
-  const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
 
-  const apiUrl = isLocalDev
-    ? "http://" + Constants.expoConfig?.hostUri!.split(":").shift() + `:${APIPort.localPort}`
-    : `https://${apiBaseUrl}:${APIPort.localPort}`;
-
-  const { data: tasks = [], isLoading, isError, error } = useGetTasks(apiUrl, boatId);
-  const { mutate: addTask } = useAddTask(apiUrl, boatId);
-  const { mutate: deleteTaskMutation } = useDeleteTask(apiUrl);
-  const { mutate: updateTaskMutation } = useUpdateTask(apiUrl);
+  const { data: tasks = [], isLoading, isError, error } = useGetTasks();
+  const { mutate: addTask } = useAddTask();
+  const { mutate: deleteTaskMutation } = useDeleteTask();
+  const { mutate: updateTaskMutation } = useUpdateTask();
 
   const handleAddTask = (description: string, status: string) => {
     const newTask: CreateTaskDTO = { description, status };

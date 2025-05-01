@@ -21,7 +21,6 @@ CREATE TABLE logs (
     description TEXT NOT NULL,
     crew_members TEXT[] NOT NULL,
     coordinates JSON NOT NULL,
-    photo_urls TEXT[] NOT NULL,
     log_started TIMESTAMP NOT NULL,
     log_ended TIMESTAMP NOT NULL,
     created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -1,15 +1,7 @@
 import Router, { RequestHandler } from "express";
 import { validator } from "../middleware/expressValidator";
 import { body, param } from "express-validator";
-import {
-  addCoordinates,
-  createLog,
-  deleteLog,
-  getAllLogs,
-  getLogById,
-  getLogsByBoatId,
-  updateLog,
-} from "../controllers/logs";
+import { createLog, deleteLog, getAllLogs, getLogById, getLogsByBoatId, updateLog } from "../controllers/logs";
 // import { auth } from "../middleware/auth";
 
 const LogRouter = Router();
@@ -109,50 +101,6 @@ LogRouter.route("/:id").get(
   }) as RequestHandler
 );
 
-// Add coordinates to a log
-LogRouter.route("/coordinates").post(
-  /*
-        #swagger.tags = ['log']
-        #swagger.summary = 'Add coordinates to a log'
-        #swagger.requestBody = {
-          required: true,
-          content: {
-            "application/json": {
-              schema: { $ref: '#/definitions/addCoordinatesDTO' }
-            }
-          }
-        }
-        #swagger.responses[200] = {
-          description: 'Coordinates added successfully',
-          content: {
-            "application/json": {
-              schema: { $ref: '#/definitions/addCoordinatesResponse' }
-            }
-          }
-        }
-        #swagger.responses[400] = {
-          description: "Invalid input data"
-        }
-        #swagger.responses[404] = {
-          description: "Log not found"
-        }
-        #swagger.responses[500] = {
-          description: "Internal server error"
-        }
-      */
-  [
-    body("log_id").isInt().withMessage("Log ID must be an integer"),
-    body("coordinates").isArray().withMessage("Coordinates must be an array"),
-  ],
-  // auth,
-  (req, res, next) => {
-    validator(req, res, next);
-  },
-  (async (req, res) => {
-    await addCoordinates(req, res);
-  }) as RequestHandler
-);
-
 // Create a new log
 LogRouter.route("/:boat_id").post(
   /*
@@ -192,7 +140,6 @@ LogRouter.route("/:boat_id").post(
     body("description").isString().notEmpty().withMessage("Description is required"),
     body("crew_members").isArray().withMessage("Crew members must be an array"),
     body("coordinates").isArray().withMessage("Coordinates must be an array"),
-    body("photo_urls").isArray().withMessage("Photo URLs must be an array"),
     body("log_started").isISO8601().withMessage("Log started must be a valid ISO8601 date"),
     body("log_ended").isISO8601().withMessage("Log ended must be a valid ISO8601 date"),
   ],
