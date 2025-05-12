@@ -1,7 +1,16 @@
+import { APIPort } from "@/constants/APIPort";
 import { APIRoutes } from "@/constants/APIRoutes";
 import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo/todo";
+import Constants from "expo-constants";
 
-export const fetchTasks = async (apiUrl: string, boatId: number) => {
+const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
+const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
+
+const apiUrl = isLocalDev
+  ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + `:${APIPort.localPort}`
+  : `https://${apiBaseUrl}:${APIPort.localPort}`;
+
+export const fetchTasks = async (boatId: number) => {
   try {
     const response = await fetch(`${apiUrl}${APIRoutes.tasks}/boat/${boatId}/tasks`);
     if (!response.ok) {
@@ -15,7 +24,7 @@ export const fetchTasks = async (apiUrl: string, boatId: number) => {
   }
 };
 
-export const postTask = async (apiUrl: string, boatId: number, task: CreateTaskDTO) => {
+export const postTask = async (boatId: number, task: CreateTaskDTO) => {
   try {
     const response = await fetch(`${apiUrl}${APIRoutes.tasks}/${boatId}`, {
       method: "POST",
@@ -37,7 +46,7 @@ export const postTask = async (apiUrl: string, boatId: number, task: CreateTaskD
   }
 };
 
-export const updateTask = async (apiUrl: string, taskId: number, status: string, description: string) => {
+export const updateTask = async (taskId: number, status: string, description: string) => {
   try {
     const response = await fetch(`${apiUrl}${APIRoutes.tasks}/${taskId}`, {
       method: "PUT",
@@ -59,7 +68,7 @@ export const updateTask = async (apiUrl: string, taskId: number, status: string,
   }
 };
 
-export const deleteTask = async (apiUrl: string, taskId: number) => {
+export const deleteTask = async (taskId: number) => {
   try {
     const response = await fetch(`${apiUrl}${APIRoutes.tasks}/${taskId}`, {
       method: "DELETE",

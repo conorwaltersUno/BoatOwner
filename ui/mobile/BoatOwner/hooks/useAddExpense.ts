@@ -3,8 +3,10 @@ import { QUERYKEYS } from "@/constants/query";
 import { CreateExpenseDTO, ExpenseDTO } from "@/interfaces/expenses/expense";
 import { postExpense } from "@/api/fetch/expenses.fetch";
 
-function useAddExpense(boatId: number) {
+function useAddExpense() {
   const queryClient = useQueryClient();
+  //get this id from user object when AUTH is implemented
+  const boatId = 1;
 
   return useMutation({
     mutationFn: (newExpense: CreateExpenseDTO) => postExpense(boatId, newExpense),

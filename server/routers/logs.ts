@@ -195,10 +195,8 @@ LogRouter.route("/:id").put(
     body("description").optional().isString().notEmpty().withMessage("Description cannot be empty"),
     body("crew_members").optional().isArray().withMessage("Crew members must be an array"),
     body("coordinates").optional().isArray().withMessage("Coordinates must be an array"),
-    body("photo_urls").optional().isArray().withMessage("Photo URLs must be an array"),
     body("log_started").optional().isISO8601().withMessage("Log started must be a valid ISO8601 date"),
     body("log_ended").optional().isISO8601().withMessage("Log ended must be a valid ISO8601 date"),
-    body("isRecordingLocation").optional().isBoolean().withMessage("isRecordingLocation must be a boolean"),
   ],
   // auth,
   (req, res, next) => {

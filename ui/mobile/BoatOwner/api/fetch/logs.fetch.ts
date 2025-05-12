@@ -1,7 +1,16 @@
+import { APIPort } from "@/constants/APIPort";
 import { APIRoutes } from "@/constants/APIRoutes";
-import { SaveLogDTO } from "../../interfaces/log/log";
+import Constants from "expo-constants";
+import { LogDTO, SaveLogDTO, UpdateLogDTO } from "../../interfaces/log/log";
 
-export const postLog = async (log: SaveLogDTO, apiUrl: string, boatId: number) => {
+const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
+const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
+
+const apiUrl = isLocalDev
+  ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + `:${APIPort.localPort}`
+  : `https://${apiBaseUrl}:${APIPort.localPort}`;
+
+export const postLog = async (log: SaveLogDTO, boatId: number) => {
   try {
     const response = await fetch(`${apiUrl}${APIRoutes.logs}/${boatId}`, {
       method: "POST",
@@ -25,6 +34,42 @@ export const postLog = async (log: SaveLogDTO, apiUrl: string, boatId: number) =
     return data;
   } catch (err: any) {
     console.error("Error creating task:", err.message);
+    throw err;
+  }
+};
+
+export const updateLog = async (log: UpdateLogDTO) => {
+  try {
+    const response = await fetch(`${apiUrl}${APIRoutes.logs}/${log.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(log),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create log: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (err: any) {
+    console.error("Error creating task:", err.message);
+    throw err;
+  }
+};
+
+export const getLogs = async (boatId: number) => {
+  try {
+    const response = await fetch(`${apiUrl}${APIRoutes.logs}/boat/${boatId}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch tasks: ${response.statusText}`);
+    }
+    const data: LogDTO[] = await response.json();
+    return data;
+  } catch (err: any) {
+    console.error("Error fetchings tasks:", err.message);
     throw err;
   }
 };

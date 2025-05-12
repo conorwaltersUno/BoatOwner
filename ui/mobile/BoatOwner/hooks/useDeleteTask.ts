@@ -1,21 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteTask } from "@/api/fetch/todo.fetch";
 import { QUERYKEYS } from "@/constants/query";
-import Constants from "expo-constants";
-import { APIPort } from "@/constants/APIPort";
 
 function useDeleteTask() {
   const queryClient = useQueryClient();
 
-  const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
-  const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
-
-  const apiUrl = isLocalDev
-    ? "http://" + Constants.expoConfig?.hostUri!.split(":").shift() + `:${APIPort.localPort}`
-    : `https://${apiBaseUrl}:${APIPort.localPort}`;
-
   return useMutation({
-    mutationFn: (id: number) => deleteTask(apiUrl, id),
+    mutationFn: (id: number) => deleteTask(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERYKEYS.TASKS] });
     },

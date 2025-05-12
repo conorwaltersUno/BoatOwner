@@ -17,11 +17,10 @@ import ExpensesPieChart from "@/components/ExpensesPieChart";
 
 export default function Expenses() {
   const [isModalVisible, setModalVisible] = useState(false);
-  const boatId = 1;
   const [selectedExpenseType, setSelectedExpenseType] = useState<string | null>(null);
 
-  const { data: expenses = [], isLoading, isError, error } = useGetExpenses(boatId);
-  const { mutate: addExpense } = useAddExpense(boatId);
+  const { data: expenses = [], isLoading, isError, error } = useGetExpenses();
+  const { mutate: addExpense } = useAddExpense();
 
   const handleAddExpense = async (newExpense: CreateExpenseDTO) => {
     addExpense(newExpense);

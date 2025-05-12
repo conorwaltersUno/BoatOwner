@@ -5,3 +5,4 @@ export * from "./useUpdateTask";
 export * from "./useGetExpenses";
 export * from "./useAddExpense";
 export * from "./useUpdateExpense";
+export * from "./useGetLogs";
