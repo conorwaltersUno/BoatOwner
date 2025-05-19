@@ -1,6 +1,6 @@
 COMMAND=start
 DOCKER_ENV=dev
-ENV=PROD
+ENV=dev
 
 ifeq "${ENV}" "PROD"
 COMMAND=build

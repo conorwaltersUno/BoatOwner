@@ -5,16 +5,18 @@ import { UpdateLogDTO } from "@/interfaces/log/log";
 
 function useUpdateLog() {
   const queryClient = useQueryClient();
-  //get this id from user object when AUTH is implemented
-  const boatId = 1;
 
   return useMutation({
     mutationFn: (updatedLog: UpdateLogDTO) => updateLog(updatedLog),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: [QUERYKEYS.LOGS] });
+
+      if (variables.id) {
+        queryClient.invalidateQueries({ queryKey: [QUERYKEYS.LOGS, variables.id] });
+      }
     },
     onError: (error: any) => {
-      throw new Error(error?.message || "Failed to add log");
+      throw new Error(error?.message || "Failed to update log");
     },
   });
 }

@@ -14,7 +14,11 @@ export const fetchTasks = async (boatId: number) => {
   try {
     const response = await fetch(`${apiUrl}${APIRoutes.tasks}/boat/${boatId}/tasks`);
     if (!response.ok) {
-      throw new Error(`Failed to fetch tasks: ${response.statusText}`);
+      const errorBody = await response.json().catch(() => ({}));
+      if (response.status === 404 && errorBody.message && errorBody.message.startsWith("No tasks found")) {
+        return [];
+      }
+      throw new Error(errorBody.message || `Failed to fetch tasks: ${response.statusText}`);
     }
     const data: TaskDTO[] = await response.json();
     return data;

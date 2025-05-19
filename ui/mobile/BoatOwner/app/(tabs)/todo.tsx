@@ -56,6 +56,19 @@ export default function Todo() {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>{error?.message}</Text>
+        <Button title="Add a task" onPress={() => setModalVisible(true)} />
+        <TaskModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddTask} />
+      </View>
+    );
+  }
+
+  if (tasks.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyTitle}>No Tasks Yet</Text>
+        <Text style={styles.emptySubtitle}>You haven't added any tasks. Tap below to create your first task!</Text>
+        <Button title="Add a task" onPress={() => setModalVisible(true)} />
+        <TaskModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddTask} />
       </View>
     );
   }
@@ -128,6 +141,26 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#f9f9f9",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 30,
+    backgroundColor: "#f9f9f9",
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#2E66E7",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 25,
+    textAlign: "center",
   },
   addContainer: {
     flex: 1,

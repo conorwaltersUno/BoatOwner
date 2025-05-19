@@ -2,6 +2,7 @@ import { prisma } from "../utilities";
 import { UserDTO, CreateUserDTO, UpdateUserDTO, refreshTokenDTO } from "../interfaces/user";
 import dayjs from "dayjs";
 import { JwtMiddleWare } from "../middleware/jwt";
+import { BoatDTO } from "../interfaces/boats";
 
 async function getAllUsers(): Promise<UserDTO[]> {
   try {
@@ -61,7 +62,7 @@ async function getUserByEmail(body: CreateUserDTO): Promise<UserDTO | null> {
   }
 }
 
-async function createUser(data: CreateUserDTO): Promise<UserDTO> {
+async function createUser(data: CreateUserDTO): Promise<{ UserDTO; BoatDTO }> {
   try {
     const newUser = await prisma.user.create({
       data: {
@@ -70,7 +71,7 @@ async function createUser(data: CreateUserDTO): Promise<UserDTO> {
         created: dayjs().format(),
       },
     });
-    await prisma.boat.create({
+    const boat = await prisma.boat.create({
       data: {
         user_id: newUser.id,
         name: data.boat_name,
@@ -78,7 +79,7 @@ async function createUser(data: CreateUserDTO): Promise<UserDTO> {
       },
     });
 
-    return newUser;
+    return { UserDTO: newUser, BoatDTO: boat };
   } catch (error: any) {
     throw Error("Error creating user: " + error.message);
   }

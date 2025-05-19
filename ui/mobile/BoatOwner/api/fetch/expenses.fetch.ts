@@ -13,7 +13,11 @@ export const fetchExpenses = async (boatId: number) => {
   try {
     const response = await fetch(`${apiUrl}/expenses/boat/${boatId}/expenses`);
     if (!response.ok) {
-      throw new Error(`Failed to fetch expenses: ${response.statusText}`);
+      const errorBody = await response.json().catch(() => ({}));
+      if (response.status === 404 && errorBody.message && errorBody.message.startsWith("No expenses found")) {
+        return [];
+      }
+      throw new Error(errorBody.message || `Failed to fetch expenses: ${response.statusText}`);
     }
     const data: ExpenseDTO[] = await response.json();
     return data;

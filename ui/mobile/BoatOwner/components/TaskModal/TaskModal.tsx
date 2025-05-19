@@ -6,7 +6,6 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   TouchableOpacity,
   TouchableWithoutFeedback,
@@ -25,7 +24,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => 
           <TouchableWithoutFeedback>
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>Add a New Task</Text>
-
               <Formik
                 initialValues={{ description: "" }}
                 validationSchema={validationSchema}
@@ -37,18 +35,25 @@ const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => 
               >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
                   <>
+                    <Text style={styles.inputLabel}>Task Description</Text>
                     <TextInput
-                      style={styles.input}
-                      placeholder="Description"
+                      style={[styles.input, styles.textArea]}
+                      placeholder="Enter task description"
                       value={values.description}
                       onChangeText={handleChange("description")}
                       onBlur={handleBlur("description")}
+                      placeholderTextColor="#aaa"
+                      multiline
+                      numberOfLines={4}
+                      textAlignVertical="top"
                     />
                     {errors.description && touched.description && (
                       <Text style={styles.errorText}>{errors.description}</Text>
                     )}
-                    <View style={styles.buttonContainer}>
-                      <Button title="Add Task" onPress={() => handleSubmit()} color="#4CAF50" />
+                    <View style={styles.buttonRow}>
+                      <TouchableOpacity style={styles.saveButton} onPress={() => handleSubmit()}>
+                        <Text style={styles.saveButtonText}>Add Task</Text>
+                      </TouchableOpacity>
                       <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
                         <Text style={styles.cancelText}>Cancel</Text>
                       </TouchableOpacity>
@@ -67,53 +72,88 @@ const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backgroundColor: "rgba(30, 40, 60, 0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContainer: {
-    width: "80%",
-    backgroundColor: "#F7F7F9",
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#000000",
-    padding: 20,
+    width: "88%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
     maxHeight: "60%",
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: "#2E66E7",
+    marginBottom: 18,
     textAlign: "center",
+  },
+  inputLabel: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#2E66E7",
+    marginBottom: 4,
+    marginLeft: 2,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#000000",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
     fontSize: 16,
+    backgroundColor: "#fafbfc",
+    color: "#222",
+  },
+  textArea: {
+    minHeight: 80,
+    maxHeight: 160,
+    paddingTop: 12,
   },
   errorText: {
-    color: "red",
-    marginBottom: 15,
-    textAlign: "center",
+    color: "#E74C3C",
+    marginBottom: 10,
+    textAlign: "left",
+    fontSize: 14,
   },
-  buttonContainer: {
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 10,
+    gap: 10,
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: "#2E66E7",
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginRight: 8,
+  },
+  saveButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   cancelButton: {
-    marginTop: 10,
+    flex: 1,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    paddingVertical: 12,
     alignItems: "center",
+    marginLeft: 8,
   },
   cancelText: {
-    color: "red",
+    color: "#E74C3C",
     fontWeight: "bold",
+    fontSize: 16,
   },
 });
 

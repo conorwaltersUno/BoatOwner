@@ -55,7 +55,7 @@ export const updateLog = async (log: UpdateLogDTO) => {
     const data = await response.json();
     return data;
   } catch (err: any) {
-    console.error("Error creating task:", err.message);
+    console.error("Error creating logs:", err.message);
     throw err;
   }
 };
@@ -64,12 +64,16 @@ export const getLogs = async (boatId: number) => {
   try {
     const response = await fetch(`${apiUrl}${APIRoutes.logs}/boat/${boatId}`);
     if (!response.ok) {
-      throw new Error(`Failed to fetch tasks: ${response.statusText}`);
+      const errorBody = await response.json().catch(() => ({}));
+      if (response.status === 404 && errorBody.message && errorBody.message.startsWith("No Logs found")) {
+        return [];
+      }
+      throw new Error(errorBody.message || `Failed to fetch logs: ${response.statusText}`);
     }
     const data: LogDTO[] = await response.json();
     return data;
   } catch (err: any) {
-    console.error("Error fetchings tasks:", err.message);
+    console.error("Error fetching logs:", err.message);
     throw err;
   }
 };

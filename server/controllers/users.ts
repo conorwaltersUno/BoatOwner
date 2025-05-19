@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
-import { UserService } from "../services";
+import { BoatService, UserService } from "../services";
 import bcrypt from "bcrypt";
 import { UserDTO } from "../interfaces/user";
 import { JwtMiddleWare } from "../middleware/jwt";
+import { BoatDTO } from "../interfaces/boats";
 
 const okStatus = 200;
 const createdStatus = 201;
@@ -53,20 +54,22 @@ async function createUser(req: Request, res: Response) {
         .json({ message: "Error creating user, user already exists with this email, please try again" });
     }
 
-    const user: UserDTO = await UserService.createUser(req.body);
+    const createdUserInfo = await UserService.createUser(req.body);
 
-    if (!user) {
+    if (!createdUserInfo) {
       return res.status(badRequestStatus).json({ message: "Error creating user, please try again" });
     }
 
     const accessToken = JwtMiddleWare.signAccessToken({
-      userid: user.id,
+      userid: createdUserInfo.UserDTO.id,
     });
     const refreshToken = JwtMiddleWare.signRefreshToken({
-      userid: user.id,
+      userid: createdUserInfo.UserDTO.id,
     });
 
-    return res.status(createdStatus).json({ accessToken, refreshToken, user });
+    return res
+      .status(createdStatus)
+      .json({ accessToken, refreshToken, user: createdUserInfo.UserDTO, boatId: createdUserInfo.BoatDTO.id });
   } catch (error: any) {
     res.status(internalServerError).json(error.message);
   }
@@ -79,6 +82,8 @@ async function signInUser(req: Request, res: Response) {
       return res.status(internalServerError).json({ message: "No user with email provided exists, please try again" });
     }
 
+    const boat = await BoatService.getBoatByUserId(user.id);
+
     const checkPassword = bcrypt.compareSync(req.body.password, user.password);
     if (!checkPassword) {
       return res.status(internalServerError).json({ message: "Password is incorrect, please try again" });
@@ -90,7 +95,7 @@ async function signInUser(req: Request, res: Response) {
     const refreshToken = JwtMiddleWare.signRefreshToken({
       userid: user.id,
     });
-    res.status(okStatus).json({ accessToken, refreshToken });
+    res.status(okStatus).json({ accessToken, refreshToken, userId: user.id, boatId: boat.id });
   } catch (error: any) {
     res.status(internalServerError).json(error.message);
   }

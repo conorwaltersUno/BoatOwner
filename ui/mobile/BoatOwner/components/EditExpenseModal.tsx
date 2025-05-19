@@ -76,6 +76,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
               >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
                   <>
+                    <Text style={styles.inputLabel}>Expense Type</Text>
                     <TextInput
                       style={styles.input}
                       placeholder="Expense Type"
@@ -87,6 +88,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
                       <Text style={styles.errorText}>{errors.expense_type}</Text>
                     )}
 
+                    <Text style={styles.inputLabel}>Amount</Text>
                     <TextInput
                       style={styles.input}
                       placeholder="Amount"
@@ -97,6 +99,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
                     />
                     {errors.amount && touched.amount && <Text style={styles.errorText}>{errors.amount}</Text>}
 
+                    <Text style={styles.inputLabel}>Expense Date</Text>
                     <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)}>
                       <View pointerEvents="none">
                         <TextInput
@@ -142,60 +145,78 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backgroundColor: "rgba(30, 40, 60, 0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContainer: {
-    width: "80%",
-    backgroundColor: "#F7F7F9",
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#000000",
-    padding: 20,
+    width: "92%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 22,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    maxHeight: "60%",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
+    maxHeight: "80%",
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: "#2E66E7",
+    marginBottom: 18,
     textAlign: "center",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#000000",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
     fontSize: 16,
+    backgroundColor: "#fafbfc",
+    color: "#222",
+  },
+  inputLabel: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#2E66E7",
+    marginBottom: 4,
+    marginLeft: 2,
   },
   errorText: {
-    color: "red",
-    marginBottom: 15,
-    textAlign: "center",
+    color: "#E74C3C",
+    marginBottom: 10,
+    textAlign: "left",
+    fontSize: 14,
   },
   buttonContainer: {
-    marginTop: 10,
+    marginTop: 18,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
   },
   cancelButton: {
-    marginTop: 10,
+    flex: 1,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    paddingVertical: 12,
     alignItems: "center",
+    marginLeft: 8,
   },
   cancelText: {
-    color: "red",
+    color: "#E74C3C",
     fontWeight: "bold",
+    fontSize: 16,
   },
   saveButton: {
-    backgroundColor: "#4CAF50",
-    borderRadius: 5,
+    flex: 1,
+    backgroundColor: "#2E66E7",
+    borderRadius: 8,
     paddingVertical: 12,
-    paddingHorizontal: 20,
     alignItems: "center",
+    marginRight: 8,
   },
   saveButtonText: {
     color: "white",

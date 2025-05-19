@@ -28,6 +28,9 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
   const handleDateChange = (event: any, selectedDate: Date | undefined, setFieldValue: any) => {
     if (event.type === "set" && selectedDate) {
       setFieldValue("expense_date", selectedDate);
+      setShowDatePicker(false);
+    } else if (event.type === "dismissed") {
+      setShowDatePicker(false);
     }
   };
 
@@ -38,7 +41,6 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
           <TouchableWithoutFeedback>
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>Add a New Expense</Text>
-
               <Formik
                 initialValues={{ expense_type: "", amount: 0.0, expense_date: new Date() }}
                 validationSchema={validationSchema}
@@ -50,6 +52,7 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
               >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
                   <>
+                    <Text style={styles.inputLabel}>Expense Type</Text>
                     <TextInput
                       style={styles.input}
                       placeholder="Expense Type"
@@ -61,17 +64,19 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
                       <Text style={styles.errorText}>{errors.expense_type}</Text>
                     )}
 
+                    <Text style={styles.inputLabel}>Amount</Text>
                     <TextInput
                       style={styles.input}
                       placeholder="Amount"
-                      value={values.amount.toString()}
+                      value={values.amount ? values.amount.toString() : ""}
                       onChangeText={handleChange("amount")}
                       onBlur={handleBlur("amount")}
                       keyboardType="numeric"
                     />
                     {errors.amount && touched.amount && <Text style={styles.errorText}>{errors.amount}</Text>}
 
-                    <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)}>
+                    <Text style={styles.inputLabel}>Expense Date</Text>
+                    <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                       <View pointerEvents="none">
                         <TextInput
                           style={styles.input}
@@ -94,19 +99,16 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
                       />
                     )}
 
-                    <View style={styles.buttonContainer}>
-                      <Button
-                        title="Add Expense"
-                        onPress={() => {
-                          setShowDatePicker(false), handleSubmit();
-                        }}
-                        color="#4CAF50"
-                      />
+                    <View style={styles.buttonRow}>
+                      <TouchableOpacity style={styles.saveButton} onPress={() => handleSubmit()}>
+                        <Text style={styles.saveButtonText}>Add Expense</Text>
+                      </TouchableOpacity>
                       <TouchableOpacity
-                        onPress={() => {
-                          setShowDatePicker(false), onClose();
-                        }}
                         style={styles.cancelButton}
+                        onPress={() => {
+                          setShowDatePicker(false);
+                          onClose();
+                        }}
                       >
                         <Text style={styles.cancelText}>Cancel</Text>
                       </TouchableOpacity>
@@ -125,53 +127,83 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backgroundColor: "rgba(30, 40, 60, 0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContainer: {
-    width: "80%",
-    backgroundColor: "#F7F7F9",
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#000000",
-    padding: 20,
+    width: "92%",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 22,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    maxHeight: "60%",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
+    maxHeight: "80%",
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: "#2E66E7",
+    marginBottom: 18,
     textAlign: "center",
+  },
+  inputLabel: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#2E66E7",
+    marginBottom: 4,
+    marginLeft: 2,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#000000",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
     fontSize: 16,
+    backgroundColor: "#fafbfc",
+    color: "#222",
   },
   errorText: {
-    color: "red",
-    marginBottom: 15,
-    textAlign: "center",
+    color: "#E74C3C",
+    marginBottom: 10,
+    textAlign: "left",
+    fontSize: 14,
   },
-  buttonContainer: {
-    marginTop: 10,
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 18,
+    gap: 10,
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: "#2E66E7",
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginRight: 8,
+  },
+  saveButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   cancelButton: {
-    marginTop: 10,
+    flex: 1,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    paddingVertical: 12,
     alignItems: "center",
+    marginLeft: 8,
   },
   cancelText: {
-    color: "red",
+    color: "#E74C3C",
     fontWeight: "bold",
+    fontSize: 16,
   },
 });
 

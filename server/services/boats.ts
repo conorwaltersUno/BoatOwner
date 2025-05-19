@@ -13,6 +13,18 @@ async function getAllBoats(): Promise<BoatDTO[]> {
   }
 }
 
+async function getBoatByUserId(userId: number): Promise<BoatDTO | null> {
+  try {
+    return await prisma.boat.findFirst({
+      where: {
+        user_id: userId,
+      },
+    });
+  } catch (error: any) {
+    throw Error(`No boat found for user id: ${userId}`);
+  }
+}
+
 async function getBoatById(boatId: number): Promise<BoatDTO | null> {
   try {
     return await prisma.boat.findUnique({
@@ -80,6 +92,7 @@ const BoatService = {
   createBoat,
   updateBoat,
   deleteBoat,
+  getBoatByUserId,
 };
 
 export { BoatService };
