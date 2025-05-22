@@ -47,7 +47,7 @@ export default function Todo() {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#0000ff" testID="ActivityIndicator" />
       </View>
     );
   }

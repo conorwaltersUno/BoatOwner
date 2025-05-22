@@ -80,11 +80,14 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
                     <>
                       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
                         <TextInput
-                          style={styles.input}
+                          style={[styles.input, styles.textArea]}
                           placeholder="Trip Description"
                           value={values.description}
                           onChangeText={handleChange("description")}
                           onBlur={handleBlur("description")}
+                          multiline
+                          numberOfLines={4}
+                          textAlignVertical="top"
                         />
                         {errors.description && touched.description && (
                           <Text style={styles.errorText}>Description cannot be empty.</Text>
@@ -168,35 +171,39 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backgroundColor: "rgba(30, 40, 60, 0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContainer: {
-    width: "90%",
-    height: "80%", // Fixed height
-    backgroundColor: "#F7F7F9",
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#000",
-    padding: 15,
+    width: "92%",
+    height: "82%",
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 0,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 8,
+    overflow: "hidden",
   },
   innerContainer: {
     flex: 1,
+    padding: 22,
+    width: "100%",
+    justifyContent: "flex-start",
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 10,
+    color: "#2E66E7",
+    marginBottom: 18,
     textAlign: "center",
   },
   scrollView: {
     flex: 1,
+    width: "100%",
   },
   scrollContent: {
     paddingBottom: 20,
@@ -204,15 +211,24 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 10,
+    marginBottom: 8,
+    color: "#2E66E7",
+    marginTop: 18,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#000",
-    borderRadius: 5,
-    padding: 10,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    padding: 12,
     fontSize: 16,
     marginBottom: 10,
+    backgroundColor: "#fafbfc",
+    color: "#222",
+  },
+  textArea: {
+    minHeight: 80,
+    maxHeight: 160,
+    paddingTop: 12,
   },
   crewRow: {
     flexDirection: "row",
@@ -225,49 +241,59 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     fontSize: 18,
-    color: "red",
+    color: "#E74C3C",
   },
   errorText: {
-    color: "red",
+    color: "#E74C3C",
     marginBottom: 10,
     textAlign: "center",
+    fontSize: 14,
   },
   addButton: {
     marginBottom: 15,
     alignItems: "center",
   },
   addButtonText: {
-    color: "#007BFF",
+    color: "#2E66E7",
     fontWeight: "bold",
     fontSize: 16,
   },
   map: {
     width: "100%",
-    height: 200,
+    height: 180,
     borderRadius: 10,
     marginTop: 10,
   },
   buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
     paddingTop: 10,
     marginBottom: 10,
   },
-  cancelButton: {
-    marginTop: 10,
-    alignItems: "center",
-  },
-  cancelText: {
-    color: "red",
-    fontWeight: "bold",
-  },
   saveButton: {
+    flex: 1,
     backgroundColor: "#4CAF50",
-    borderRadius: 5,
+    borderRadius: 8,
     paddingVertical: 12,
-    paddingHorizontal: 20,
     alignItems: "center",
+    marginRight: 8,
   },
   saveButtonText: {
     color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: "center",
+    marginLeft: 8,
+  },
+  cancelText: {
+    color: "#E74C3C",
     fontWeight: "bold",
     fontSize: 16,
   },

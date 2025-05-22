@@ -18,11 +18,7 @@ import * as Yup from "yup";
 import MapView, { Polyline, Marker } from "react-native-maps";
 import { UpdateLogDTO } from "../interfaces/log/log";
 import { useUpdateLog } from "@/hooks/useUpdateLog";
-import Slider from "@react-native-community/slider";
 import dayjs from "dayjs";
-// Optionally, for UTC handling:
-// import utc from "dayjs/plugin/utc";
-// dayjs.extend(utc);
 
 interface LogDetailModalProps {
   modalVisibility: boolean;
@@ -74,7 +70,6 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
     if (!modalVisibility) setIsEditing(false);
   }, [modalVisibility]);
 
-  // Animate the marker along the coordinates
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isReplaying && localLog?.coordinates?.length > 1) {
@@ -87,20 +82,18 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
             return prev;
           }
         });
-      }, 10); // fixed speed
+      }, 10);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isReplaying, localLog]);
 
-  // Reset replay when log changes or modal closes
   useEffect(() => {
     setReplayIndex(0);
     setIsReplaying(false);
   }, [localLog, modalVisibility]);
 
-  // Helper to format seconds as "1h 2m 3s"
   function formatDuration(seconds: number) {
     if (isNaN(seconds) || seconds < 0) return "0s";
     const h = Math.floor(seconds / 3600);
@@ -109,12 +102,10 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
     return [h ? `${h}h` : "", m ? `${m}m` : "", `${s}s`].filter(Boolean).join(" ");
   }
 
-  // Helper to get time at current point
   const getCurrentPointTime = () => {
     if (!localLog?.coordinates?.length || !localLog.log_started || isNaN(new Date(localLog.log_started).getTime()))
       return "0s";
 
-    // If coordinate has timestamp, use it
     const currCoord = localLog.coordinates[replayIndex];
     if (currCoord?.timestamp) {
       const start = new Date(localLog.log_started).getTime();
@@ -125,7 +116,6 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
       }
     }
 
-    // Otherwise, interpolate based on index
     const totalPoints = localLog.coordinates.length;
     const totalDuration =
       localLog.log_started && localLog.log_ended
@@ -139,7 +129,6 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
     return "0s";
   };
 
-  // Helper to get total trip duration
   const getTotalDuration = () => {
     if (!localLog?.log_started || !localLog?.log_ended) return "0s";
     const start = new Date(localLog.log_started).getTime();
@@ -149,7 +138,6 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
     return formatDuration(elapsedSec);
   };
 
-  // Helper to get the actual time at the current point (if timestamp exists)
   const getCurrentPointTimestamp = () => {
     if (!localLog?.coordinates?.length) return "";
     const curr = localLog.coordinates[replayIndex]?.timestamp;
@@ -241,7 +229,6 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
                           keyboardShouldPersistTaps="handled"
                           showsVerticalScrollIndicator
                         >
-                          {/* Always scrollable, whether editing or not */}
                           {!isEditing ? (
                             renderLogDetails()
                           ) : (

@@ -16,7 +16,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { CreateExpenseDTO } from "@/interfaces/expenses/expense";
 import { ExpenseModalProps } from "@/interfaces/expenses/expenseModal";
 
-const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubmit }) => {
+const AddExpenseModal: React.FC<ExpenseModalProps & { testID?: string }> = ({ visible, onClose, onSubmit, testID }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const validationSchema = Yup.object().shape({
@@ -35,7 +35,7 @@ const AddExpenseModal: React.FC<ExpenseModalProps> = ({ visible, onClose, onSubm
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
+    <Modal visible={visible} transparent animationType="slide" testID={testID}>
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>

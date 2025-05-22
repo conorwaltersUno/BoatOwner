@@ -67,7 +67,12 @@ export default function Expenses() {
         <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
           <Text style={styles.addButtonText}>+ Add a new expense</Text>
         </TouchableOpacity>
-        <AddExpenseModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddExpense} />
+        <AddExpenseModal
+          visible={isModalVisible}
+          onClose={() => setModalVisible(false)}
+          onSubmit={handleAddExpense}
+          testID="AddExpenseModal"
+        />
       </View>
     );
   }
@@ -90,7 +95,12 @@ export default function Expenses() {
           />
         </View>
       </TouchableWithoutFeedback>
-      <AddExpenseModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddExpense} />
+      <AddExpenseModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleAddExpense}
+        testID="AddExpenseModal"
+      />
 
       <Text style={[styles.sectionTitle, { marginLeft: 18, marginTop: 8 }]}>Expense Details</Text>
       {selectedExpenseType ? (

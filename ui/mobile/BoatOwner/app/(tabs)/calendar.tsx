@@ -65,7 +65,6 @@ function getYearStats(logs: LogDTO[]) {
 export default function CalendarLogsView() {
   const { data: logs = [], isLoading, isError, error } = useGetLogs();
   const router = useRouter();
-  const calendarRef = useRef<any>(null);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedLog, setSelectedLog] = useState<UpdateLogDTO | null>(null);
@@ -164,7 +163,7 @@ export default function CalendarLogsView() {
         <Text style={styles.emptySubtitle}>
           You haven't recorded any logs. Tap below to go to the home page and record your first log!
         </Text>
-        <Button title="Go to Home" onPress={() => router.replace("/(tabs)/home")} />
+        <Button title="Go to Home" onPress={() => router.replace("/(tabs)/(home)")} />
       </View>
     );
   }
@@ -178,7 +177,6 @@ export default function CalendarLogsView() {
       </View>
       <View style={styles.flexGrow}>
         <Calendar
-          ref={calendarRef}
           markedDates={{
             ...markedDates,
             ...(selectedDate
