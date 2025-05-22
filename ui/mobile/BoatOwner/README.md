@@ -1,50 +1,103 @@
-# Welcome to your Expo app 👋
+# BoatOwner Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is the mobile client for BoatOwner, built with [Expo](https://expo.dev) and React Native.
 
-## Get started
+---
 
-1. Install dependencies
+## 🚀 Features
+
+- **Modern authentication:** Secure sign-in and sign-up with token refresh, auto sign-out, and protected routes.
+- **Production-ready UI:** Clean, branded sign-in and sign-up screens with Expo vector icon logo and social login placeholders.
+- **API integration:** All API requests use `authFetch` for automatic access token handling and refresh.
+- **Task, Log, and Expense management:** Create, update, and delete tasks, logs, and expenses for your boat.
+- **TypeScript-first:** Strong typing across all code.
+- **React Query:** For data fetching and caching.
+- **File-based routing:** Powered by Expo Router.
+
+---
+
+## 🛠️ Getting Started
+
+1. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **Configure environment variables**
 
-   ```bash
-    npx expo start
+   Copy `.env.template` to `.env.local` or `.env.development` and fill in your values:
+
+   ```
+   EXPO_PUBLIC_IS_LOCAL_DEV=false
+   EXPO_PUBLIC_API_BASE_URL=https://your-api-url
+   GOOGLE_MAPS_API_KEY=your-google-maps-key
    ```
 
-In the output, you'll find options to open the app in a
+3. **Start the app**
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   npx expo start
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   You can then open the app in:
 
-## Get a fresh project
+   - [Development build](https://docs.expo.dev/develop/development-builds/introduction/)
+   - [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+   - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+   - [Expo Go](https://expo.dev/go)
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
-```
+## 🧑‍💻 Development Notes
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- **Authentication:**  
+  All API calls use `authFetch`, which attaches the access token, refreshes it if expired, and redirects to sign-in if both tokens are invalid.
+- **UI:**  
+  The sign-in and sign-up screens use a ship icon from Expo vector icons as the logo. Social login buttons for Apple and Google are present as placeholders.
+- **API:**  
+  All fetch files (`todo.fetch.ts`, `expenses.fetch.ts`, `logs.fetch.ts`, etc.) use `authFetch` for secure requests.
+- **Testing:**  
+  Run tests with:
 
-## Learn more
+  ```bash
+  npm test
+  ```
 
-To learn more about developing your project with Expo, look at the following resources:
+- **Routing:**  
+  Uses Expo Router for file-based navigation.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## 📁 Project Structure
 
-Join our community of developers creating universal apps.
+- `app/` - App screens and routing
+- `api/` - API fetch utilities (uses `authFetch`)
+- `components/` - Reusable UI components
+- `constants/` - App-wide constants
+- `context/` - React context (e.g., Auth)
+- `hooks/` - Custom React hooks
+- `interfaces/` - TypeScript interfaces
+- `utils/` - Utility functions
+- `assets/` - Images and icons
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 📝 Learn More
+
+- [Expo documentation](https://docs.expo.dev/)
+- [Expo Router](https://docs.expo.dev/router/introduction/)
+- [React Native](https://reactnative.dev/)
+
+---
+
+## 💬 Community
+
+- [Expo on GitHub](https://github.com/expo/expo)
+- [Expo Discord](https://chat.expo.dev)
+
+---
+
+## ⚓️ BoatOwner
+
+Built with ❤️ for boat owners.
