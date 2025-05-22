@@ -8,6 +8,7 @@ import { BoatRouter } from "./routers/boats";
 import { LogRouter } from "./routers/logs";
 import { TaskRouter } from "./routers/tasks";
 import { ExpenseRouter } from "./routers/expenses";
+import { auth } from "./middleware/auth";
 
 const app = express();
 
@@ -17,12 +18,15 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/swagger-ui", swaggerUi.serve, swaggerUi.setup(swaggerFile));
 
+app.use("/health", HealthRouter);
 app.use("/users", UserRouter);
+
+app.use(auth);
+
 app.use("/boat", BoatRouter);
 app.use("/logs", LogRouter);
 app.use("/tasks", TaskRouter);
 app.use("/expenses", ExpenseRouter);
-app.use("/health", HealthRouter);
 
 app.use((err, req: Request, res: Response, next: NextFunction) => {
   if (err) {

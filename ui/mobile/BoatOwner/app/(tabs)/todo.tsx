@@ -7,8 +7,6 @@ import TaskModal from "../../components/TaskModal/TaskModal";
 import { useAddTask, useGetTasks, useDeleteTask, useUpdateTask } from "../../hooks/index";
 
 import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo/todo";
-import Constants from "expo-constants";
-import { APIPort } from "@/constants/APIPort";
 
 export default function Todo() {
   const [isModalVisible, setModalVisible] = useState(false);

@@ -1,6 +1,7 @@
 import { CreateExpenseDTO, ExpenseDTO, UpdateExpenseDTO } from "@/interfaces/expenses/expense";
 import Constants from "expo-constants";
 import { APIPort } from "@/constants/APIPort";
+import { authFetch } from "../../api/fetch/auth.fetch";
 
 const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
@@ -11,7 +12,7 @@ const apiUrl = isLocalDev
 
 export const fetchExpenses = async (boatId: number) => {
   try {
-    const response = await fetch(`${apiUrl}/expenses/boat/${boatId}/expenses`);
+    const response = await authFetch(`${apiUrl}/expenses/boat/${boatId}/expenses`);
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
       if (response.status === 404 && errorBody.message && errorBody.message.startsWith("No expenses found")) {
@@ -28,7 +29,7 @@ export const fetchExpenses = async (boatId: number) => {
 
 export const postExpense = async (boatId: number, expense: CreateExpenseDTO) => {
   try {
-    const response = await fetch(`${apiUrl}/expenses/${boatId}`, {
+    const response = await authFetch(`${apiUrl}/expenses/${boatId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -39,7 +40,7 @@ export const postExpense = async (boatId: number, expense: CreateExpenseDTO) => 
       }),
     });
     if (!response.ok) {
-      throw new Error(`Failed to add expense: ${response}`);
+      throw new Error(`Failed to add expense: ${response.statusText}`);
     }
 
     const data: ExpenseDTO = await response.json();
@@ -51,7 +52,7 @@ export const postExpense = async (boatId: number, expense: CreateExpenseDTO) => 
 
 export const updateExpense = async (expense: UpdateExpenseDTO) => {
   try {
-    const response = await fetch(`${apiUrl}/expenses/${expense.id}`, {
+    const response = await authFetch(`${apiUrl}/expenses/${expense.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -64,7 +65,7 @@ export const updateExpense = async (expense: UpdateExpenseDTO) => {
       }),
     });
     if (!response.ok) {
-      throw new Error(`Failed to update expense: ${response}`);
+      throw new Error(`Failed to update expense: ${response.statusText}`);
     }
 
     const data: ExpenseDTO = await response.json();
@@ -74,9 +75,9 @@ export const updateExpense = async (expense: UpdateExpenseDTO) => {
   }
 };
 
-export const deleteExpense = async (apiUrl: string, expenseId: number) => {
+export const deleteExpense = async (expenseId: number) => {
   try {
-    const response = await fetch(`${apiUrl}/expenses/${expenseId}`, {
+    const response = await authFetch(`${apiUrl}/expenses/${expenseId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
