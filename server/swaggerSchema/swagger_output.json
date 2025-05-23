@@ -30,29 +30,17 @@
     }
   ],
   "paths": {
-    "/users/": {
+    "/health/": {
       "get": {
-        "tags": [
-          "User"
-        ],
-        "summary": "Get all users",
         "description": "",
         "responses": {
-          "200": {
-            "description": "Successfully retrieved list of users",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/getAllUserResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error"
+          "default": {
+            "description": ""
           }
         }
-      },
+      }
+    },
+    "/users/": {
       "post": {
         "tags": [
           "User"
@@ -107,138 +95,6 @@
                 ]
               }
             }
-          }
-        }
-      }
-    },
-    "/users/{id}": {
-      "get": {
-        "tags": [
-          "User"
-        ],
-        "summary": "Get user by ID",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "User ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved user data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/getUserByIdResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "User not found"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "User"
-        ],
-        "summary": "Update an existing user",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "User ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/updateUserResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data"
-          },
-          "404": {
-            "description": "User not found"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                  },
-                  "password": {
-                    "type": "string",
-                    "example": "NewP@ssw0rd"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "User"
-        ],
-        "summary": "Delete a user",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            },
-            "description": "User ID"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "User deleted successfully"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "User not found"
-          },
-          "500": {
-            "description": "Internal server error"
           }
         }
       }
@@ -333,6 +189,47 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Delete a user",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "User ID"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "User deleted successfully"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
       }
@@ -813,55 +710,6 @@
           },
           "500": {
             "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/logs/coordinates": {
-      "post": {
-        "tags": [
-          "log"
-        ],
-        "summary": "Add coordinates to a log",
-        "description": "",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Coordinates added successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/addCoordinatesResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input data"
-          },
-          "404": {
-            "description": "Log not found"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/addCoordinatesDTO"
-              }
-            }
           }
         }
       }
@@ -1479,9 +1327,179 @@
         }
       }
     },
-    "/": {
+    "/friends/request": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "example": "any"
+                  },
+                  "userId": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/respond": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "requestId": {
+                    "example": "any"
+                  },
+                  "accept": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends/{userId}": {
       "get": {
         "description": "",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/friends/{friendId}": {
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "friendId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/friends/requests/{userId}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/friends/{userId}/logs": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "default": {
             "description": ""

@@ -50,9 +50,7 @@ export default function Expenses() {
           onPress={() => {
             /* Optionally add a refetch here */
           }}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
+        ></TouchableOpacity>
       </View>
     );
   }

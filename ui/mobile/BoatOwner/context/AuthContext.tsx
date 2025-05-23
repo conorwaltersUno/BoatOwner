@@ -19,35 +19,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       const accessToken = await getAccessToken();
-      if (accessToken) {
-        setAuthenticated(true);
+      const refreshToken = await getRefreshToken();
+
+      // If no tokens, log out
+      if (!accessToken && !refreshToken) {
+        setAuthenticated(false);
         setAuthLoading(false);
         return;
       }
-      const refreshToken = await getRefreshToken();
-      if (refreshToken) {
+
+      if (accessToken) {
         try {
-          const res = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || ""}/api/users/token`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refreshToken }),
+          const res = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || ""}/auth-check`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
           });
           if (res.ok) {
-            const data = await res.json();
-            await saveTokens(data.accessToken, refreshToken);
             setAuthenticated(true);
-          } else {
-            await clearTokens();
-            setAuthenticated(false);
+            setAuthLoading(false);
+            return;
+          }
+
+          if (res.status === 401 && refreshToken) {
+            const refreshRes = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || ""}/api/users/token`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refreshToken }),
+            });
+            if (refreshRes.ok) {
+              const data = await refreshRes.json();
+              await saveTokens(data.accessToken, refreshToken);
+              setAuthenticated(true);
+              setAuthLoading(false);
+              return;
+            }
           }
         } catch {
-          await clearTokens();
-          setAuthenticated(false);
+          console.log("Error during authentication check, will require re-login");
         }
-      } else {
-        setAuthenticated(false);
       }
+
+      await clearTokens();
+      setAuthenticated(false);
       setAuthLoading(false);
+      router.replace("/(auth)/SignIn");
     })();
   }, []);
 

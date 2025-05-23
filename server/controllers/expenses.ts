@@ -43,7 +43,7 @@ async function getExpensesByBoatId(req: Request, res: Response) {
     const expenses: ExpenseDTO[] = await ExpenseService.getExpensesByBoatId(Number(req.params.boat_id));
 
     if (expenses.length === 0) {
-      return res.status(notFoundStatus).json({ message: "No expenses found for this boat" });
+      return res.status(notFoundStatus).json([]);
     }
 
     return res.status(okStatus).json(expenses);

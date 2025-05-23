@@ -7,7 +7,8 @@ export function useSignUp() {
     mutationFn: async (data: { email: string; password: string; boat_name: string; boat_model: string }) => {
       const { email, password, boat_name, boat_model } = data;
       const res = await signUp(email, password, boat_name, boat_model);
-      await saveTokens(res.accessToken, res.refreshToken, res.user.id, res.boat?.id);
+      console.log(res);
+      await saveTokens(res.accessToken, res.refreshToken, res.user.id, res.boatId);
       return res;
     },
   });

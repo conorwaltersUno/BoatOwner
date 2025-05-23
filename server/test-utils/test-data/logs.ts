@@ -10,11 +10,9 @@ export const MockLog: LogDTO = {
     { x: 10, y: 20 },
     { x: 10, y: 20 },
   ],
-  photo_urls: [],
   log_started: new Date(),
   log_ended: new Date(),
   created_on: new Date(),
-  isrecordinglocation: false,
 };
 
 export const MockLogArray: LogDTO[] = [
@@ -28,11 +26,9 @@ export const MockLogArray: LogDTO[] = [
       { x: 10, y: 20 },
       { x: 10, y: 20 },
     ],
-    photo_urls: [],
     log_started: new Date(),
     log_ended: new Date(),
     created_on: new Date(),
-    isrecordinglocation: false,
   },
 ];
 
@@ -44,9 +40,8 @@ export const MockLogCreate: CreateLogDTO = {
     { x: 10, y: 20 },
     { x: 10, y: 20 },
   ],
-  photo_urls: [],
   log_started: new Date(),
   log_ended: new Date(),
   created_on: new Date(),
-  isrecordinglocation: false,
+  duration: 100,
 };

@@ -65,9 +65,36 @@ model tasks {
 }
 
 model user {
-  id       Int      @id @default(autoincrement())
-  email    String   @unique @db.VarChar(255)
-  password String   @db.VarChar(255)
-  created  DateTime @default(now()) @db.Timestamp(6)
-  boat     boat[]
+  id                                                Int               @id @default(autoincrement())
+  email                                             String            @unique @db.VarChar(255)
+  password                                          String            @db.VarChar(255)
+  created                                           DateTime          @default(now()) @db.Timestamp(6)
+  boat                                              boat[]
+  friend_requests_friend_requests_receiver_idTouser friend_requests[] @relation("friend_requests_receiver_idTouser")
+  friend_requests_friend_requests_sender_idTouser   friend_requests[] @relation("friend_requests_sender_idTouser")
+  friends_friends_friend_idTouser                   friends[]         @relation("friends_friend_idTouser")
+  friends_friends_user_idTouser                     friends[]         @relation("friends_user_idTouser")
+}
+
+model friend_requests {
+  id                                     Int      @id @default(autoincrement())
+  sender_id                              Int
+  receiver_id                            Int
+  status                                 String   @default("pending") @db.VarChar(20)
+  created                                DateTime @default(now()) @db.Timestamp(6)
+  user_friend_requests_receiver_idTouser user     @relation("friend_requests_receiver_idTouser", fields: [receiver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_receiver")
+  user_friend_requests_sender_idTouser   user     @relation("friend_requests_sender_idTouser", fields: [sender_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sender")
+
+  @@unique([sender_id, receiver_id], map: "unique_request")
+}
+
+model friends {
+  id                           Int      @id @default(autoincrement())
+  user_id                      Int
+  friend_id                    Int
+  created                      DateTime @default(now()) @db.Timestamp(6)
+  user_friends_friend_idTouser user     @relation("friends_friend_idTouser", fields: [friend_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_friend")
+  user_friends_user_idTouser   user     @relation("friends_user_idTouser", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user")
+
+  @@unique([user_id, friend_id], map: "unique_friendship")
 }

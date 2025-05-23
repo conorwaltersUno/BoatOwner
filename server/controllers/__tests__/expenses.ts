@@ -34,12 +34,14 @@ describe("ExpenseController", () => {
 
       const responseData = response._getJSONData().map((expense: any) => ({
         ...expense,
+        amount: expense.amount.toString(),
         expense_date: new Date(expense.expense_date).toISOString(),
         created_on: new Date(expense.created_on).toISOString(),
       }));
 
       const expectedData = MockExpenseArray.map((expense) => ({
         ...expense,
+        amount: expense.amount.toString(),
         expense_date: new Date(expense.expense_date).toISOString(),
         created_on: new Date(expense.created_on).toISOString(),
       }));
@@ -94,12 +96,14 @@ describe("ExpenseController", () => {
       const responseData = response._getJSONData();
       const formattedResponseData = {
         ...responseData,
+        amount: responseData.amount.toString(),
         expense_date: new Date(responseData.expense_date).toISOString(),
         created_on: new Date(responseData.created_on).toISOString(),
       };
 
       const expectedData = {
         ...MockExpenseCreate,
+        amount: MockExpenseCreate.amount.toString(),
         expense_date: new Date(MockExpenseCreate.expense_date).toISOString(),
         created_on: new Date(MockExpenseCreate.created_on).toISOString(),
       };
@@ -156,12 +160,14 @@ describe("ExpenseController", () => {
       const responseData = response._getJSONData();
       const formattedResponseData = responseData.map((expense: any) => ({
         ...expense,
+        amount: expense.amount.toString(),
         expense_date: new Date(expense.expense_date).toISOString(),
         created_on: new Date(expense.created_on).toISOString(),
       }));
 
       const expectedData = MockExpenseArray.map((expense) => ({
         ...expense,
+        amount: expense.amount.toString(),
         expense_date: new Date(expense.expense_date).toISOString(),
         created_on: new Date(expense.created_on).toISOString(),
       }));
@@ -204,7 +210,7 @@ describe("ExpenseController", () => {
     it("should return a created expense", async () => {
       const body: CreateExpenseDTO = {
         expense_type: "Fuel",
-        amount: 100,
+        amount: new (require("@prisma/client").Prisma.Decimal)(100),
         boat_id: 1,
         expense_date: new Date("2024-07-02T11:00:00.000Z"),
         created_on: new Date("2024-07-02T11:00:00.000Z"),
@@ -228,12 +234,14 @@ describe("ExpenseController", () => {
       const responseData = response._getJSONData();
       const formattedResponseData = {
         ...responseData,
+        amount: responseData.amount.toString(),
         expense_date: new Date(responseData.expense_date).toISOString(),
         created_on: new Date(responseData.created_on).toISOString(),
       };
 
       const expectedData = {
         ...returnValue,
+        amount: returnValue.amount.toString(),
         expense_date: new Date(returnValue.expense_date).toISOString(),
         created_on: new Date(returnValue.created_on).toISOString(),
       };
@@ -244,7 +252,7 @@ describe("ExpenseController", () => {
     it("should return a 400 error if expense creation fails", async () => {
       const body: CreateExpenseDTO = {
         expense_type: "Fuel",
-        amount: 100,
+        amount: new (require("@prisma/client").Prisma.Decimal)(100),
         boat_id: 1,
         expense_date: new Date("2024-07-02T11:00:00.000Z"),
         created_on: new Date("2024-07-02T11:00:00.000Z"),
@@ -269,7 +277,7 @@ describe("ExpenseController", () => {
     it("should return a 500 error when an exception is thrown", async () => {
       const body: CreateExpenseDTO = {
         expense_type: "Fuel",
-        amount: 100,
+        amount: new (require("@prisma/client").Prisma.Decimal)(100),
         boat_id: 1,
         expense_date: new Date("2024-07-02T11:00:00.000Z"),
         created_on: new Date("2024-07-02T11:00:00.000Z"),
@@ -295,10 +303,10 @@ describe("ExpenseController", () => {
   describe("updateExpense", () => {
     it("should return an updated expense", async () => {
       const body: UpdateExpenseDTO = {
+        id: 1,
         expense_type: "Maintenance",
         expense_date: new Date("2024-07-02T11:00:00.000Z"),
-        created_on: new Date("2024-07-02T11:00:00.000Z"),
-        amount: 200,
+        amount: new (require("@prisma/client").Prisma.Decimal)(200),
       };
       const request = httpMocks.createRequest({
         method: "PUT",
@@ -307,7 +315,7 @@ describe("ExpenseController", () => {
         body: body,
       });
       const response: MockResponse<Response> = createResponse();
-      const returnValue = { id: 1, ...body };
+      const returnValue = { id: 1, ...body, created_on: new Date("2024-07-02T11:00:00.000Z") };
 
       when(ExpenseService.updateExpense).calledWith(1, body).mockReturnValueOnce(Promise.resolve(returnValue));
       await updateExpense(request, response);
@@ -317,12 +325,14 @@ describe("ExpenseController", () => {
       const responseData = response._getJSONData();
       const formattedResponseData = {
         ...responseData,
+        amount: responseData.amount.toString(),
         expense_date: new Date(responseData.expense_date).toISOString(),
         created_on: new Date(responseData.created_on).toISOString(),
       };
 
       const expectedData = {
         ...returnValue,
+        amount: returnValue.amount.toString(),
         expense_date: new Date(returnValue.expense_date).toISOString(),
         created_on: new Date(returnValue.created_on).toISOString(),
       };
@@ -333,9 +343,9 @@ describe("ExpenseController", () => {
     it("should return a 404 error when expense is not found", async () => {
       const body: UpdateExpenseDTO = {
         expense_type: "Maintenance",
-        amount: 200,
+        amount: new (require("@prisma/client").Prisma.Decimal)(200),
         expense_date: new Date("2024-07-02T11:00:00.000Z"),
-        created_on: new Date("2024-07-02T11:00:00.000Z"),
+        id: 1,
       };
       const request = httpMocks.createRequest({
         method: "PUT",
@@ -355,9 +365,9 @@ describe("ExpenseController", () => {
     it("should return a 500 error when an exception is thrown", async () => {
       const body: UpdateExpenseDTO = {
         expense_type: "Maintenance",
-        amount: 200,
+        amount: new (require("@prisma/client").Prisma.Decimal)(200),
         expense_date: new Date("2024-07-02T11:00:00.000Z"),
-        created_on: new Date("2024-07-02T11:00:00.000Z"),
+        id: 1,
       };
       const request = httpMocks.createRequest({
         method: "PUT",

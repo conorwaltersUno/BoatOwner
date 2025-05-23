@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Ionicons, FontAwesome } from "@expo/vector-icons";
+import { Ionicons, FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
   return (
@@ -37,6 +37,20 @@ export default function TabLayout() {
         options={{
           title: "Settings",
           tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="friendsScreen"
+        options={{
+          title: "Friends",
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="account-group" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="feedScreen"
+        options={{
+          title: "Feed",
+          tabBarIcon: ({ color, size }) => <MaterialCommunityIcons name="rss" color={color} size={size} />,
         }}
       />
     </Tabs>
