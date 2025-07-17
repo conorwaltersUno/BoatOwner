@@ -49,7 +49,7 @@ function getYearStats(logs: LogDTO[]) {
   const longestHours = longestTrip ? (longestTrip / (1000 * 60 * 60)).toFixed(1) : "0";
   const shortestHours = shortestTrip !== Number.MAX_SAFE_INTEGER ? (shortestTrip / (1000 * 60 * 60)).toFixed(1) : "0";
   const avgCrew = numLogs ? (totalCrew / numLogs).toFixed(1) : "0";
-  const totalDistanceNm = (totalDistance * 60).toFixed(1); // fake conversion to nautical miles
+  const totalDistanceNm = (totalDistance * 60).toFixed(1);
 
   return {
     numLogs,

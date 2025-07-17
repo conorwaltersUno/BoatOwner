@@ -6,9 +6,7 @@ import { useEffect, useState } from "react";
 import { getBoatId } from "@/utils/tokenStorage";
 
 function useGetLogs() {
-  //get this id from user object when AUTH is implemented
   const [boatId, setBoatId] = useState<number | null>(null);
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     getBoatId().then(setBoatId);
