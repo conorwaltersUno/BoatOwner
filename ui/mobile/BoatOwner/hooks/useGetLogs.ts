@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {} from "../constants/query";
 import { QUERYKEYS } from "@/constants/query";
 import { getLogs } from "@/api/fetch/logs.fetch";

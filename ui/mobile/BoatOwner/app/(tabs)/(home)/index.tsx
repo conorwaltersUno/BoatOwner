@@ -8,7 +8,6 @@ import LoggingModal from "../../../components/SaveLogModal";
 export default function HomeScreen() {
   const mapRef = useRef<MapView>(null);
 
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [watcher, setWatcher] = useState<Location.LocationSubscription | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -31,13 +30,11 @@ export default function HomeScreen() {
       }
 
       const currentLocation = await Location.getCurrentPositionAsync({});
-      setLocation(currentLocation);
-      const initialRegion = {
+      setRegion({
         latitude: currentLocation.coords.latitude,
         longitude: currentLocation.coords.longitude,
         ...zoomLevel,
-      };
-      setRegion(initialRegion);
+      });
     })();
   }, []);
 
@@ -55,6 +52,12 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, [watcher]);
 
+  React.useEffect(() => {
+    if (region) {
+      mapRef.current?.animateToRegion(region, 500);
+    }
+  }, [region, zoomLevel]);
+
   const startLogging = async () => {
     if (watcher) return;
 
@@ -70,7 +73,6 @@ export default function HomeScreen() {
       },
       (newLoc) => {
         const { latitude, longitude } = newLoc.coords;
-        setLocation(newLoc);
 
         const newRegion = {
           latitude,
@@ -107,30 +109,6 @@ export default function HomeScreen() {
       setWatcher(null);
       setModalVisible(true);
     }
-  };
-
-  const resetLoggingState = () => {
-    setLocations([]);
-    setStartTime(null);
-    setSeconds(0);
-    setLocation(null);
-    setIsFollowingUser(true);
-  };
-
-  const handleModalClose = () => {
-    Alert.alert("Confirm", "Are you sure you want to close this log, you will lose any unsaved data?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Yes, Close",
-        onPress: () => {
-          setModalVisible(false);
-          resetLoggingState();
-        },
-      },
-    ]);
   };
 
   const formatTime = (s: number) => {

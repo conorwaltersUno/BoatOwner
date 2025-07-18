@@ -1,7 +1,8 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent } from "@testing-library/react-native";
 import { Alert } from "react-native";
 
+// Move all imports to the top of the file
 // Mocks for hooks and components
 const mockAddTask = jest.fn();
 const mockDeleteTask = jest.fn();
@@ -116,3 +117,12 @@ describe("Todo Screen", () => {
     expect(getByText("You haven't added any tasks. Tap below to create your first task!")).toBeTruthy();
   });
 });
+// Add display name to Todo for lint
+(Todo as any).displayName = 'Todo';
+
+const TodoTestComponent = () => {
+  return <Todo />;
+};
+TodoTestComponent.displayName = "TodoTestComponent";
+
+export default TodoTestComponent;

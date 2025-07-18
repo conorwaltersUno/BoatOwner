@@ -27,7 +27,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       setAuthenticated(true);
       router.replace("/(tabs)/(home)");
     }
-  }, [data]);
+  }, [data, router, setAuthenticated]);
 
   return (
     <View style={styles.container}>

@@ -1,6 +1,5 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
-import { View, Text, TouchableOpacity } from "react-native";
 import CalendarLogsView from "@/app/(tabs)/calendar";
 
 // Mock hooks and components
@@ -128,3 +127,13 @@ describe("CalendarLogsView", () => {
     expect(getByText("No Logs Yet")).toBeTruthy();
   });
 });
+
+// Add display name to CalendarLogsView for lint
+CalendarLogsView.displayName = 'CalendarLogsView';
+
+const CalendarTestComponent = () => {
+  return <CalendarLogsView />;
+};
+CalendarTestComponent.displayName = "CalendarTestComponent";
+
+export default CalendarTestComponent;

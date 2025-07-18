@@ -1,4 +1,3 @@
-import { CustomBackButton } from "@/components/CustomBackButton";
 import { Stack } from "expo-router";
 
 export default function RootLayout() {

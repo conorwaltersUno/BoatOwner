@@ -95,24 +95,58 @@ export default function Friend() {
             data={friendsLogs}
             keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => {
-              const user = item.owner || item.user || item.friend || {};
+              console.log('Rendering log item:', item);
+              // --- FRIENDS_LOGS_FIX: Robustly extract user and boat info for display ---
+              // This logic tries multiple possible fields for user and boat info to handle various backend response shapes.
+              // User: tries owner, user, friend, friend_details, username fields in order.
+              // Boat: tries boat.name/model, boat_name, boat_model, and falls back to boat ID or 'Unknown'.
+              // This ensures the UI always displays the most accurate info available, and never shows 'Unknown User' unless all options are missing.
+              const user =
+                item.owner?.username ? item.owner :
+                item.user?.username ? item.user :
+                item.friend?.username ? item.friend :
+                item.friend_details?.username ? item.friend_details :
+                item.username ? { username: item.username } :
+                {};
+              const boat =
+                item.boat?.name || item.boat?.model ? item.boat :
+                (item.boat_name || item.boat_model) ? { name: item.boat_name, model: item.boat_model } :
+                null;
+              const boatName = boat?.name || item.boat_name || item.boatName || null;
+              const boatModel = boat?.model || item.boat_model || item.boatModel || null;
+              const boatId = item.boat_id || item.boatId || null;
+              // Remove unused variable lint warning by using default for user
+              const username = user.username || 'Unknown User';
               return (
                 <View style={styles.logCard}>
                   {/* User Info (Top) */}
                   <View style={styles.logUserRow}>
                     <View style={styles.avatarCircleLarge}>
-                      <Text style={styles.avatarTextLarge}>{user.username?.[0]?.toUpperCase() || '?'}</Text>
+                      <Text style={styles.avatarTextLarge}>{username[0]?.toUpperCase() || '?'}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.logUsername}>{user.username || 'Unknown User'}</Text>
+                      <Text style={styles.logUsername}>{username}</Text>
                     </View>
                   </View>
                   {/* Log Content (Middle): Route Map with Replay */}
                   <LogRouteMapWithReplay log={item} height={180} showReplayControls onMapPress={() => { setSelectedLog(item); setLogModalVisible(true); }} />
                   {/* Log Meta (Bottom) */}
                   <View style={styles.logMetaRow}>
-                    <Text style={styles.logMetaText}>Boat: {item.boat_name || item.boat_id}</Text>
-                    <Text style={styles.logMetaText}>Start: {item.log_started ? new Date(item.log_started).toLocaleString() : 'N/A'}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.logMetaText}>
+                        <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>User: </Text>
+                        {username}
+                      </Text>
+                      <Text style={styles.logMetaText}>
+                        <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>Boat: </Text>
+                        {boatName ? boatName : boatId ? `ID ${boatId}` : 'Unknown'}
+                        {boatModel ? `  •  ${boatModel}` : ''}
+                      </Text>
+                      <Text style={styles.logMetaText}>
+                        <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>Start: </Text>
+                        {item.log_started ? new Date(item.log_started).toLocaleString() : 'N/A'}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               );
@@ -406,5 +440,47 @@ const styles = StyleSheet.create({
     color: '#e74c3c',
     marginBottom: 8,
     textAlign: 'center',
+  },
+  addButton: {
+    backgroundColor: '#2E66E7',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    marginLeft: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonDisabled: {
+    backgroundColor: '#b3c6f7',
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  acceptButton: {
+    backgroundColor: '#2ecc71',
+    borderRadius: 8,
+    padding: 8,
+    marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rejectButton: {
+    backgroundColor: '#e74c3c',
+    borderRadius: 8,
+    padding: 8,
+    marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  username: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E66E7',
+  },
+  email: {
+    fontSize: 13,
+    color: '#888',
   },
 });

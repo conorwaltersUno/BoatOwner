@@ -11,7 +11,7 @@ interface LogRouteMapWithReplayProps {
   onMapPress?: () => void;
 }
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, height = 200, showReplayControls = true, onMapPress }) => {
   const [replayIndex, setReplayIndex] = useState(0);

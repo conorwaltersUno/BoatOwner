@@ -1,5 +1,5 @@
 import LogDetailModal from "@/components/LogDetailModal";
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, Button, Dimensions } from "react-native";
 import { Calendar, DateData } from "react-native-calendars";
 import { useGetLogs } from "../../hooks/index";
@@ -211,10 +211,10 @@ export default function CalendarLogsView() {
             textMonthFontSize: 20,
             textDayHeaderFontSize: 14,
           }}
-          style={[styles.calendar, { width: SCREEN_WIDTH }]}
+          style={[styles.calendar, { width: '100%', minHeight: SCREEN_HEIGHT * 0.28, maxHeight: SCREEN_HEIGHT * 0.32, marginBottom: 8 }]}
         />
       </View>
-      <View style={styles.statsCard}>
+      <View style={styles.statsCardFixed}>
         <Text style={styles.statsTitle}>Yearly Stats</Text>
         <View style={styles.statsGrid}>
           <View style={styles.statsGridRow}>
@@ -249,9 +249,7 @@ export default function CalendarLogsView() {
           </View>
         </View>
       </View>
-
       {renderLogSelectionModal()}
-
       {selectedLog && (
         <LogDetailModal
           modalVisibility={isDetailModalVisible}
@@ -268,13 +266,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
+  statsCardFixed: {
+    width: "98%",
+    alignSelf: 'center',
+    backgroundColor: "#F0EFF4",
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 4,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#b0b3bb",
+    justifyContent: 'flex-start',
+    minHeight: SCREEN_HEIGHT * 0.22,
+    maxHeight: SCREEN_HEIGHT * 0.35,
+  },
   flexFill: {
     flex: 1,
     backgroundColor: "#f9f9f9",
+    minHeight: SCREEN_HEIGHT,
+    width: '100%',
   },
   flexGrow: {
-    flex: 1,
-    justifyContent: "center",
+    width: '100%',
+    minHeight: SCREEN_HEIGHT * 0.28,
+    maxHeight: SCREEN_HEIGHT * 0.32,
+    justifyContent: 'flex-start',
   },
   calendarHeader: {
     width: "100%",
@@ -282,8 +303,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 24,
-    paddingTop: 32,
-    marginBottom: 8,
+    paddingTop: 24,
+    marginBottom: 4,
   },
   calendarHeaderTitle: {
     fontSize: 22,
@@ -292,20 +313,23 @@ const styles = StyleSheet.create({
   },
   calendar: {
     alignSelf: "center",
-    minHeight: SCREEN_HEIGHT * 0.55,
     borderRadius: 18,
     overflow: "hidden",
-    marginBottom: 18,
+    marginBottom: 8,
     marginTop: 2,
+    width: '100%',
+    minHeight: SCREEN_HEIGHT * 0.28,
+    maxHeight: SCREEN_HEIGHT * 0.32,
   },
-  statsCard: {
-    width: "94%",
+  statsCardExpanded: {
+    flex: 1,
+    width: "98%",
+    alignSelf: 'center',
     backgroundColor: "#F0EFF4",
     borderRadius: 16,
-    padding: 18,
-    marginLeft: 12,
-    marginTop: 8,
-    marginBottom: 25,
+    padding: 14,
+    marginTop: 4,
+    marginBottom: 10,
     shadowColor: "#000",
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -313,6 +337,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderWidth: 1,
     borderColor: "#b0b3bb",
+    justifyContent: 'flex-start',
   },
   statsTitle: {
     fontSize: 18,

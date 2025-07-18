@@ -1,5 +1,8 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render } from "@testing-library/react-native";
+
+// Move import to top if not already
+import Settings from "@/app/(tabs)/settings";
 
 // Define mocks outside the factory so they're shared
 const mockClearTokens = jest.fn();
@@ -18,8 +21,6 @@ jest.mock("expo-router", () => ({
 jest.mock("@expo/vector-icons", () => ({
   FontAwesome: "FontAwesome",
 }));
-
-import Settings from "@/app/(tabs)/settings";
 
 describe("Settings Screen", () => {
   beforeEach(() => {

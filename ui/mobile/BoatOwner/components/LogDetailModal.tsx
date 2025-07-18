@@ -11,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  Dimensions,
 } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
@@ -27,8 +26,6 @@ interface LogDetailModalProps {
   log: UpdateLogDTO;
   onLogUpdated?: (updatedLog: UpdateLogDTO) => void;
 }
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setModalVisibility, log, onLogUpdated }) => {
   const { mutate: updateLog } = useUpdateLog();

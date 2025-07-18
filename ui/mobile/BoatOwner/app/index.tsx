@@ -1,8 +1,7 @@
+import { ActivityIndicator, View } from "react-native";
 import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useRouter } from "expo-router";
-import { ActivityIndicator, View } from "react-native";
-import { clearTokens } from "@/utils/tokenStorage";
 
 export default function AppEntry() {
   const { isAuthenticated, authLoading } = useAuth();
@@ -16,7 +15,7 @@ export default function AppEntry() {
         router.replace("/(tabs)/(home)");
       }
     }
-  }, [authLoading, isAuthenticated]);
+  }, [authLoading, isAuthenticated, router]);
 
   if (authLoading) {
     return (

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERYKEYS } from "@/constants/query";
-import { CreateExpenseDTO, ExpenseDTO } from "@/interfaces/expenses/expense";
+import { CreateExpenseDTO } from "@/interfaces/expenses/expense";
 import { postExpense } from "@/api/fetch/expenses.fetch";
 import { getBoatId } from "@/utils/tokenStorage";
 import { useState, useEffect } from "react";
