@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSearchUsers, useSendFriendRequest, usePendingRequests, useAcceptFriendRequest, useRejectFriendRequest, useFriendsList } from '@/hooks/useFriends';
+import { useSearchUsers, useSendFriendRequest, usePendingRequests, useAcceptFriendRequest, useRejectFriendRequest, useFriendsList, useFriendsLogs } from '@/hooks/useFriends';
+import { LogDTO } from '@/interfaces/log/log';
+import LogDetailModal from '@/components/LogDetailModal';
+import LogRouteMapWithReplay from '@/components/LogRouteMapWithReplay';
 
 export default function Friend() {
+  const [activeTab, setActiveTab] = useState<'logs' | 'manage'>('logs');
   const [searchQuery, setSearchQuery] = useState('');
   const { data: searchResults, isLoading: searchLoading, error: searchError } = useSearchUsers(searchQuery);
   const { mutate: sendRequest, isPending: sending } = useSendFriendRequest();
@@ -11,6 +15,9 @@ export default function Friend() {
   const { mutate: acceptRequest } = useAcceptFriendRequest();
   const { mutate: rejectRequest } = useRejectFriendRequest();
   const { data: friendsList, isLoading: friendsLoading, error: friendsError } = useFriendsList();
+  const { data: friendsLogs = [], isLoading: logsLoading, error: logsError } = useFriendsLogs();
+  const [selectedLog, setSelectedLog] = useState<LogDTO | null>(null);
+  const [isLogModalVisible, setLogModalVisible] = useState(false);
 
   // Loading guard
   if (searchLoading || pendingLoading || friendsLoading) {
@@ -62,101 +69,164 @@ export default function Friend() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search users by username..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          autoCapitalize="none"
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={20} color="#aaa" />
-          </TouchableOpacity>
-        )}
+      {/* Tab Switcher */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'logs' && styles.tabButtonActive]}
+          onPress={() => setActiveTab('logs')}
+        >
+          <Text style={[styles.tabText, activeTab === 'logs' && styles.tabTextActive]}>Friends' Logs</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'manage' && styles.tabButtonActive]}
+          onPress={() => setActiveTab('manage')}
+        >
+          <Text style={[styles.tabText, activeTab === 'manage' && styles.tabTextActive]}>Manage Friends</Text>
+        </TouchableOpacity>
       </View>
-      {/* Search Results */}
-      {searchQuery.length >= 2 && (
+
+      {/* Tab Content */}
+      {activeTab === 'logs' ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Search Results</Text>
-          {searchLoading && <ActivityIndicator />}
+          <Text style={styles.sectionTitle}>Friends' Logs</Text>
+          {logsLoading && <ActivityIndicator />}
+          {logsError && <Text style={styles.errorText}>Error loading friends' logs</Text>}
           <FlatList
-            data={searchResults || []}
+            data={friendsLogs}
             keyExtractor={item => item.id.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.userCard}>
-                <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarText}>{item.username[0]?.toUpperCase() || '?'}</Text>
+            renderItem={({ item }) => {
+              const user = item.owner || item.user || item.friend || {};
+              return (
+                <View style={styles.logCard}>
+                  {/* User Info (Top) */}
+                  <View style={styles.logUserRow}>
+                    <View style={styles.avatarCircleLarge}>
+                      <Text style={styles.avatarTextLarge}>{user.username?.[0]?.toUpperCase() || '?'}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.logUsername}>{user.username || 'Unknown User'}</Text>
+                    </View>
+                  </View>
+                  {/* Log Content (Middle): Route Map with Replay */}
+                  <LogRouteMapWithReplay log={item} height={180} showReplayControls onMapPress={() => { setSelectedLog(item); setLogModalVisible(true); }} />
+                  {/* Log Meta (Bottom) */}
+                  <View style={styles.logMetaRow}>
+                    <Text style={styles.logMetaText}>Boat: {item.boat_name || item.boat_id}</Text>
+                    <Text style={styles.logMetaText}>Start: {item.log_started ? new Date(item.log_started).toLocaleString() : 'N/A'}</Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.username}>{item.username}</Text>
-                  <Text style={styles.email}>{item.email}</Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.addButton, isUserFriendOrPending(item.username) && styles.addButtonDisabled]}
-                  onPress={() => handleSendRequest(item.username)}
-                  disabled={sending || isUserFriendOrPending(item.username)}
-                >
-                  <Text style={styles.addButtonText}>
-                    {isUserFriendOrPending(item.username) ? 'Requested' : 'Add'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            ListEmptyComponent={!searchLoading ? <Text style={styles.emptyText}>No users found.</Text> : null}
+              );
+            }}
+            ListEmptyComponent={!logsLoading ? <Text style={styles.emptyText}>No friends' logs yet.</Text> : null}
           />
+          {selectedLog && (
+            <LogDetailModal
+              modalVisibility={isLogModalVisible}
+              setModalVisibility={setLogModalVisible}
+              log={selectedLog}
+            />
+          )}
+        </View>
+      ) : (
+        <View>
+          {/* Search Users */}
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search users by username..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color="#aaa" />
+              </TouchableOpacity>
+            )}
+          </View>
+          {/* Search Results */}
+          {searchQuery.length >= 2 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Search Results</Text>
+              {searchLoading && <ActivityIndicator />}
+              <FlatList
+                data={searchResults || []}
+                keyExtractor={item => item.id.toString()}
+                renderItem={({ item }) => (
+                  <View style={styles.userCard}>
+                    <View style={styles.avatarCircle}>
+                      <Text style={styles.avatarText}>{item.username[0]?.toUpperCase() || '?'}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.username}>{item.username}</Text>
+                      <Text style={styles.email}>{item.email}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.addButton, isUserFriendOrPending(item.username) && styles.addButtonDisabled]}
+                      onPress={() => handleSendRequest(item.username)}
+                      disabled={sending || isUserFriendOrPending(item.username)}
+                    >
+                      <Text style={styles.addButtonText}>
+                        {isUserFriendOrPending(item.username) ? 'Requested' : 'Add'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                ListEmptyComponent={!searchLoading ? <Text style={styles.emptyText}>No users found.</Text> : null}
+              />
+            </View>
+          )}
+          {/* Pending Requests */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Pending Requests</Text>
+            {pendingLoading && <ActivityIndicator />}
+            <FlatList
+              data={pendingRequests || []}
+              keyExtractor={item => item.id.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.requestCard}>
+                  <View style={styles.avatarCircle}>
+                    <Text style={styles.avatarText}>{item.sender_details.username[0]?.toUpperCase() || '?'}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.username}>{item.sender_details.username}</Text>
+                    <Text style={styles.email}>{item.sender_details.email}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.acceptButton} onPress={() => handleAcceptRequest(item.id)}>
+                    <Ionicons name="checkmark" size={20} color="#fff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.rejectButton} onPress={() => handleRejectRequest(item.id)}>
+                    <Ionicons name="close" size={20} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              )}
+              ListEmptyComponent={!pendingLoading ? <Text style={styles.emptyText}>No pending requests.</Text> : null}
+            />
+          </View>
+          {/* Friends List */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Your Friends</Text>
+            {friendsLoading && <ActivityIndicator />}
+            <FlatList
+              data={friendsList || []}
+              keyExtractor={item => item.id.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.friendCard}>
+                  <View style={styles.avatarCircle}>
+                    <Text style={styles.avatarText}>{item.friend_details.username[0]?.toUpperCase() || '?'}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.username}>{item.friend_details.username}</Text>
+                    <Text style={styles.email}>{item.friend_details.email}</Text>
+                  </View>
+                </View>
+              )}
+              ListEmptyComponent={!friendsLoading ? <Text style={styles.emptyText}>No friends yet.</Text> : null}
+            />
+          </View>
         </View>
       )}
-      {/* Pending Requests */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Pending Requests</Text>
-        {pendingLoading && <ActivityIndicator />}
-        <FlatList
-          data={pendingRequests || []}
-          keyExtractor={item => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.requestCard}>
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarText}>{item.sender_details.username[0]?.toUpperCase() || '?'}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.username}>{item.sender_details.username}</Text>
-                <Text style={styles.email}>{item.sender_details.email}</Text>
-              </View>
-              <TouchableOpacity style={styles.acceptButton} onPress={() => handleAcceptRequest(item.id)}>
-                <Ionicons name="checkmark" size={20} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.rejectButton} onPress={() => handleRejectRequest(item.id)}>
-                <Ionicons name="close" size={20} color="#fff" />
-              </TouchableOpacity>
-            </View>
-          )}
-          ListEmptyComponent={!pendingLoading ? <Text style={styles.emptyText}>No pending requests.</Text> : null}
-        />
-      </View>
-      {/* Friends List */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Friends</Text>
-        {friendsLoading && <ActivityIndicator />}
-        <FlatList
-          data={friendsList || []}
-          keyExtractor={item => item.id.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.friendCard}>
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarText}>{item.friend_details.username[0]?.toUpperCase() || '?'}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.username}>{item.friend_details.username}</Text>
-                <Text style={styles.email}>{item.friend_details.email}</Text>
-              </View>
-            </View>
-          )}
-          ListEmptyComponent={!friendsLoading ? <Text style={styles.emptyText}>No friends yet.</Text> : null}
-        />
-      </View>
     </View>
   );
 }
@@ -250,41 +320,81 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#2E66E7',
   },
-  username: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+  avatarCircleLarge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#e0e7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
-  email: {
-    fontSize: 14,
+  avatarTextLarge: {
+    fontWeight: 'bold',
+    fontSize: 22,
+    color: '#2E66E7',
+  },
+  logCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 22,
+    padding: 0,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  logUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  logUsername: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E66E7',
+  },
+  logMetaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: '#f7f7fa',
+  },
+  logMetaText: {
+    fontSize: 13,
     color: '#888',
   },
-  addButton: {
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 18,
+    backgroundColor: '#e0e7ff',
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  tabButtonActive: {
     backgroundColor: '#2E66E7',
-    borderRadius: 20,
-    paddingVertical: 7,
-    paddingHorizontal: 18,
-    marginLeft: 10,
   },
-  addButtonDisabled: {
-    backgroundColor: '#b3c6f7',
-  },
-  addButtonText: {
-    color: '#fff',
+  tabText: {
+    fontSize: 16,
+    color: '#2E66E7',
     fontWeight: '600',
-    fontSize: 15,
   },
-  acceptButton: {
-    backgroundColor: '#34C759',
-    borderRadius: 20,
-    padding: 8,
-    marginLeft: 8,
-  },
-  rejectButton: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 20,
-    padding: 8,
-    marginLeft: 8,
+  tabTextActive: {
+    color: '#fff',
   },
   emptyText: {
     textAlign: 'center',
