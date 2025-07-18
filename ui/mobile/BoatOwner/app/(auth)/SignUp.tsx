@@ -17,7 +17,7 @@ type SignUpScreenProps = {
 };
 
 export default function SignUpScreen({ navigation }: SignUpScreenProps) {
-  const [form, setForm] = useState({ email: "", password: "", boat_name: "", boat_model: "" });
+  const [form, setForm] = useState({ email: "", password: "", username: "", boat_name: "", boat_model: "" });
   const { mutate, isPending, error, data } = useSignUp();
   const { setAuthenticated } = useAuth();
   const router = useRouter();
@@ -49,6 +49,13 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
         onChangeText={(password) => setForm((f) => ({ ...f, password }))}
         secureTextEntry
         style={styles.input}
+      />
+      <TextInput
+        placeholder="Username"
+        value={form.username}
+        onChangeText={(username) => setForm((f) => ({ ...f, username }))}
+        style={styles.input}
+        autoCapitalize="none"
       />
       <TextInput
         placeholder="Boat Name"

@@ -89,6 +89,8 @@ ui/mobile/BoatOwner/
      docker compose down -v
      docker volume prune -f
      docker compose up --build -d
+     npx prisma db pull
+     npx prisma generate
      ```
    - **Verify the DB structure is correct after migration.**
 
@@ -246,13 +248,14 @@ npm run test          # Run tests
 npm run swagger-autogen  # Generate Swagger docs
 ```
 
-### **Frontend Setup:**
+### **Frontend Setup (React Native + Expo):**
 ```zsh
 cd ui/mobile/BoatOwner
 npm install
-npm run start         # Start Expo development server
-npm run test          # Run tests
-npm run lint          # Lint code
+npx expo start         # Start Expo development server (required for React Native mobile app)
+# Use Expo Go app on your device or an emulator to run the app
+npm run test           # Run tests
+npm run lint           # Lint code
 ```
 
 ### **Useful Make Commands:**

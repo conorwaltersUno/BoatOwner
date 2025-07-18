@@ -6,11 +6,10 @@ import { BoatDTO } from "../interfaces/boats";
 
 async function getAllUsers(): Promise<UserDTO[]> {
   try {
-    return await prisma.user.findMany({
-      orderBy: {
-        id: "asc",
-      },
+    const users = await prisma.user.findMany({
+      orderBy: { id: "asc" },
     });
+    return users.map(u => ({ ...u, created: u.created instanceof Date ? u.created.toISOString() : u.created }));
   } catch (error: any) {
     throw Error("Error retrieving users: " + error.message);
   }
@@ -18,11 +17,10 @@ async function getAllUsers(): Promise<UserDTO[]> {
 
 async function getUserById(userId: number): Promise<UserDTO | null> {
   try {
-    return await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
     });
+    return user ? { ...user, created: user.created instanceof Date ? user.created.toISOString() : user.created } : null;
   } catch (error: any) {
     throw Error(`No user found with id: ${userId}`);
   }
@@ -47,57 +45,48 @@ async function generateNewAccessToken(body: refreshTokenDTO) {
 async function getUserByEmail(body: CreateUserDTO): Promise<UserDTO | null> {
   try {
     const user = await prisma.user.findFirst({
-      where: {
-        email: body.email,
-      },
+      where: { email: body.email },
     });
-
-    if (!user) {
-      return null;
-    }
-
-    return user;
+    return user ? { ...user, created: user.created instanceof Date ? user.created.toISOString() : user.created } : null;
   } catch (error: any) {
     throw Error(`Error getting user by email: ${error}`);
   }
 }
 
 async function createUser(data: CreateUserDTO): Promise<{ UserDTO; BoatDTO }> {
-  try {
-    const newUser = await prisma.user.create({
-      data: {
-        email: data.email,
-        password: data.password,
-        created: dayjs().format(),
-      },
-    });
-    const boat = await prisma.boat.create({
-      data: {
-        user_id: newUser.id,
-        name: data.boat_name,
-        model: data.boat_model,
-      },
-    });
+  // Username uniqueness validation
+  const existingUser = await prisma.user.findUnique({ where: { username: data.username } });
+  if (existingUser) throw new Error("Username already exists");
+  const newUser = await prisma.user.create({
+    data: {
+      email: data.email,
+      password: data.password,
+      username: data.username,
+      created: dayjs().toISOString(),
+    },
+  });
+  const boat = await prisma.boat.create({
+    data: {
+      user_id: newUser.id,
+      name: data.boat_name,
+      model: data.boat_model,
+    },
+  });
+  return { UserDTO: { ...newUser, created: newUser.created instanceof Date ? newUser.created.toISOString() : newUser.created }, BoatDTO: boat };
+}
 
-    return { UserDTO: newUser, BoatDTO: boat };
-  } catch (error: any) {
-    throw Error("Error creating user: " + error.message);
-  }
+async function getUserByUsername(username: string): Promise<UserDTO | null> {
+  const user = await prisma.user.findUnique({ where: { username } });
+  return user ? { ...user, created: user.created instanceof Date ? user.created.toISOString() : user.created } : null;
 }
 
 async function updateUser(userId: number, data: UpdateUserDTO): Promise<UserDTO | null> {
   try {
     const updatedUser = await prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        email: data.email,
-        password: data.password,
-      },
+      where: { id: userId },
+      data: { email: data.email, password: data.password },
     });
-
-    return updatedUser;
+    return updatedUser ? { ...updatedUser, created: updatedUser.created instanceof Date ? updatedUser.created.toISOString() : updatedUser.created } : null;
   } catch (error: any) {
     throw Error(`Error updating user with id: ${userId} - ${error.message}`);
   }
@@ -125,6 +114,7 @@ const UserService = {
   getUserByEmail,
   generateNewAccessToken,
   updateUser,
+  getUserByUsername,
 };
 
 export { UserService };

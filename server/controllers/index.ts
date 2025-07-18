@@ -4,3 +4,4 @@ export * from "./health";
 export * from "./tasks";
 export * from "./logs";
 export * from "./expenses";
+export * from "./friends";

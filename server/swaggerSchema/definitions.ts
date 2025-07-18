@@ -158,4 +158,60 @@ export const definitions = {
   getExpensesByBoatIdResponse: [{ $ref: "#/definitions/expensesDTO" }],
   createExpenseResponse: { $ref: "#/definitions/expensesDTO" },
   updateExpenseResponse: { $ref: "#/definitions/expensesDTO" },
+
+  /**
+   * @swagger
+   * components:
+   *   schemas:
+   *     FriendDTO:
+   *       type: object
+   *       properties:
+   *         id:
+   *           type: integer
+   *         user_id:
+   *           type: integer
+   *         friend_id:
+   *           type: integer
+   *         created_at:
+   *           type: string
+   *         friend_details:
+   *           type: object
+   *           properties:
+   *             id:
+   *               type: integer
+   *             username:
+   *               type: string
+   *             email:
+   *               type: string
+   *     FriendRequestDTO:
+   *       type: object
+   *       properties:
+   *         id:
+   *           type: integer
+   *         sender_id:
+   *           type: integer
+   *         receiver_id:
+   *           type: integer
+   *         status:
+   *           type: string
+   *           enum: [pending, accepted, rejected]
+   *         created_at:
+   *           type: string
+   *         updated_at:
+   *           type: string
+   *         sender_details:
+   *           type: object
+   *           properties:
+   *             id:
+   *               type: integer
+   *             username:
+   *               type: string
+   *             email:
+   *               type: string
+   *     CreateFriendRequestDTO:
+   *       type: object
+   *       properties:
+   *         receiver_username:
+   *           type: string
+   */
 };

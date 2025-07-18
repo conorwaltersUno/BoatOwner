@@ -26,6 +26,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="friend"
+        options={{
+          title: "Friends",
+          tabBarIcon: ({ color, size }) => <Ionicons name="people-circle" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="calendar"
         options={{
           title: "Calendar",

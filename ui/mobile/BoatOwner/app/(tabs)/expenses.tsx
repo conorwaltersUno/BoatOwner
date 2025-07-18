@@ -6,8 +6,6 @@ import {
   ActivityIndicator,
   TouchableWithoutFeedback,
   SafeAreaView,
-  Button,
-  ScrollView,
   TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
