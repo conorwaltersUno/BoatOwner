@@ -118,7 +118,11 @@ export default function Friend() {
               // Remove unused variable lint warning by using default for user
               const username = user.username || 'Unknown User';
               return (
-                <View style={styles.logCard}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => { setSelectedLog(item); setLogModalVisible(true); }}
+                  style={styles.logCard}
+                >
                   {/* User Info (Top) */}
                   <View style={styles.logUserRow}>
                     <View style={styles.avatarCircleLarge}>
@@ -148,7 +152,7 @@ export default function Friend() {
                       </Text>
                     </View>
                   </View>
-                </View>
+                </TouchableOpacity>
               );
             }}
             ListEmptyComponent={!logsLoading ? <Text style={styles.emptyText}>No friends' logs yet.</Text> : null}

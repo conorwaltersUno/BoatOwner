@@ -1,20 +1,20 @@
-import { Stack } from "expo-router";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
-import { AuthProvider } from "@/context/AuthContext";
+import { Stack } from 'expo-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '../context/AuthContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <Stack screenOptions={{ headerShown: false }}>
+        <AuthProvider>
+          <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>
-        </GestureHandlerRootView>
+        </AuthProvider>
       </QueryClientProvider>
-    </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

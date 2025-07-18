@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import MapView, { Polyline, Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
-import LoggingModal from "../../../components/SaveLogModal";
+import LoggingModal from "../../components/SaveLogModal";
 
 export default function HomeScreen() {
   const mapRef = useRef<MapView>(null);

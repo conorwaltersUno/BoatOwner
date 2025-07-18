@@ -3,12 +3,21 @@ import { Ionicons, FontAwesome, MaterialCommunityIcons } from "@expo/vector-icon
 
 export default function TabLayout() {
   return (
-    <Tabs>
-      <Tabs.Screen
-        name="todo"
+      <Tabs>
+        <Tabs.Screen
+          name="todo"
+          options={{
+            title: "Todo's",
+            tabBarIcon: ({ color, size }) => <FontAwesome name="sort-amount-asc" color={color} size={size} />,
+          }}
+        />
+        <Tabs.Screen
+        name="index"
         options={{
-          title: "Todo's",
-          tabBarIcon: ({ color, size }) => <FontAwesome name="sort-amount-asc" color={color} size={size} />,
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map" size={size ?? 28} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
