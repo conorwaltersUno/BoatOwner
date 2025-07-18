@@ -163,7 +163,7 @@ export default function CalendarLogsView() {
         <Text style={styles.emptySubtitle}>
           You haven't recorded any logs. Tap below to go to the home page and record your first log!
         </Text>
-        <Button title="Go to Home" onPress={() => router.replace("/(tabs)/(home)")} />
+        <Button title="Go to Home" onPress={() => router.replace("/(tabs)")} />
       </View>
     );
   }

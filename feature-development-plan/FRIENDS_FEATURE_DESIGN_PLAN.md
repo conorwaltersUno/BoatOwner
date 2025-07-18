@@ -11,6 +11,7 @@ Implement a friends system that allows users to:
 - Create accounts with unique usernames
 - Search for other users by username
 - Send and receive friend requests
+  - **Show 'Requested' on the Add button if a friend request has already been sent to that user. Show 'Friends' if already friends, and 'Respond' if the user sent you a request. Only enable the button for 'Add'.**
 - View friends' logs in a dedicated section
 - Maintain current log recording functionality in a separate tab
 

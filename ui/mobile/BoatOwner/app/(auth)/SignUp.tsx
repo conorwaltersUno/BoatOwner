@@ -25,7 +25,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   useEffect(() => {
     if (data) {
       setAuthenticated(true);
-      router.replace("/(tabs)/(home)");
+      router.replace("/(tabs)");
     }
   }, [data, router, setAuthenticated]);
 

@@ -30,4 +30,5 @@ export interface UserSearchResult {
   id: number;
   username: string;
   email: string;
+  friendStatus?: 'pending' | 'incoming' | 'none';
 }

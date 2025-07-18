@@ -5,6 +5,7 @@ import { useSearchUsers, useSendFriendRequest, usePendingRequests, useAcceptFrie
 import { LogDTO } from '@/interfaces/log/log';
 import LogDetailModal from '@/components/LogDetailModal';
 import LogRouteMapWithReplay from '@/components/LogRouteMapWithReplay';
+import type { UserSearchResult } from '@/interfaces/friends';
 
 export default function Friend() {
   const [activeTab, setActiveTab] = useState<'logs' | 'manage'>('logs');
@@ -65,6 +66,28 @@ export default function Friend() {
 
   const handleRejectRequest = (requestId: number) => {
     rejectRequest(requestId);
+  };
+
+  // Helper: determine friend request state for a username
+  const getUserFriendStatus = (username: string) => {
+    const lower = username.toLowerCase();
+    if (friendsList?.some(f => f.friend_details.username.toLowerCase() === lower)) {
+      return 'friend';
+    }
+    if (pendingRequests?.some(r => r.sender_details.username.toLowerCase() === lower)) {
+      return 'requested'; // You sent a request
+    }
+    if (pendingRequests?.some(r => r.receiver_id && r.sender_details.username.toLowerCase() === lower)) {
+      return 'pending'; // They sent you a request
+    }
+    return 'none';
+  };
+
+  // New helper to interpret friendStatus from search results
+  const getUserFriendStatusFromResult = (user: UserSearchResult) => {
+    if (user.friendStatus === 'pending') return 'Requested';
+    if (user.friendStatus === 'incoming') return 'Respond';
+    return 'Add';
   };
 
   return (
@@ -191,26 +214,36 @@ export default function Friend() {
               <FlatList
                 data={searchResults || []}
                 keyExtractor={item => item.id.toString()}
-                renderItem={({ item }) => (
-                  <View style={styles.userCard}>
-                    <View style={styles.avatarCircle}>
-                      <Text style={styles.avatarText}>{item.username[0]?.toUpperCase() || '?'}</Text>
+                renderItem={({ item }) => {
+                  const status = getUserFriendStatusFromResult(item);
+                  let buttonText = 'Add';
+                  let disabled = false;
+                  if (status === 'Requested') {
+                    buttonText = 'Requested';
+                    disabled = true;
+                  } else if (status === 'Respond') {
+                    buttonText = 'Respond';
+                    disabled = true;
+                  }
+                  return (
+                    <View style={styles.userCard}>
+                      <View style={styles.avatarCircle}>
+                        <Text style={styles.avatarText}>{item.username[0]?.toUpperCase() || '?'}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.username}>{item.username}</Text>
+                        <Text style={styles.email}>{item.email}</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={[styles.addButton, disabled && styles.addButtonDisabled]}
+                        onPress={() => handleSendRequest(item.username)}
+                        disabled={sending || disabled}
+                      >
+                        <Text style={styles.addButtonText}>{buttonText}</Text>
+                      </TouchableOpacity>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.username}>{item.username}</Text>
-                      <Text style={styles.email}>{item.email}</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={[styles.addButton, isUserFriendOrPending(item.username) && styles.addButtonDisabled]}
-                      onPress={() => handleSendRequest(item.username)}
-                      disabled={sending || isUserFriendOrPending(item.username)}
-                    >
-                      <Text style={styles.addButtonText}>
-                        {isUserFriendOrPending(item.username) ? 'Requested' : 'Add'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                  );
+                }}
                 ListEmptyComponent={!searchLoading ? <Text style={styles.emptyText}>No users found.</Text> : null}
               />
             </View>

@@ -112,6 +112,7 @@
   - Use hooks for data and mutations.
   - Add loading and error states.
   - Style according to FRONTEND_RULES.md.
+  - **Show 'Requested' on the Add button if a friend request has already been sent to that user. Show 'Friends' if already friends, and 'Respond' if the user sent you a request. Only enable the button for 'Add'.**
 
 ### 4.5. Home Tab Updates
 4.5.1. Update `ui/mobile/BoatOwner/app/(tabs)/(home)/index.tsx`:
