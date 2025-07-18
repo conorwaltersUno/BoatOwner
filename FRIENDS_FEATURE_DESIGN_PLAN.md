@@ -432,7 +432,7 @@ export function useSearchUsers(query: string) {
   return useQuery({
     queryKey: [QUERY_KEYS.SEARCH_USERS, query],
     queryFn: () => friendsApi.searchUsers(query),
-    enabled: query.length >= 2,
+    enabled: query.length > 0,
   });
 }
 
@@ -723,7 +723,7 @@ export default function FriendsScreen() {
       </View>
 
       {/* Search Results */}
-      {searchQuery.length >= 2 && (
+      {searchQuery.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Search Results</Text>
           <FlatList

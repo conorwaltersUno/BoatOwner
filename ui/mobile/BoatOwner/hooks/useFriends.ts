@@ -26,6 +26,7 @@ export function useFriendRequests() {
 }
 
 export function useSendFriendRequest() {
+  console.log("useSendFriendRequest called");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ email }: { email: string }) => sendFriendRequest(email),

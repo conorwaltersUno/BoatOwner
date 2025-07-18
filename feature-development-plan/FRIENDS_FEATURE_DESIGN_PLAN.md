@@ -723,7 +723,7 @@ export default function FriendsScreen() {
       </View>
 
       {/* Search Results */}
-      {searchQuery.length >= 2 && (
+      {searchQuery.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Search Results</Text>
           <FlatList
