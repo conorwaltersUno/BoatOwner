@@ -7,6 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { useFocusEffect } from '@react-navigation/native';
 import type { UserSearchResult } from '@/interfaces/friends';
+import LogRouteMapWithReplay from '@/components/LogRouteMapWithReplay';
+import dayjs from 'dayjs';
 
 export default function Friend() {
   const [activeTab, setActiveTab] = useState<'logs' | 'manage'>('logs');
@@ -178,20 +180,50 @@ export default function Friend() {
               data={friendsFeed}
               keyExtractor={item => String(item.id)}
               renderItem={({ item }) => {
-                // Robust extraction of user and boat info
                 const username = item.user?.name || item.user?.email || 'Unknown User';
                 const boatName = item.boat?.name || '';
                 const boatModel = item.boat?.model || '';
-                let boatInfo = '';
-                if (boatName && boatModel) boatInfo = `Boat: ${boatName} (${boatModel})`;
-                else if (boatName) boatInfo = `Boat: ${boatName}`;
-                else if (boatModel) boatInfo = `Boat Model: ${boatModel}`;
+                const logTime = item.log_started ? dayjs(item.log_started).format('YYYY-MM-DD HH:mm') : '';
+                const durationSec = item.log_started && item.log_ended ? Math.round((new Date(item.log_ended).getTime() - new Date(item.log_started).getTime()) / 1000) : 0;
+                const formatDuration = (seconds: number) => {
+                  if (isNaN(seconds) || seconds < 0) return '0s';
+                  const h = Math.floor(seconds / 3600);
+                  const m = Math.floor((seconds % 3600) / 60);
+                  const s = seconds % 60;
+                  return [h ? `${h}h` : '', m ? `${m}m` : '', `${s}s`].filter(Boolean).join(' ');
+                };
+                // Convert log fields to Date for LogRouteMapWithReplay
+                const logForMap = {
+                  ...item,
+                  log_started: item.log_started ? new Date(item.log_started) : new Date(0),
+                  log_ended: item.log_ended ? new Date(item.log_ended) : new Date(0),
+                  created_on: item.created_on ? new Date(item.created_on) : new Date(0),
+                };
                 return (
-                  <View style={styles.logCard}>
-                    <Text style={styles.logUser}>{username}</Text>
-                    <Text style={styles.logDate}>{new Date(item.created_on).toLocaleString()}</Text>
-                    {boatInfo ? <Text style={styles.logDate}>{boatInfo}</Text> : null}
-                    {/* Add more log fields as needed */}
+                  <View style={styles.igCard}>
+                    {/* Username at top */}
+                    <Text style={styles.igUsername}>{username}</Text>
+                    {/* Map with replay in the middle */}
+                    <View style={styles.igMapContainer}>
+                      <LogRouteMapWithReplay log={logForMap} height={220} />
+                    </View>
+                    {/* Info below map */}
+                    <View style={styles.igInfoRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.igBoat}>{boatName}</Text>
+                        <Text style={styles.igBoatModel}>{boatModel}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.igTime}>{logTime}</Text>
+                        <Text style={styles.igDuration}>Duration: {formatDuration(durationSec)}</Text>
+                      </View>
+                    </View>
+                    {item.description ? (
+                      <Text style={styles.igDescription}>{item.description}</Text>
+                    ) : null}
+                    {item.crew_members?.length ? (
+                      <Text style={styles.igCrew}>Crew: {item.crew_members.join(', ')}</Text>
+                    ) : null}
                   </View>
                 );
               }}
@@ -383,4 +415,69 @@ const styles = StyleSheet.create({
   logCard: { backgroundColor: '#f9f9f9', borderRadius: 8, padding: 12, margin: 8, marginBottom: 0 },
   logUser: { fontWeight: 'bold', fontSize: 15, marginBottom: 2 },
   logDate: { color: '#888', fontSize: 13 },
+  // New styles for Instagram-style card
+  igCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    margin: 12,
+    marginBottom: 0,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  igUsername: {
+    fontWeight: 'bold',
+    fontSize: 17,
+    padding: 12,
+    paddingBottom: 0,
+    color: '#2E66E7',
+  },
+  igMapContainer: {
+    marginTop: 8,
+    marginBottom: 8,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  igInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingBottom: 4,
+  },
+  igBoat: {
+    fontWeight: '600',
+    fontSize: 15,
+    color: '#222',
+  },
+  igBoatModel: {
+    fontSize: 13,
+    color: '#888',
+  },
+  igTime: {
+    fontSize: 13,
+    color: '#888',
+    textAlign: 'right',
+  },
+  igDuration: {
+    fontSize: 13,
+    color: '#888',
+    textAlign: 'right',
+  },
+  igDescription: {
+    fontSize: 15,
+    color: '#333',
+    paddingHorizontal: 12,
+    paddingBottom: 6,
+    paddingTop: 2,
+  },
+  igCrew: {
+    fontSize: 13,
+    color: '#666',
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+  },
 });
