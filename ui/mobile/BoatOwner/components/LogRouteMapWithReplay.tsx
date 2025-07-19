@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import dayjs from 'dayjs';
 import { LogDTO } from '@/interfaces/log/log';
+import Slider from '@react-native-community/slider';
 
 interface LogRouteMapWithReplayProps {
   log: LogDTO;
@@ -12,10 +13,12 @@ interface LogRouteMapWithReplayProps {
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SPEEDS = [0.5, 1, 1.5, 2, 5, 10];
 
 const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, height = 200, showReplayControls = true, onMapPress }) => {
   const [replayIndex, setReplayIndex] = useState(0);
   const [isReplaying, setIsReplaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
 
   useEffect(() => {
     setReplayIndex(0);
@@ -34,12 +37,12 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
             return prev;
           }
         });
-      }, 10);
+      }, Math.max(10, 100 / speed)); // speed up or slow down
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isReplaying, log]);
+  }, [isReplaying, log, speed]);
 
   function formatDuration(seconds: number) {
     if (isNaN(seconds) || seconds < 0) return '0s';
@@ -139,34 +142,63 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
         </View>
       </TouchableOpacity>
       {showReplayControls && (
-        <View style={styles.replayControls}>
-          {!isReplaying ? (
+        <View style={{ marginTop: 8 }}>
+          {/* Slider for timeline */}
+          <Slider
+            style={{ width: '100%', height: 32 }}
+            minimumValue={0}
+            maximumValue={log?.coordinates?.length ? log.coordinates.length - 1 : 0}
+            value={replayIndex}
+            onValueChange={val => setReplayIndex(Math.round(val))}
+            minimumTrackTintColor="#2E66E7"
+            maximumTrackTintColor="#eaf0fa"
+            thumbTintColor="#2E66E7"
+            disabled={!log?.coordinates?.length}
+          />
+          {/* Play/Pause and Speed Controls */}
+          <View style={styles.replayControlsRow}>
             <TouchableOpacity
-              style={styles.replayButton}
+              style={[styles.playPauseButton, isReplaying ? styles.pauseButton : styles.playButton]}
               onPress={() => {
-                setReplayIndex(0);
-                setIsReplaying(true);
+                if (isReplaying) {
+                  setIsReplaying(false);
+                } else {
+                  if (replayIndex >= log.coordinates.length - 1) setReplayIndex(0);
+                  setIsReplaying(true);
+                }
               }}
               disabled={!log?.coordinates?.length}
             >
-              <Text style={styles.replayButtonText}>Replay Trip</Text>
+              <Text style={styles.playPauseButtonText}>{isReplaying ? 'Pause' : 'Play'}</Text>
             </TouchableOpacity>
-          ) : (
             <TouchableOpacity
-              style={[styles.replayButton, styles.replayButtonActive]}
+              style={[styles.replayButton, { minWidth: 44, minHeight: 40, alignItems: 'center', justifyContent: 'center' }]}
               onPress={() => {
+                setReplayIndex(0);
                 setIsReplaying(false);
               }}
+              disabled={!log?.coordinates?.length}
+              accessibilityLabel="Replay from start"
             >
-              <Text style={styles.replayButtonText}>Stop Replay</Text>
+              <Text style={styles.replayIcon}>⟲</Text>
             </TouchableOpacity>
-          )}
-          {isReplaying && (
-            <Text style={styles.replayProgress}>
-              Elapsed: {getCurrentPointTime()} / {getTotalDuration()}
-              {getCurrentPointTimestamp() ? ` (${getCurrentPointTimestamp()})` : ''}
-            </Text>
-          )}
+            <TouchableOpacity
+              style={[styles.speedBtn, { minWidth: 60, minHeight: 40, alignItems: 'center', justifyContent: 'center' }]}
+              onPress={() => {
+                const idx = SPEEDS.indexOf(speed);
+                setSpeed(SPEEDS[(idx + 1) % SPEEDS.length]);
+              }}
+              disabled={!log?.coordinates?.length}
+              accessibilityLabel={`Change replay speed (current: ${speed}x)`}
+            >
+              <Text style={styles.speedBtnText}>{speed}x</Text>
+            </TouchableOpacity>
+          </View>
+          {/* Progress info */}
+          <Text style={styles.replayProgress}>
+            Elapsed: {getCurrentPointTime()} / {getTotalDuration()}
+            {getCurrentPointTimestamp() ? ` (${getCurrentPointTimestamp()})` : ''}
+          </Text>
         </View>
       )}
     </View>
@@ -196,17 +228,64 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingHorizontal: 4,
   },
+  replayControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    marginBottom: 4,
+    gap: 8,
+  },
   replayButton: {
+    marginLeft: 8,
+    backgroundColor: '#eaf0fa',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 44,
+    minHeight: 40,
+  },
+  replayIcon: {
+    fontSize: 20,
+    color: '#2E66E7',
+    fontWeight: 'bold',
+  },
+  playPauseButton: {
     backgroundColor: '#2E66E7',
     paddingVertical: 8,
     paddingHorizontal: 18,
     borderRadius: 20,
+    marginRight: 8,
   },
-  replayButtonActive: {
+  playButton: {
+    backgroundColor: '#2E66E7',
+  },
+  pauseButton: {
     backgroundColor: '#aaa',
   },
-  replayButtonText: {
+  playPauseButtonText: {
     color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  speedBtn: {
+    backgroundColor: '#eee',
+    color: '#2E66E7',
+    fontWeight: 'bold',
+    fontSize: 15,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 60,
+    minHeight: 40,
+  },
+  speedBtnText: {
+    color: '#2E66E7',
     fontWeight: 'bold',
     fontSize: 15,
   },

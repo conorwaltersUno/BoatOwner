@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Modal,
   View,
@@ -18,23 +18,64 @@ import { UpdateLogDTO } from "../interfaces/log/log";
 import { useUpdateLog } from "@/hooks/useUpdateLog";
 import dayjs from "dayjs";
 import LogRouteMapWithReplay from "./LogRouteMapWithReplay";
-import { LogDTO } from '@/interfaces/log/log';
+import { LogDTO } from '../interfaces/log/log';
+import MapView, { Polyline, Marker } from 'react-native-maps';
+import Slider from '@react-native-community/slider';
 
 interface LogDetailModalProps {
   modalVisibility: boolean;
   setModalVisibility: React.Dispatch<React.SetStateAction<boolean>>;
-  log: UpdateLogDTO;
-  onLogUpdated?: (updatedLog: UpdateLogDTO) => void;
+  log: LogDTO;
+  onLogUpdated?: (updatedLog: LogDTO) => void;
 }
+
+const REPLAY_SPEEDS = [0.5, 1, 1.5, 2, 5, 10];
 
 const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setModalVisibility, log, onLogUpdated }) => {
   const { mutate: updateLog } = useUpdateLog();
   const [isEditing, setIsEditing] = useState(false);
-  const [localLog, setLocalLog] = useState<UpdateLogDTO>(log);
+  const [localLog, setLocalLog] = useState<LogDTO>(log);
+  const [replayIndex, setReplayIndex] = useState(0);
+  const [isReplaying, setIsReplaying] = useState(false);
+  const [replaySpeed, setReplaySpeed] = useState(1);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setLocalLog(log);
   }, [log]);
+
+  useEffect(() => {
+    setReplayIndex(0);
+    setIsReplaying(false);
+    setReplaySpeed(1);
+  }, [log]);
+
+  useEffect(() => {
+    if (isReplaying && localLog?.coordinates?.length > 1) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      const speedMs = 100 / replaySpeed;
+      intervalRef.current = setInterval(() => {
+        setReplayIndex(prev => {
+          if (prev < localLog.coordinates.length - 1) {
+            return prev + 1;
+          } else {
+            setIsReplaying(false);
+            return prev;
+          }
+        });
+      }, speedMs);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isReplaying, replaySpeed, localLog]);
+
+  const handleSliderChange = (val: number) => {
+    setReplayIndex(Math.round(val));
+    setIsReplaying(false);
+  };
 
   const validationSchema = Yup.object().shape({
     description: Yup.string().trim().required("Description is required."),
@@ -42,7 +83,7 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
   });
 
   const handleUpdate = (values: { description: string; crewMembers: string[] }) => {
-    const updatedLog: UpdateLogDTO = {
+    const updatedLog: LogDTO = {
       ...localLog,
       description: values.description,
       crew_members: values.crewMembers,
@@ -74,13 +115,49 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
     return [h ? `${h}h` : "", m ? `${m}m` : "", `${s}s`].filter(Boolean).join(" ");
   }
 
+  const getCurrentPointTime = () => {
+    if (!localLog?.coordinates?.length || !localLog.log_started || isNaN(new Date(localLog.log_started).getTime()))
+      return '0s';
+    const currCoord = localLog.coordinates[replayIndex];
+    if (currCoord?.timestamp) {
+      const start = new Date(localLog.log_started).getTime();
+      const curr = new Date(currCoord.timestamp).getTime();
+      if (!isNaN(curr) && !isNaN(start)) {
+        const elapsedSec = Math.max(0, Math.round((curr - start) / 1000));
+        return formatDuration(elapsedSec);
+      }
+    }
+    const totalPoints = localLog.coordinates.length;
+    const totalDuration =
+      localLog.log_started && localLog.log_ended
+        ? new Date(localLog.log_ended).getTime() - new Date(localLog.log_started).getTime()
+        : 0;
+    if (totalPoints > 1 && totalDuration > 0) {
+      const elapsedMs = Math.round((replayIndex / (totalPoints - 1)) * totalDuration);
+      return formatDuration(Math.max(0, Math.round(elapsedMs / 1000)));
+    }
+    return '0s';
+  };
+
   const getTotalDuration = () => {
-    if (!localLog?.log_started || !localLog?.log_ended) return "0s";
+    if (!localLog?.log_started || !localLog?.log_ended) return '0s';
     const start = new Date(localLog.log_started).getTime();
     const end = new Date(localLog.log_ended).getTime();
-    if (isNaN(start) || isNaN(end) || end < start) return "0s";
+    if (isNaN(start) || isNaN(end) || end < start) return '0s';
     const elapsedSec = Math.round((end - start) / 1000);
     return formatDuration(elapsedSec);
+  };
+
+  const getCurrentPointTimestamp = () => {
+    if (!localLog?.coordinates?.length) return '';
+    const curr = localLog.coordinates[replayIndex]?.timestamp;
+    if (curr) {
+      const date = dayjs(curr);
+      if (date.isValid()) {
+        return date.format('YYYY-MM-DD HH:mm');
+      }
+    }
+    return '';
   };
 
   const renderLogDetails = () => {
@@ -147,6 +224,87 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
                     <Text style={styles.closeButtonText}>✕</Text>
                   </TouchableOpacity>
                 </View>
+                {/* Map + Replay UI */}
+                <View style={styles.mapContainerDynamic}>
+                  <MapView
+                    style={{ width: '100%', height: 220, borderRadius: 12 }}
+                    initialRegion={
+                      localLog.coordinates?.[0]
+                        ? {
+                            latitude: localLog.coordinates[0].latitude,
+                            longitude: localLog.coordinates[0].longitude,
+                            latitudeDelta: 0.05,
+                            longitudeDelta: 0.05,
+                          }
+                        : {
+                            latitude: 37.78825,
+                            longitude: -122.4324,
+                            latitudeDelta: 0.05,
+                            longitudeDelta: 0.05,
+                          }
+                    }
+                    region={
+                      localLog.coordinates?.[replayIndex]
+                        ? {
+                            latitude: localLog.coordinates[replayIndex].latitude,
+                            longitude: localLog.coordinates[replayIndex].longitude,
+                            latitudeDelta: 0.05,
+                            longitudeDelta: 0.05,
+                          }
+                        : undefined
+                    }
+                    pointerEvents="none"
+                  >
+                    <Polyline
+                      coordinates={localLog.coordinates.map(c => ({ latitude: c.latitude, longitude: c.longitude }))}
+                      strokeColor="#007AFF"
+                      strokeWidth={3}
+                    />
+                    {localLog.coordinates[replayIndex] && (
+                      <Marker
+                        coordinate={{
+                          latitude: localLog.coordinates[replayIndex].latitude,
+                          longitude: localLog.coordinates[replayIndex].longitude,
+                        }}
+                      />
+                    )}
+                  </MapView>
+                  {/* Slider and controls */}
+                  <View style={styles.sliderRow}>
+                    <TouchableOpacity onPress={() => setIsReplaying(!isReplaying)}>
+                      <Text style={styles.replayBtn}>{isReplaying ? 'Stop' : 'Start'}</Text>
+                    </TouchableOpacity>
+                    <Slider
+                      style={{ flex: 1, marginHorizontal: 12 }}
+                      minimumValue={0}
+                      maximumValue={localLog.coordinates.length - 1}
+                      value={replayIndex}
+                      onValueChange={handleSliderChange}
+                      step={1}
+                      minimumTrackTintColor="#007AFF"
+                      maximumTrackTintColor="#ccc"
+                      thumbTintColor="#007AFF"
+                    />
+                    <TouchableOpacity onPress={() => setReplaySpeed(prev => {
+                      const idx = REPLAY_SPEEDS.indexOf(prev);
+                      return REPLAY_SPEEDS[(idx + 1) % REPLAY_SPEEDS.length];
+                    })}>
+                      <Text style={styles.speedBtn}>{replaySpeed}x</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => {
+                      setReplayIndex(0);
+                      setIsReplaying(false);
+                    }} accessibilityLabel="Restart log replay">
+                      <Text style={styles.replayBtn}>⟲</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.sliderInfoRow}>
+                    <Text style={styles.sliderInfoText}>{getCurrentPointTime()} / {getTotalDuration()}</Text>
+                    <Text style={styles.sliderInfoText}>{getCurrentPointTimestamp()}</Text>
+                  </View>
+                </View>
+                {/* Details Section */}
+                {renderLogDetails()}
                 <Formik
                   initialValues={{
                     description: localLog?.description || "",
@@ -225,14 +383,6 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
                               )}
                           </>
                         )}
-                        <Text style={styles.sectionTitle}>Route Map</Text>
-                        <View style={styles.mapContainerDynamic}>
-                          <LogRouteMapWithReplay 
-                            log={localLog as unknown as LogDTO} 
-                            height={160} // smaller map
-                            showReplayControls
-                          />
-                        </View>
                       </ScrollView>
                       <View style={styles.buttonContainer}>
                         {!isEditing ? (
@@ -510,6 +660,43 @@ const styles = StyleSheet.create({
     color: "#E74C3C",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  sliderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 2,
+    paddingHorizontal: 4,
+  },
+  replayBtn: {
+    backgroundColor: '#2E66E7',
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginRight: 8,
+  },
+  speedBtn: {
+    backgroundColor: '#eee',
+    color: '#007AFF',
+    fontWeight: 'bold',
+    fontSize: 15,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginLeft: 8,
+  },
+  sliderInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    marginBottom: 2,
+  },
+  sliderInfoText: {
+    color: '#888',
+    fontSize: 13,
   },
 });
 
