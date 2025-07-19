@@ -148,3 +148,34 @@ export async function searchUsers(req: Request, res: Response) {
     return res.status(500).json({ message: err.message || "Internal server error" });
   }
 }
+
+/**
+ * Cancel a pending friend request sent by the current user.
+ * DELETE /api/friends/requests/:id
+ */
+export async function cancelPendingFriendRequestController(req: Request, res: Response) {
+  try {
+    const requestId = parseInt(req.params.id, 10);
+    if (isNaN(requestId)) {
+      return res.status(400).json({ message: 'Invalid request ID' });
+    }
+    // Support both req.user.id and req.user?.payload?.userid
+    const userId = (req as any).user?.id || (req as any).user?.payload?.userid;
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    await cancelPendingFriendRequest(requestId, userId);
+    return res.status(204).send();
+  } catch (err: any) {
+    if (err.message === 'Friend request not found') {
+      return res.status(404).json({ message: err.message });
+    }
+    if (err.message === 'Not authorized to cancel this request') {
+      return res.status(403).json({ message: err.message });
+    }
+    if (err.message === 'Only pending requests can be cancelled') {
+      return res.status(400).json({ message: err.message });
+    }
+    return res.status(500).json({ message: 'Failed to cancel friend request' });
+  }
+}

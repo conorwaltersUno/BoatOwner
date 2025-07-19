@@ -172,4 +172,14 @@
 
 ---
 
+## Cancel Pending Friend Request
+- Implemented backend endpoint DELETE /api/friends/requests/:id to allow users to cancel their own pending friend requests.
+- Added service, controller, and router logic with proper validation and error handling.
+- Documented the endpoint in Swagger.
+- Added frontend API call, React Query mutation, and UI logic to show a Cancel button for outgoing pending requests.
+- UI provides confirmation dialog, loading state, and feedback on success/error.
+- Tests and documentation updated accordingly.
+
+---
+
 **This checklist ensures a robust, secure, and maintainable implementation of the Friends feature. Each step should be checked off and validated before moving to the next phase.**

@@ -190,4 +190,23 @@ FriendsRouter.route("/search").post(
   }) as RequestHandler
 );
 
+FriendsRouter.route("/requests/:id").delete(
+  /*
+      #swagger.tags = ['Friends']
+      #swagger.summary = 'Cancel a pending friend request'
+      #swagger.parameters['id'] = {
+        in: 'path', required: true, description: 'Friend request ID', schema: { type: 'integer' }
+      }
+      #swagger.responses[204] = { description: 'Friend request canceled' }
+      #swagger.responses[400] = { description: 'Invalid request ID' }
+      #swagger.responses[401] = { description: 'Unauthorized' }
+      #swagger.responses[404] = { description: 'Request not found' }
+      #swagger.responses[500] = { description: 'Internal server error' }
+    */
+  auth,
+  [param("id").isInt().withMessage("Request ID must be an integer")],
+  (req, res, next) => { validator(req, res, next); },
+  (async (req, res) => { await cancelPendingFriendRequestController(req, res); }) as RequestHandler
+);
+
 export { FriendsRouter };

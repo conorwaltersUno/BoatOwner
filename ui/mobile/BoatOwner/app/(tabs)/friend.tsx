@@ -1,49 +1,45 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Platform, ToastAndroid } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSearchUsers, useSendFriendRequest, usePendingRequests, useAcceptFriendRequest, useRejectFriendRequest, useFriendsList, useFriendsLogs, useRemoveFriend } from '@/hooks/useFriends';
+import { useSearchUsers, useSendFriendRequest, useFriendsList, useFriendsLogs, useRemoveFriend, useCancelPendingFriendRequest, useAcceptFriendRequest, usePendingRequests } from '@/hooks/useFriends';
 import { LogDTO } from '@/interfaces/log/log';
 import LogDetailModal from '@/components/LogDetailModal';
 import LogRouteMapWithReplay from '@/components/LogRouteMapWithReplay';
 import type { UserSearchResult } from '@/interfaces/friends';
+import { useAuth } from '../../context/AuthContext';
+import CollapsibleSection from '@/components/CollapsibleSection';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Friend() {
+  // Move ALL hooks to the top before any conditional return
   const [activeTab, setActiveTab] = useState<'logs' | 'manage'>('logs');
   const [searchQuery, setSearchQuery] = useState('');
   const { data: searchResults, isLoading: searchLoading, error: searchError } = useSearchUsers(searchQuery);
   const { mutate: sendRequest, isPending: sending } = useSendFriendRequest();
-  const { data: pendingRequests, isLoading: pendingLoading, error: pendingError } = usePendingRequests();
-  const { mutate: acceptRequest } = useAcceptFriendRequest();
-  const { mutate: rejectRequest } = useRejectFriendRequest();
-  const { data: friendsList, isLoading: friendsLoading, error: friendsError } = useFriendsList();
+  const { data: friendsList, isLoading: friendsLoading, error: friendsError, refetch: refetchFriendsList } = useFriendsList();
   const { data: friendsLogs = [], isLoading: logsLoading, error: logsError } = useFriendsLogs();
   const { mutate: removeFriend } = useRemoveFriend();
+  const { mutate: cancelRequest, isPending: isCancelling } = useCancelPendingFriendRequest();
+  const { mutate: acceptRequest } = useAcceptFriendRequest();
+  const { user: currentUser } = useAuth();
   const [selectedLog, setSelectedLog] = useState<LogDTO | null>(null);
   const [isLogModalVisible, setLogModalVisible] = useState(false);
+  const { data: pendingRequests = [], isLoading: pendingLoading, refetch: refetchPendingRequests } = usePendingRequests();
 
-  // Loading guard
-  if (searchLoading || pendingLoading || friendsLoading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#2E66E7" />
-        <Text style={styles.emptyText}>Loading friends data...</Text>
-      </View>
-    );
-  }
+  console.log('[FriendScreen] currentUser:', currentUser);
+  console.log('[FriendScreen] friendsList:', friendsList);
+  // Always default searchResults to [] for safety
+  const safeSearchResults = searchResults || [];
+  console.log('[FriendScreen] searchResults:', safeSearchResults);
+  console.log('[FriendScreen] friendsLogs:', friendsLogs);
 
-  // Error guard
-  if (searchError || pendingError || friendsError) {
-    const errorMsg =
-      (typeof searchError === 'object' && searchError && 'message' in searchError && (searchError as any).message) ||
-      (typeof pendingError === 'object' && pendingError && 'message' in pendingError && (pendingError as any).message) ||
-      (typeof friendsError === 'object' && friendsError && 'message' in friendsError && (friendsError as any).message) ||
-      'Unable to load friends data.';
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>{errorMsg}</Text>
-      </View>
-    );
-  }
+  // Refetch on tab focus to ensure up-to-date state for all users
+  useFocusEffect(
+    React.useCallback(() => {
+      refetchPendingRequests();
+      refetchFriendsList();
+    }, [refetchPendingRequests, refetchFriendsList])
+  );
 
   // Helper for nicer success alerts
   const showSuccess = (message: string) => {
@@ -59,16 +55,6 @@ export default function Friend() {
       onSuccess: () => showSuccess('Friend request sent!'),
       onError: (error: any) => Alert.alert('Error', error.message),
     });
-  };
-
-  const handleAcceptRequest = (requestId: number) => {
-    acceptRequest(requestId, {
-      onSuccess: () => showSuccess('Friend request accepted!'),
-    });
-  };
-
-  const handleRejectRequest = (requestId: number) => {
-    rejectRequest(requestId);
   };
 
   const handleRemoveFriend = (friendId: number) => {
@@ -91,21 +77,6 @@ export default function Friend() {
     );
   };
 
-  // Helper: determine friend request state for a username
-  const getUserFriendStatus = (username: string) => {
-    const lower = username.toLowerCase();
-    if (friendsList?.some(f => f.friend_details.username.toLowerCase() === lower)) {
-      return 'friend';
-    }
-    if (pendingRequests?.some(r => r.sender_details.username.toLowerCase() === lower)) {
-      return 'requested'; // You sent a request
-    }
-    if (pendingRequests?.some(r => r.receiver_id && r.sender_details.username.toLowerCase() === lower)) {
-      return 'pending'; // They sent you a request
-    }
-    return 'none';
-  };
-
   // New helper to interpret friendStatus from search results
   const getUserFriendStatusFromResult = (user: UserSearchResult) => {
     if (user.friendStatus === 'pending') return 'Requested';
@@ -113,216 +84,345 @@ export default function Friend() {
     return 'Add';
   };
 
+  // Helper for Toast/Alert
+  function showToast(msg: string) {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(msg, ToastAndroid.SHORT);
+    } else {
+      Alert.alert(msg);
+    }
+  }
+
+  // Use currentUser.id if available
+  const currentUserId = currentUser?.id ?? null;
+  console.log('[FriendScreen] currentUserId:', currentUserId);
+
+  // Helper: Filter incoming friend requests from friendsList
+  const incomingRequests = (Array.isArray(pendingRequests) && currentUser?.id)
+    ? pendingRequests.filter(r => r.status === 'pending' && r.receiver_id === currentUser.id)
+    : [];
+  const incomingCount = incomingRequests.length;
+
+  // Collapsible state: open if there are requests, closed if none
+  const [incomingOpen, setIncomingOpen] = useState(incomingCount > 0);
+  React.useEffect(() => {
+    setIncomingOpen(incomingCount > 0);
+  }, [incomingCount]);
+
   return (
     <View style={styles.container}>
-      {/* Tab Switcher */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'logs' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('logs')}
-        >
-          <Text style={[styles.tabText, activeTab === 'logs' && styles.tabTextActive]}>Friends' Logs</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'manage' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('manage')}
-        >
-          <Text style={[styles.tabText, activeTab === 'manage' && styles.tabTextActive]}>Manage Friends</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Tab Content */}
-      {activeTab === 'logs' ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Friends' Logs</Text>
-          {logsLoading && <ActivityIndicator />}
-          {logsError && <Text style={styles.errorText}>Error loading friends' logs</Text>}
-          <FlatList
-            data={friendsLogs}
-            keyExtractor={item => item.id.toString()}
-            renderItem={({ item }) => {
-              console.log('Rendering log item:', item);
-              // --- FRIENDS_LOGS_FIX: Robustly extract user and boat info for display ---
-              // This logic tries multiple possible fields for user and boat info to handle various backend response shapes.
-              // User: tries owner, user, friend, friend_details, username fields in order.
-              // Boat: tries boat.name/model, boat_name, boat_model, and falls back to boat ID or 'Unknown'.
-              // This ensures the UI always displays the most accurate info available, and never shows 'Unknown User' unless all options are missing.
-              const user =
-                item.owner?.username ? item.owner :
-                item.user?.username ? item.user :
-                item.friend?.username ? item.friend :
-                item.friend_details?.username ? item.friend_details :
-                item.username ? { username: item.username } :
-                {};
-              const boat =
-                item.boat?.name || item.boat?.model ? item.boat :
-                (item.boat_name || item.boat_model) ? { name: item.boat_name, model: item.boat_model } :
-                null;
-              const boatName = boat?.name || item.boat_name || item.boatName || null;
-              const boatModel = boat?.model || item.boat_model || item.boatModel || null;
-              const boatId = item.boat_id || item.boatId || null;
-              // Remove unused variable lint warning by using default for user
-              const username = user.username || 'Unknown User';
-              return (
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => { setSelectedLog(item); setLogModalVisible(true); }}
-                  style={styles.logCard}
-                >
-                  {/* User Info (Top) */}
-                  <View style={styles.logUserRow}>
-                    <View style={styles.avatarCircleLarge}>
-                      <Text style={styles.avatarTextLarge}>{username[0]?.toUpperCase() || '?'}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.logUsername}>{username}</Text>
-                    </View>
-                  </View>
-                  {/* Log Content (Middle): Route Map with Replay */}
-                  <LogRouteMapWithReplay log={item} height={180} showReplayControls onMapPress={() => { setSelectedLog(item); setLogModalVisible(true); }} />
-                  {/* Log Meta (Bottom) */}
-                  <View style={styles.logMetaRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.logMetaText}>
-                        <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>User: </Text>
-                        {username}
-                      </Text>
-                      <Text style={styles.logMetaText}>
-                        <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>Boat: </Text>
-                        {boatName ? boatName : boatId ? `ID ${boatId}` : 'Unknown'}
-                        {boatModel ? `  •  ${boatModel}` : ''}
-                      </Text>
-                      <Text style={styles.logMetaText}>
-                        <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>Start: </Text>
-                        {item.log_started ? new Date(item.log_started).toLocaleString() : 'N/A'}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            }}
-            ListEmptyComponent={!logsLoading ? <Text style={styles.emptyText}>No friends' logs yet.</Text> : null}
-          />
-          {selectedLog && (
-            <LogDetailModal
-              modalVisibility={isLogModalVisible}
-              setModalVisibility={setLogModalVisible}
-              log={selectedLog}
-            />
-          )}
+      {/* Loading guard */}
+      {(searchLoading || friendsLoading) && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#2E66E7" />
+          <Text style={styles.emptyText}>Loading friends data...</Text>
         </View>
-      ) : (
-        <View>
-          {/* Search Users */}
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search users by username..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoCapitalize="none"
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color="#aaa" />
-              </TouchableOpacity>
-            )}
+      )}
+      {/* Error guard */}
+      {!(searchLoading || friendsLoading) && (searchError || friendsError) && (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={styles.errorText}>{
+            (typeof searchError === 'object' && searchError && 'message' in searchError && (searchError as any).message) ||
+            (typeof friendsError === 'object' && friendsError && 'message' in friendsError && (friendsError as any).message) ||
+            'Unable to load friends data.'
+          }</Text>
+        </View>
+      )}
+      {/* Main content, only if not loading or error */}
+      {!(searchLoading || friendsLoading) && !(searchError || friendsError) && (
+        <>
+          {/* Tab Switcher */}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tabButton, activeTab === 'logs' && styles.tabButtonActive]}
+              onPress={() => {
+                console.log('[FriendScreen] Switch to logs tab');
+                setActiveTab('logs');
+              }}
+            >
+              <Text style={[styles.tabText, activeTab === 'logs' && styles.tabTextActive]}>Friends' Logs</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabButton, activeTab === 'manage' && styles.tabButtonActive]}
+              onPress={() => {
+                console.log('[FriendScreen] Switch to manage tab');
+                setActiveTab('manage');
+              }}
+            >
+              <Text style={[styles.tabText, activeTab === 'manage' && styles.tabTextActive]}>Manage Friends</Text>
+            </TouchableOpacity>
           </View>
-          {/* Search Results */}
-          {searchQuery.length > 0 && (
+
+          {/* Tab Content */}
+          {activeTab === 'logs' ? (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Search Results</Text>
-              {searchLoading && <ActivityIndicator />}
+              <Text style={styles.sectionTitle}>Friends' Logs</Text>
+              {logsLoading && <ActivityIndicator />}
+              {logsError && <Text style={styles.errorText}>Error loading friends' logs</Text>}
               <FlatList
-                data={searchResults || []}
+                data={friendsLogs}
                 keyExtractor={item => item.id.toString()}
                 renderItem={({ item }) => {
-                  // Use friendStatus from the backend for correct button state
-                  let buttonText = 'Add';
-                  let disabled = false;
-                  if (item.friendStatus === 'pending') {
-                    buttonText = 'Requested';
-                    disabled = true;
-                  } else if (item.friendStatus === 'incoming') {
-                    buttonText = 'Respond';
-                    disabled = true;
-                  }
+                  console.log('[FriendScreen] Rendering log item:', item);
+                  // --- FRIENDS_LOGS_FIX: Robustly extract user and boat info for display ---
+                  // This logic tries multiple possible fields for user and boat info to handle various backend response shapes.
+                  // User: tries owner, user, friend, friend_details, username fields in order.
+                  // Boat: tries boat.name/model, boat_name, boat_model, and falls back to boat ID or 'Unknown'.
+                  // This ensures the UI always displays the most accurate info available, and never shows 'Unknown User' unless all options are missing.
+                  const user =
+                    item.owner?.username ? item.owner :
+                    item.user?.username ? item.user :
+                    item.friend?.username ? item.friend :
+                    item.friend_details?.username ? item.friend_details :
+                    item.username ? { username: item.username } :
+                    {};
+                  const boat =
+                    item.boat?.name || item.boat?.model ? item.boat :
+                    (item.boat_name || item.boat_model) ? { name: item.boat_name, model: item.boat_model } :
+                    null;
+                  const boatName = boat?.name || item.boat_name || item.boatName || null;
+                  const boatModel = boat?.model || item.boat_model || item.boatModel || null;
+                  const boatId = item.boat_id || item.boatId || null;
+                  // Remove unused variable lint warning by using default for user
+                  const username = user.username || 'Unknown User';
                   return (
-                    <View style={styles.userCard}>
-                      <View style={styles.avatarCircle}>
-                        <Text style={styles.avatarText}>{item.username[0]?.toUpperCase() || '?'}</Text>
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => { setSelectedLog(item); setLogModalVisible(true); }}
+                      style={styles.logCard}
+                    >
+                      {/* User Info (Top) */}
+                      <View style={styles.logUserRow}>
+                        <View style={styles.avatarCircleLarge}>
+                          <Text style={styles.avatarTextLarge}>{username[0]?.toUpperCase() || '?'}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.logUsername}>{username}</Text>
+                        </View>
                       </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.username}>{item.username}</Text>
-                        <Text style={styles.email}>{item.email}</Text>
+                      {/* Log Content (Middle): Route Map with Replay */}
+                      <LogRouteMapWithReplay log={item} height={180} showReplayControls onMapPress={() => { setSelectedLog(item); setLogModalVisible(true); }} />
+                      {/* Log Meta (Bottom) */}
+                      <View style={styles.logMetaRow}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.logMetaText}>
+                            <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>User: </Text>
+                            {username}
+                          </Text>
+                          <Text style={styles.logMetaText}>
+                            <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>Boat: </Text>
+                            {boatName ? boatName : boatId ? `ID ${boatId}` : 'Unknown'}
+                            {boatModel ? `  •  ${boatModel}` : ''}
+                          </Text>
+                          <Text style={styles.logMetaText}>
+                            <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>Start: </Text>
+                            {item.log_started ? new Date(item.log_started).toLocaleString() : 'N/A'}
+                          </Text>
+                        </View>
                       </View>
-                      <TouchableOpacity
-                        style={[styles.addButton, disabled && styles.addButtonDisabled]}
-                        onPress={() => handleSendRequest(item.username)}
-                        disabled={sending || disabled}
-                      >
-                        <Text style={styles.addButtonText}>{buttonText}</Text>
-                      </TouchableOpacity>
-                    </View>
+                    </TouchableOpacity>
                   );
                 }}
-                ListEmptyComponent={!searchLoading ? <Text style={styles.emptyText}>No users found.</Text> : null}
+                ListEmptyComponent={!logsLoading ? <Text style={styles.emptyText}>No friends' logs yet.</Text> : null}
               />
+              {selectedLog && (
+                <LogDetailModal
+                  modalVisibility={isLogModalVisible}
+                  setModalVisibility={setLogModalVisible}
+                  log={selectedLog}
+                />
+              )}
+            </View>
+          ) : (
+            <View>
+              {/* Search Users */}
+              <View style={styles.searchContainer}>
+                <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search users by username..."
+                  value={searchQuery}
+                  onChangeText={text => {
+                    console.log('[FriendScreen] Search query changed:', text);
+                    setSearchQuery(text);
+                  }}
+                  autoCapitalize="none"
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => {
+                    console.log('[FriendScreen] Clear search query');
+                    setSearchQuery('');
+                  }}>
+                    <Ionicons name="close-circle" size={20} color="#aaa" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Search Results Section (only if searchQuery is present) */}
+              {searchQuery.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Search Results</Text>
+                  <FlatList
+                    data={safeSearchResults}
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={({ item }) => {
+                      const status = getUserFriendStatusFromResult(item);
+                      return (
+                        <View style={styles.userCard}>
+                          <View style={styles.avatarCircle}>
+                            <Text style={styles.avatarText}>{item.username[0]?.toUpperCase() || '?'}</Text>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.username}>{item.username}</Text>
+                            <Text style={styles.email}>{item.email}</Text>
+                          </View>
+                          {status === 'Add' && (
+                            <TouchableOpacity
+                              style={styles.addButton}
+                              onPress={() => handleSendRequest(item.username)}
+                              disabled={sending}
+                            >
+                              <Text style={styles.addButtonText}>Add</Text>
+                            </TouchableOpacity>
+                          )}
+                          {status === 'Requested' && typeof item.pendingRequestId === 'number' && (
+                            <TouchableOpacity
+                              style={[styles.addButton, styles.addButtonDisabled]}
+                              onPress={() => cancelRequest(item.pendingRequestId!, {
+                                onSuccess: () => showToast('Request cancelled'),
+                                onError: (e) => showToast(e.message || 'Error cancelling'),
+                              })}
+                              disabled={isCancelling}
+                            >
+                              <Text style={styles.addButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                          )}
+                          {status === 'Respond' && typeof item.pendingRequestId === 'number' && (
+                            <TouchableOpacity
+                              style={styles.addButton}
+                              onPress={() => acceptRequest(item.pendingRequestId!, {
+                                onSuccess: () => showSuccess('Friend request accepted!'),
+                                onError: (error: any) => Alert.alert('Error', error.message),
+                              })}
+                            >
+                              <Text style={styles.addButtonText}>Respond</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      );
+                    }}
+                    ListEmptyComponent={<Text style={styles.emptyText}>No users found.</Text>}
+                  />
+                </View>
+              )}
+
+              {/* Collapsible Incoming Requests Section (always show if there are incoming requests) */}
+              {incomingCount > 0 && (
+                <CollapsibleSection
+                  title={
+                    <View style={styles.incomingHeader}>
+                      <Text style={styles.incomingHeaderText}>Incoming Friend Requests</Text>
+                      {incomingCount > 0 && (
+                        <View style={styles.notificationBadge}>
+                          <Text style={styles.notificationBadgeText}>{incomingCount}</Text>
+                        </View>
+                      )}
+                    </View>
+                  }
+                  initiallyCollapsed={incomingCount === 0}
+                >
+                  <FlatList
+                    data={incomingRequests}
+                    keyExtractor={item => item.id.toString()}
+                    style={{ maxHeight: 220, height: 220 }}
+                    renderItem={({ item }) => (
+                      <View style={styles.userCard}>
+                        <View style={styles.avatarCircle}>
+                          <Text style={styles.avatarText}>{item.sender_details.username[0]?.toUpperCase() || '?'}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.username}>{item.sender_details.username}</Text>
+                          <Text style={styles.email}>{item.sender_details.email}</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.acceptButton}
+                          onPress={() => {
+                            Alert.alert(
+                              'Accept Friend Request',
+                              `Accept friend request from ${item.sender_details.username}?`,
+                              [
+                                { text: 'No' },
+                                {
+                                  text: 'Yes',
+                                  onPress: () => acceptRequest(item.id, {
+                                    onSuccess: () => showSuccess('Friend request accepted!'),
+                                    onError: (error: any) => Alert.alert('Error', error.message),
+                                  }),
+                                },
+                              ]
+                            );
+                          }}
+                        >
+                          <Text style={{ color: '#fff', fontWeight: '600' }}>Accept</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.rejectButton}
+                          onPress={() => {
+                            Alert.alert(
+                              'Decline Friend Request',
+                              `Decline friend request from ${item.sender_details.username}?`,
+                              [
+                                { text: 'No' },
+                                {
+                                  text: 'Yes',
+                                  onPress: () => cancelRequest(item.id, {
+                                    onSuccess: () => showToast('Request declined'),
+                                    onError: (e) => showToast(e.message || 'Error declining'),
+                                  }),
+                                },
+                              ]
+                            );
+                          }}
+                        >
+                          <Text style={{ color: '#fff', fontWeight: '600' }}>Decline</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    ListEmptyComponent={<Text style={styles.emptyText}>No incoming friend requests.</Text>}
+                  />
+                </CollapsibleSection>
+              )}
+
+              {/* Friends List */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Your Friends</Text>
+                {friendsLoading && <ActivityIndicator />}
+                <FlatList
+                  data={friendsList || []}
+                  keyExtractor={item => item.id.toString()}
+                  renderItem={({ item }) => {
+                    console.log('[FriendScreen] Rendering friend:', item);
+                    return (
+                      <View style={styles.friendCard}>
+                        <View style={styles.avatarCircle}>
+                          <Text style={styles.avatarText}>{item.friend_details.username[0]?.toUpperCase() || '?'}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.username}>{item.friend_details.username}</Text>
+                          <Text style={styles.email}>{item.friend_details.email}</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => handleRemoveFriend(item.friend_id)}>
+                          <Ionicons name="person-remove" size={20} color="#FF3B30" />
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  }}
+                  ListEmptyComponent={!friendsLoading ? <Text style={styles.emptyText}>No friends yet.</Text> : null}
+                />
+              </View>
             </View>
           )}
-          {/* Pending Requests */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Pending Requests</Text>
-            {pendingLoading && <ActivityIndicator />}
-            <FlatList
-              data={pendingRequests || []}
-              keyExtractor={item => item.id.toString()}
-              renderItem={({ item }) => (
-                <View style={styles.requestCard}>
-                  <View style={styles.avatarCircle}>
-                    <Text style={styles.avatarText}>{item.sender_details.username[0]?.toUpperCase() || '?'}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>{item.sender_details.username}</Text>
-                    <Text style={styles.email}>{item.sender_details.email}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.acceptButton} onPress={() => handleAcceptRequest(item.id)}>
-                    <Ionicons name="checkmark" size={20} color="#fff" />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.rejectButton} onPress={() => handleRejectRequest(item.id)}>
-                    <Ionicons name="close" size={20} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              )}
-              ListEmptyComponent={!pendingLoading ? <Text style={styles.emptyText}>No pending requests.</Text> : null}
-            />
-          </View>
-          {/* Friends List */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your Friends</Text>
-            {friendsLoading && <ActivityIndicator />}
-            <FlatList
-              data={friendsList || []}
-              keyExtractor={item => item.id.toString()}
-              renderItem={({ item }) => (
-                <View style={styles.friendCard}>
-                  <View style={styles.avatarCircle}>
-                    <Text style={styles.avatarText}>{item.friend_details.username[0]?.toUpperCase() || '?'}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>{item.friend_details.username}</Text>
-                    <Text style={styles.email}>{item.friend_details.email}</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => handleRemoveFriend(item.friend_id)}>
-                    <Ionicons name="person-remove" size={20} color="#FF3B30" />
-                  </TouchableOpacity>
-                </View>
-              )}
-              ListEmptyComponent={!friendsLoading ? <Text style={styles.emptyText}>No friends yet.</Text> : null}
-            />
-          </View>
-        </View>
+        </>
       )}
     </View>
   );
@@ -364,20 +464,13 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 10,
   },
-  userCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 10,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
+  sectionSubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#666',
+    marginBottom: 8,
   },
-  requestCard: {
+  userCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
@@ -545,5 +638,62 @@ const styles = StyleSheet.create({
   email: {
     fontSize: 13,
     color: '#888',
+  },
+  // New styles for incoming friend requests section
+  incomingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  incomingHeaderText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#2E66E7',
+  },
+  notificationBadge: {
+    backgroundColor: '#e74c3c',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    marginLeft: 8,
+  },
+  notificationBadgeText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+  incomingContainerOpen: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginBottom: 18,
+    padding: 10,
+    minHeight: 80,
+    maxHeight: 260,
+    flexGrow: 0,
+    flexShrink: 0,
+    // Take up about 1/3 of the available vertical space
+    height: 220,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+  },
+  incomingContainerClosed: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    marginBottom: 18,
+    padding: 10,
+    minHeight: 60,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
   },
 });
