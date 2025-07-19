@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "start": "nodemon server.ts",
+    "start": "nodemon --exec ts-node server.ts",
     "swagger-autogen": "ts-node swagger.ts",
     "test": "jest --detectOpenHandles --forceExit",
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\" && eslint --ext .ts . --fix",

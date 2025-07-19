@@ -59,11 +59,9 @@ async function createExpense(req: Request, res: Response) {
       ...req.body,
       boat_id: Number(req.params.boat_id),
     });
-
     if (!expense) {
       return res.status(badRequestStatus).json({ message: "Error creating expense, please try again" });
     }
-
     return res.status(createdStatus).json(expense);
   } catch (error: any) {
     res.status(internalServerError).json({ message: error.message });
