@@ -81,6 +81,17 @@ export const removeFriend = async (friendId: number): Promise<void> => {
   }
 };
 
+// DELETE /friends/requests/:id (Cancel pending friend request)
+export const cancelPendingFriendRequest = async (requestId: number): Promise<void> => {
+  const response = await authFetch(`${apiUrl}/friends/requests/${requestId}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || "Failed to cancel friend request");
+  }
+};
+
 // GET /friends/:userId/logs
 export const fetchFriendsFeed = async (): Promise<FriendsLogDTO[]> => {
   const userId = await getUserId();

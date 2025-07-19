@@ -140,9 +140,27 @@ export async function getFriendsLogs(req: Request, res: Response) {
   try {
     const userId = parseInt(req.params.userId, 10);
     const rawLogs = await FriendService.getFriendsLogs(userId);
+    // Each log must include: user (id, username, email) and boat (name, model)
     const logs: FriendsLogDTO[] = rawLogs.map((log: any) => ({
-      ...log,
-      user: log.user, // Ensure this property exists or map it appropriately
+      id: log.id,
+      boat_id: log.boat_id,
+      description: log.description,
+      crew_members: log.crew_members,
+      coordinates: log.coordinates,
+      log_started: log.log_started,
+      log_ended: log.log_ended,
+      created_on: log.created_on,
+      boat: {
+        name: log.boat?.name || '',
+        model: log.boat?.model || '',
+      },
+      user: log.boat?.user
+        ? {
+            id: log.boat.user.id,
+            username: log.boat.user.username,
+            email: log.boat.user.email,
+          }
+        : { id: 0, username: 'Unknown User', email: '' },
     }));
     return res.status(okStatus).json(logs);
   } catch (err: any) {

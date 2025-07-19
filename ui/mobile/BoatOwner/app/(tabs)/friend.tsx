@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Platform, ToastAndroid } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFriends, useFriendRequests, useSendFriendRequest, useRespondToFriendRequest, useRemoveFriend, useFriendsFeed } from '@/hooks/useFriends';
+import { useFriends, useFriendRequests, useSendFriendRequest, useRespondToFriendRequest, useRemoveFriend, useFriendsFeed, useCancelPendingFriendRequest } from '@/hooks/useFriends';
 import { searchUsers } from '@/api/fetch/friends.fetch';
 import { useAuth } from '../../context/AuthContext';
 import CollapsibleSection from '@/components/CollapsibleSection';
@@ -18,8 +18,8 @@ export default function Friend() {
   const sendFriendRequest = useSendFriendRequest();
   const respondToFriendRequest = useRespondToFriendRequest();
   const removeFriend = useRemoveFriend();
+  const cancelPendingFriendRequest = useCancelPendingFriendRequest();
   const { feed: friendsFeed, isLoading: feedLoading } = useFriendsFeed();
-  const { user } = useAuth();
 
   useEffect(() => {
     const trimmed = searchQuery.trim();
@@ -79,9 +79,7 @@ export default function Friend() {
     return 'Add';
   }
 
-  console.log('currentUser:', user);
   const incomingRequests = requests.filter(r => r.status === 'pending');
-  console.log('incomingRequests:', incomingRequests);
   const incomingCount = incomingRequests.length;
   const [incomingOpen, setIncomingOpen] = useState(incomingCount >= 0);
   useEffect(() => {
@@ -179,13 +177,24 @@ export default function Friend() {
             <FlatList
               data={friendsFeed}
               keyExtractor={item => String(item.id)}
-              renderItem={({ item }) => (
-                <View style={styles.logCard}>
-                  <Text style={styles.logUser}>{item.user?.name || item.user?.email || 'Friend'}</Text>
-                  <Text style={styles.logDate}>{new Date(item.created_on).toLocaleString()}</Text>
-                  {/* Add more log fields as needed */}
-                </View>
-              )}
+              renderItem={({ item }) => {
+                // Robust extraction of user and boat info
+                const username = item.user?.name || item.user?.email || 'Unknown User';
+                const boatName = item.boat?.name || '';
+                const boatModel = item.boat?.model || '';
+                let boatInfo = '';
+                if (boatName && boatModel) boatInfo = `Boat: ${boatName} (${boatModel})`;
+                else if (boatName) boatInfo = `Boat: ${boatName}`;
+                else if (boatModel) boatInfo = `Boat Model: ${boatModel}`;
+                return (
+                  <View style={styles.logCard}>
+                    <Text style={styles.logUser}>{username}</Text>
+                    <Text style={styles.logDate}>{new Date(item.created_on).toLocaleString()}</Text>
+                    {boatInfo ? <Text style={styles.logDate}>{boatInfo}</Text> : null}
+                    {/* Add more log fields as needed */}
+                  </View>
+                );
+              }}
               contentContainerStyle={{ paddingBottom: 32 }}
             />
           )}
@@ -222,19 +231,56 @@ export default function Friend() {
                       </Text>
                       <Text style={styles.searchResultEmail}>{item.email}</Text>
                     </View>
-                    <TouchableOpacity
-                      style={[
-                        styles.actionButton,
-                        status === 'Add' && styles.actionButtonAdd,
-                        status === 'Requested' && styles.actionButtonRequested,
-                        status === 'Friends' && styles.actionButtonFriends,
-                        status === 'Respond' && styles.actionButtonRespond,
-                      ]}
-                      disabled={status !== 'Add'}
-                      onPress={() => handleSendRequest(item.email)}
-                    >
-                      <Text style={styles.actionButtonText}>{status}</Text>
-                    </TouchableOpacity>
+                    {status === 'Requested' ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={[styles.actionButton, styles.actionButtonRequested, { marginRight: 8 }]}>Requested</Text>
+                        <TouchableOpacity
+                          style={[styles.actionButton, { backgroundColor: '#E53935' }]}
+                          disabled={cancelPendingFriendRequest.isPending}
+                          onPress={() => {
+                            if (item.pendingRequestId) {
+                              Alert.alert(
+                                'Cancel Friend Request',
+                                'Are you sure you want to cancel this friend request?',
+                                [
+                                  { text: 'No', style: 'cancel' },
+                                  {
+                                    text: 'Yes',
+                                    style: 'destructive',
+                                    onPress: () => {
+                                      cancelPendingFriendRequest.mutate(item.pendingRequestId!, {
+                                        onSuccess: () => {
+                                          showToast('Friend request cancelled');
+                                          setSearchResults(results => results.map(u => u.id === item.id ? { ...u, friendStatus: 'none', pendingRequestId: null } : u));
+                                        },
+                                        onError: (err: any) => {
+                                          showToast(err?.message || 'Could not cancel friend request.');
+                                        },
+                                      });
+                                    },
+                                  },
+                                ]
+                              );
+                            }
+                          }}
+                        >
+                          <Ionicons name="close" size={18} color="#fff" />
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={[
+                          styles.actionButton,
+                          status === 'Add' && styles.actionButtonAdd,
+                          status === 'Friends' && styles.actionButtonFriends,
+                          status === 'Respond' && styles.actionButtonRespond,
+                        ]}
+                        disabled={status !== 'Add'}
+                        onPress={() => handleSendRequest(item.email)}
+                      >
+                        <Text style={styles.actionButtonText}>{status}</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 );
               }}

@@ -6,6 +6,7 @@ import {
   respondToFriendRequest,
   removeFriend,
   fetchFriendsFeed,
+  cancelPendingFriendRequest,
 } from "@/api/fetch/friends.fetch";
 import { FriendRequestDTO, FriendUserDTO, FriendsLogDTO } from "../interfaces/friends/friends";
 
@@ -72,4 +73,19 @@ export function useFriendsFeed() {
     queryFn: fetchFriendsFeed,
   });
   return { feed: data, isLoading };
+}
+
+export function useCancelPendingFriendRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (requestId: number) => cancelPendingFriendRequest(requestId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["searchResults"] });
+    },
+    onError: (error) => {
+      console.error("Cancel friend request error:", error);
+    },
+  });
 }
