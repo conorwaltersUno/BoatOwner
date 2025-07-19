@@ -13,9 +13,11 @@ import {
 } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import MapView, { Polyline } from "react-native-maps";
+import MapView, { Polyline, Marker } from "react-native-maps";
 import { LocationPoint, SaveLogDTO } from "../interfaces/log/log";
 import { useSaveLog } from "@/hooks/useSaveLog";
+import Slider from '@react-native-community/slider';
+import { Ionicons } from '@expo/vector-icons';
 
 interface SaveLogModalProps {
   modalVisibility: boolean;
@@ -52,6 +54,38 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
     setModalVisibility(false);
   };
 
+  const REPLAY_SPEEDS = [0.5, 1, 1.5, 2, 5, 10];
+  const [replayIndex, setReplayIndex] = React.useState(0);
+  const [isReplaying, setIsReplaying] = React.useState(false);
+  const [replaySpeed, setReplaySpeed] = React.useState(1);
+  const [mapRegion, setMapRegion] = React.useState<any>(undefined);
+  const mapRef = React.useRef<MapView | null>(null);
+
+  React.useEffect(() => {
+    setReplayIndex(0);
+    setIsReplaying(false);
+    setReplaySpeed(1);
+  }, [locations]);
+
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (isReplaying && locations.length > 1) {
+      interval = setInterval(() => {
+        setReplayIndex(prev => {
+          if (prev < locations.length - 1) {
+            return prev + 1;
+          } else {
+            // Loop back to start
+            return 0;
+          }
+        });
+      }, Math.max(10, 100 / replaySpeed));
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isReplaying, locations, replaySpeed]);
+
   return (
     <Modal visible={modalVisibility} transparent animationType="slide">
       <TouchableWithoutFeedback onPress={() => setModalVisibility(false)}>
@@ -62,104 +96,185 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
               keyboardVerticalOffset={100}
               style={styles.modalContainer}
             >
-              <View style={styles.innerContainer}>
-                <Text style={styles.modalTitle}>Trip Summary {new Date().toLocaleDateString()}</Text>
-
-                <Formik
-                  initialValues={{
-                    description: "",
-                    crewMembers: [""],
-                  }}
-                  validationSchema={validationSchema}
-                  onSubmit={(values, { resetForm }) => {
-                    handleSave(values);
-                    resetForm();
-                  }}
-                >
-                  {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
-                    <>
-                      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-                        <TextInput
-                          style={[styles.input, styles.textArea]}
-                          placeholder="Trip Description"
-                          value={values.description}
-                          onChangeText={handleChange("description")}
-                          onBlur={handleBlur("description")}
-                          multiline
-                          numberOfLines={4}
-                          textAlignVertical="top"
-                        />
-                        {errors.description && touched.description && (
-                          <Text style={styles.errorText}>Description cannot be empty.</Text>
-                        )}
-
-                        <Text style={styles.sectionTitle}>Crew Members</Text>
-                        {values.crewMembers.map((member, idx) => (
-                          <View key={idx} style={styles.crewRow}>
+              <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                <View style={styles.innerContainer}>
+                  <Text style={styles.modalTitle}>Trip Summary</Text>
+                  <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
+                  <Formik
+                    initialValues={{
+                      description: "",
+                      crewMembers: [""],
+                    }}
+                    validationSchema={validationSchema}
+                    onSubmit={(values, { resetForm }) => {
+                      handleSave(values);
+                      resetForm();
+                    }}
+                  >
+                    {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
+                      <>
+                        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+                          <View style={styles.sectionCard}>
+                            <Text style={styles.sectionTitle}>Description</Text>
                             <TextInput
-                              style={[styles.input, { flex: 1 }]}
-                              placeholder={`Crew Member ${idx + 1}`}
-                              value={member}
-                              onChangeText={(text) => {
-                                const updated = [...values.crewMembers];
-                                updated[idx] = text;
-                                setFieldValue("crewMembers", updated);
-                              }}
+                              style={[styles.input, styles.textArea]}
+                              placeholder="Describe your trip..."
+                              value={values.description}
+                              onChangeText={handleChange("description")}
+                              onBlur={handleBlur("description")}
+                              multiline
+                              numberOfLines={4}
+                              textAlignVertical="top"
                             />
-                            {idx > 0 && (
-                              <TouchableOpacity
-                                style={styles.deleteButton}
-                                onPress={() => {
-                                  const updated = values.crewMembers.filter((_, i) => i !== idx);
-                                  setFieldValue("crewMembers", updated);
-                                }}
-                              >
-                                <Text style={styles.deleteButtonText}>🗑️</Text>
-                              </TouchableOpacity>
+                            {errors.description && touched.description && (
+                              <Text style={styles.errorText}>Description cannot be empty.</Text>
                             )}
                           </View>
-                        ))}
-
-                        <TouchableOpacity
-                          onPress={() => {
-                            setFieldValue("crewMembers", [...values.crewMembers, ""]);
-                          }}
-                          style={styles.addButton}
-                        >
-                          <Text style={styles.addButtonText}>+ Add Crew Member</Text>
-                        </TouchableOpacity>
-
-                        {Array.isArray(errors.crewMembers) &&
-                          errors.crewMembers.some((err) => err) &&
-                          touched.crewMembers && (
-                            <Text style={styles.errorText}>Crew member name cannot be empty.</Text>
-                          )}
-
-                        <MapView
-                          style={styles.map}
-                          initialRegion={{
-                            latitude: locations[0]?.latitude || 37.78825,
-                            longitude: locations[0]?.longitude || -122.4324,
-                            latitudeDelta: 0.01,
-                            longitudeDelta: 0.01,
-                          }}
-                        >
-                          <Polyline coordinates={locations} strokeWidth={4} strokeColor="blue" />
-                        </MapView>
-                      </ScrollView>
-
-                      <View style={styles.buttonContainer}>
-                        <TouchableOpacity onPress={() => handleSubmit()} style={styles.saveButton}>
-                          <Text style={styles.saveButtonText}>Save Trip</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setModalVisibility(false)} style={styles.cancelButton}>
-                          <Text style={styles.cancelText}>Cancel</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </>
-                  )}
-                </Formik>
-              </View>
+                          <View style={styles.sectionCard}>
+                            <Text style={styles.sectionTitle}>Crew Members</Text>
+                            {values.crewMembers.map((member, idx) => (
+                              <View key={idx} style={styles.crewRow}>
+                                <TextInput
+                                  style={[styles.input, { flex: 1 }]}
+                                  placeholder={`Crew Member ${idx + 1}`}
+                                  value={member}
+                                  onChangeText={(text) => {
+                                    const updated = [...values.crewMembers];
+                                    updated[idx] = text;
+                                    setFieldValue("crewMembers", updated);
+                                  }}
+                                />
+                                {idx > 0 && (
+                                  <TouchableOpacity
+                                    style={styles.deleteButton}
+                                    onPress={() => {
+                                      const updated = values.crewMembers.filter((_, i) => i !== idx);
+                                      setFieldValue("crewMembers", updated);
+                                    }}
+                                  >
+                                    <Text style={styles.deleteButtonText}>🗑️</Text>
+                                  </TouchableOpacity>
+                                )}
+                              </View>
+                            ))}
+                            <TouchableOpacity
+                              onPress={() => {
+                                setFieldValue("crewMembers", [...values.crewMembers, ""]);
+                              }}
+                              style={styles.addButton}
+                            >
+                              <Text style={styles.addButtonText}>+ Add Crew Member</Text>
+                            </TouchableOpacity>
+                            {Array.isArray(errors.crewMembers) &&
+                              errors.crewMembers.some((err) => err) &&
+                              touched.crewMembers && (
+                                <Text style={styles.errorText}>Crew member name cannot be empty.</Text>
+                              )}
+                          </View>
+                          <View style={styles.sectionCard}>
+                            <Text style={styles.sectionTitle}>Route Map</Text>
+                            <View style={{ marginBottom: 16 }}>
+                              <MapView
+                                ref={mapRef}
+                                style={styles.map}
+                                initialRegion={{
+                                  latitude: locations[0]?.latitude || 37.78825,
+                                  longitude: locations[0]?.longitude || -122.4324,
+                                  latitudeDelta: 0.01,
+                                  longitudeDelta: 0.01,
+                                }}
+                                region={mapRegion}
+                                onRegionChangeComplete={region => setMapRegion(region)}
+                              >
+                                <Polyline coordinates={locations} strokeWidth={4} strokeColor="#2E66E7" />
+                                {locations.length > 0 && (
+                                  <Marker
+                                    coordinate={locations[replayIndex]}
+                                    pinColor="#E74C3C"
+                                    title="Current Position"
+                                  />
+                                )}
+                              </MapView>
+                              {/* Replay Controls */}
+                              {locations.length > 1 && (
+                                <View style={{ marginTop: 10 }}>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    {/* Play/Pause button to the left of the slider, smaller */}
+                                    <TouchableOpacity
+                                      onPress={() => setIsReplaying(!isReplaying)}
+                                      style={{ backgroundColor: '#2E66E7', borderRadius: 16, padding: 6, marginRight: 8, marginLeft: 4 }}
+                                    >
+                                      <Ionicons name={isReplaying ? 'pause' : 'play'} size={16} color="#fff" />
+                                    </TouchableOpacity>
+                                    <Slider
+                                      style={{ flex: 1, height: 24, marginRight: 0, marginLeft: 0 }}
+                                      minimumValue={0}
+                                      maximumValue={locations.length - 1}
+                                      value={replayIndex}
+                                      onValueChange={(val: number) => setReplayIndex(Math.round(val))}
+                                      minimumTrackTintColor="#2E66E7"
+                                      maximumTrackTintColor="#eaf0fa"
+                                      thumbTintColor="#2E66E7"
+                                    />
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 12 }}>
+                                      <TouchableOpacity
+                                        onPress={() => setReplaySpeed(prev => {
+                                          const idx = REPLAY_SPEEDS.indexOf(prev);
+                                          return REPLAY_SPEEDS[(idx + 1) % REPLAY_SPEEDS.length];
+                                        })}
+                                        style={{ backgroundColor: '#eee', borderRadius: 20, padding: 8, marginRight: 4 }}
+                                      >
+                                        <Text style={styles.speedBtn}>{replaySpeed}x</Text>
+                                      </TouchableOpacity>
+                                      <TouchableOpacity
+                                        onPress={() => {
+                                          setReplayIndex(0);
+                                          setIsReplaying(false);
+                                        }}
+                                        accessibilityLabel="Restart log replay"
+                                        style={{ backgroundColor: '#eaf0fa', borderRadius: 20, padding: 8, marginRight: 4, marginLeft: 4 }}
+                                      >
+                                        <Text style={styles.replayBtn}>⟲</Text>
+                                      </TouchableOpacity>
+                                    </View>
+                                  </View>
+                                </View>
+                              )}
+                              {/* Recenter button */}
+                              {locations.length > 0 && (
+                                <TouchableOpacity
+                                  style={styles.recenterBtn}
+                                  onPress={() => {
+                                    if (locations.length > 0 && mapRef.current) {
+                                      mapRef.current.animateToRegion({
+                                        latitude: locations[replayIndex].latitude,
+                                        longitude: locations[replayIndex].longitude,
+                                        latitudeDelta: 0.01,
+                                        longitudeDelta: 0.01,
+                                      });
+                                    }
+                                  }}
+                                  accessibilityLabel="Recenter on current log location"
+                                >
+                                  <Ionicons name="locate" size={22} color="#2E66E7" />
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          </View>
+                        </ScrollView>
+                        <View style={styles.buttonContainer}>
+                          <TouchableOpacity onPress={() => handleSubmit()} style={styles.saveButton}>
+                            <Text style={styles.saveButtonText}>Save Trip</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => setModalVisibility(false)} style={styles.cancelButton}>
+                            <Text style={styles.cancelText}>Cancel</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </>
+                    )}
+                  </Formik>
+                </View>
+              </ScrollView>
             </KeyboardAvoidingView>
           </TouchableWithoutFeedback>
         </View>
@@ -195,25 +310,38 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: "bold",
     color: "#2E66E7",
-    marginBottom: 18,
+    marginBottom: 2,
     textAlign: "center",
+    letterSpacing: 0.5,
   },
-  scrollView: {
-    flex: 1,
-    width: "100%",
+  dateText: {
+    fontSize: 15,
+    color: "#888",
+    textAlign: "center",
+    marginBottom: 12,
+    fontWeight: "500",
   },
-  scrollContent: {
-    paddingBottom: 20,
+  sectionCard: {
+    backgroundColor: '#f7f9fc',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 18,
+    shadowColor: '#2E66E7',
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "600",
-    marginBottom: 8,
+    marginBottom: 10,
     color: "#2E66E7",
-    marginTop: 18,
+    marginTop: 0,
+    letterSpacing: 0.2,
   },
   input: {
     borderWidth: 1,
@@ -260,9 +388,10 @@ const styles = StyleSheet.create({
   },
   map: {
     width: "100%",
-    height: 180,
+    height: 160,
     borderRadius: 10,
-    marginTop: 10,
+    marginTop: 6,
+    marginBottom: 0,
   },
   buttonContainer: {
     flexDirection: "row",
@@ -296,6 +425,37 @@ const styles = StyleSheet.create({
     color: "#E74C3C",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  scrollView: {
+    flex: 1,
+    width: "100%",
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  recenterBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 7,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    zIndex: 20,
+  },
+  speedBtn: {
+    color: '#2E66E7',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  replayBtn: {
+    fontSize: 20,
+    color: '#2E66E7',
+    fontWeight: 'bold',
   },
 });
 

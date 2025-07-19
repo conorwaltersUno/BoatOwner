@@ -21,6 +21,7 @@ import LogRouteMapWithReplay from "./LogRouteMapWithReplay";
 import { LogDTO } from '../interfaces/log/log';
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import Slider from '@react-native-community/slider';
+import { Ionicons } from '@expo/vector-icons';
 
 interface LogDetailModalProps {
   modalVisibility: boolean;
@@ -39,6 +40,7 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
   const [isReplaying, setIsReplaying] = useState(false);
   const [replaySpeed, setReplaySpeed] = useState(1);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const mapRef = useRef<MapView | null>(null);
 
   useEffect(() => {
     setLocalLog(log);
@@ -59,8 +61,8 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
           if (prev < localLog.coordinates.length - 1) {
             return prev + 1;
           } else {
-            setIsReplaying(false);
-            return prev;
+            // Loop back to start
+            return 0;
           }
         });
       }, speedMs);
@@ -226,56 +228,75 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
                 </View>
                 {/* Map + Replay UI */}
                 <View style={styles.mapContainerDynamic}>
-                  <MapView
-                    style={{ width: '100%', height: 220, borderRadius: 12 }}
-                    initialRegion={
-                      localLog.coordinates?.[0]
-                        ? {
-                            latitude: localLog.coordinates[0].latitude,
-                            longitude: localLog.coordinates[0].longitude,
-                            latitudeDelta: 0.05,
-                            longitudeDelta: 0.05,
-                          }
-                        : {
-                            latitude: 37.78825,
-                            longitude: -122.4324,
-                            latitudeDelta: 0.05,
-                            longitudeDelta: 0.05,
-                          }
-                    }
-                    region={
-                      localLog.coordinates?.[replayIndex]
-                        ? {
+                  <View style={{ position: 'relative' }}>
+                    <MapView
+                      ref={mapRef}
+                      style={{ width: '100%', height: 220, borderRadius: 12 }}
+                      initialRegion={
+                        localLog.coordinates?.[0]
+                          ? {
+                              latitude: localLog.coordinates[0].latitude,
+                              longitude: localLog.coordinates[0].longitude,
+                              latitudeDelta: 0.05,
+                              longitudeDelta: 0.05,
+                            }
+                          : {
+                              latitude: 37.78825,
+                              longitude: -122.4324,
+                              latitudeDelta: 0.05,
+                              longitudeDelta: 0.05,
+                            }
+                      }
+                      region={
+                        localLog.coordinates?.[replayIndex]
+                          ? {
+                              latitude: localLog.coordinates[replayIndex].latitude,
+                              longitude: localLog.coordinates[replayIndex].longitude,
+                              latitudeDelta: 0.05,
+                              longitudeDelta: 0.05,
+                            }
+                          : undefined
+                      }
+                      pointerEvents="none"
+                    >
+                      <Polyline
+                        coordinates={localLog.coordinates.map(c => ({ latitude: c.latitude, longitude: c.longitude }))}
+                        strokeColor="#007AFF"
+                        strokeWidth={3}
+                      />
+                      {localLog.coordinates[replayIndex] && (
+                        <Marker
+                          coordinate={{
                             latitude: localLog.coordinates[replayIndex].latitude,
                             longitude: localLog.coordinates[replayIndex].longitude,
-                            latitudeDelta: 0.05,
-                            longitudeDelta: 0.05,
-                          }
-                        : undefined
-                    }
-                    pointerEvents="none"
-                  >
-                    <Polyline
-                      coordinates={localLog.coordinates.map(c => ({ latitude: c.latitude, longitude: c.longitude }))}
-                      strokeColor="#007AFF"
-                      strokeWidth={3}
-                    />
-                    {localLog.coordinates[replayIndex] && (
-                      <Marker
-                        coordinate={{
-                          latitude: localLog.coordinates[replayIndex].latitude,
-                          longitude: localLog.coordinates[replayIndex].longitude,
-                        }}
-                      />
-                    )}
-                  </MapView>
+                          }}
+                        />
+                      )}
+                    </MapView>
+                    <TouchableOpacity
+                      style={styles.recenterBtn}
+                      onPress={() => {
+                        if (mapRef.current && localLog.coordinates[replayIndex]) {
+                          mapRef.current.animateToRegion({
+                            latitude: localLog.coordinates[replayIndex].latitude,
+                            longitude: localLog.coordinates[replayIndex].longitude,
+                            latitudeDelta: 0.01,
+                            longitudeDelta: 0.01,
+                          });
+                        }
+                      }}
+                      accessibilityLabel="Recenter on current log location"
+                    >
+                      <Ionicons name="locate" size={22} color="#2E66E7" />
+                    </TouchableOpacity>
+                  </View>
                   {/* Slider and controls */}
                   <View style={styles.sliderRow}>
-                    <TouchableOpacity onPress={() => setIsReplaying(!isReplaying)}>
-                      <Text style={styles.replayBtn}>{isReplaying ? 'Stop' : 'Start'}</Text>
+                    <TouchableOpacity onPress={() => setIsReplaying(!isReplaying)} style={{ backgroundColor: '#2E66E7', borderRadius: 16, padding: 6, marginRight: 8, marginLeft: 4 }}>
+                      <Ionicons name={isReplaying ? 'pause' : 'play'} size={16} color="#fff" />
                     </TouchableOpacity>
                     <Slider
-                      style={{ flex: 1, marginHorizontal: 12 }}
+                      style={{ flex: 1, marginHorizontal: 12, height: 24 }}
                       minimumValue={0}
                       maximumValue={localLog.coordinates.length - 1}
                       value={replayIndex}
@@ -285,18 +306,20 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
                       maximumTrackTintColor="#ccc"
                       thumbTintColor="#007AFF"
                     />
-                    <TouchableOpacity onPress={() => setReplaySpeed(prev => {
-                      const idx = REPLAY_SPEEDS.indexOf(prev);
-                      return REPLAY_SPEEDS[(idx + 1) % REPLAY_SPEEDS.length];
-                    })}>
-                      <Text style={styles.speedBtn}>{replaySpeed}x</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => {
-                      setReplayIndex(0);
-                      setIsReplaying(false);
-                    }} accessibilityLabel="Restart log replay">
-                      <Text style={styles.replayBtn}>⟲</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 12 }}>
+                      <TouchableOpacity onPress={() => setReplaySpeed(prev => {
+                        const idx = REPLAY_SPEEDS.indexOf(prev);
+                        return REPLAY_SPEEDS[(idx + 1) % REPLAY_SPEEDS.length];
+                      })} style={{ backgroundColor: '#eee', borderRadius: 20, padding: 8, marginRight: 4 }}>
+                          <Text style={styles.speedBtn}>{replaySpeed}x</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => {
+                          setReplayIndex(0);
+                          setIsReplaying(false);
+                        }} accessibilityLabel="Restart log replay" style={{ backgroundColor: '#eaf0fa', borderRadius: 20, padding: 8, marginRight: 4, marginLeft: 4 }}>
+                          <Text style={styles.replayBtn}>⟲</Text>
+                        </TouchableOpacity>
+                    </View>
                   </View>
                   <View style={styles.sliderInfoRow}>
                     <Text style={styles.sliderInfoText}>{getCurrentPointTime()} / {getTotalDuration()}</Text>
@@ -677,6 +700,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     marginRight: 8,
+    marginLeft: 4,
   },
   speedBtn: {
     backgroundColor: '#eee',
@@ -686,7 +710,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    marginLeft: 8,
   },
   sliderInfoRow: {
     flexDirection: 'row',
@@ -697,6 +720,20 @@ const styles = StyleSheet.create({
   sliderInfoText: {
     color: '#888',
     fontSize: 13,
+  },
+  recenterBtn: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 7,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    zIndex: 20,
   },
 });
 

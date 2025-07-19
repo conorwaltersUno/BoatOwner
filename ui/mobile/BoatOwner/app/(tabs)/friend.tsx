@@ -9,6 +9,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { UserSearchResult } from '@/interfaces/friends';
 import LogRouteMapWithReplay from '@/components/LogRouteMapWithReplay';
 import dayjs from 'dayjs';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function Friend() {
   const [activeTab, setActiveTab] = useState<'logs' | 'manage'>('logs');
@@ -22,6 +23,7 @@ export default function Friend() {
   const removeFriend = useRemoveFriend();
   const cancelPendingFriendRequest = useCancelPendingFriendRequest();
   const { feed: friendsFeed, isLoading: feedLoading } = useFriendsFeed();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const trimmed = searchQuery.trim();
@@ -42,8 +44,7 @@ export default function Friend() {
         setSearchResults(
           results.map((u: any) => ({
             id: u.id,
-            username: u.username || u.name || u.email?.split('@')[0] || 'User',
-            email: u.email,
+            username: u.username || 'User',
             friendStatus: u.friendStatus,
             pendingRequestId: u.pendingRequestId,
           }))
@@ -89,10 +90,10 @@ export default function Friend() {
   }, [incomingCount]);
 
   // Remove friend handler
-  const handleRemoveFriend = (friendId: number, email: string) => {
+  const handleRemoveFriend = (friendId: number, username: string) => {
     Alert.alert(
       'Remove Friend',
-      `Are you sure you want to remove ${email} from your friends?`,
+      `Are you sure you want to remove ${username} from your friends?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -115,9 +116,9 @@ export default function Friend() {
   };
 
   // Send friend request handler
-  const handleSendRequest = (email: string) => {
+  const handleSendRequest = (username: string) => {
     sendFriendRequest.mutate(
-      { email },
+      { username },
       {
         onSuccess: () => {
           showToast('Friend request sent');
@@ -171,65 +172,67 @@ export default function Friend() {
       {/* Friends' Logs Tab */}
       {activeTab === 'logs' && (
         <View style={{ flex: 1 }}>
-          {feedLoading ? (
-            <ActivityIndicator style={{ marginTop: 32 }} />
-          ) : friendsFeed.length === 0 ? (
-            <Text style={styles.emptyText}>No logs from friends yet.</Text>
-          ) : (
-            <FlatList
-              data={friendsFeed}
-              keyExtractor={item => String(item.id)}
-              renderItem={({ item }) => {
-                const username = item.user?.name || item.user?.email || 'Unknown User';
-                const boatName = item.boat?.name || '';
-                const boatModel = item.boat?.model || '';
-                const logTime = item.log_started ? dayjs(item.log_started).format('YYYY-MM-DD HH:mm') : '';
-                const durationSec = item.log_started && item.log_ended ? Math.round((new Date(item.log_ended).getTime() - new Date(item.log_started).getTime()) / 1000) : 0;
-                const formatDuration = (seconds: number) => {
-                  if (isNaN(seconds) || seconds < 0) return '0s';
-                  const h = Math.floor(seconds / 3600);
-                  const m = Math.floor((seconds % 3600) / 60);
-                  const s = seconds % 60;
-                  return [h ? `${h}h` : '', m ? `${m}m` : '', `${s}s`].filter(Boolean).join(' ');
-                };
-                // Convert log fields to Date for LogRouteMapWithReplay
-                const logForMap = {
-                  ...item,
-                  log_started: item.log_started ? new Date(item.log_started) : new Date(0),
-                  log_ended: item.log_ended ? new Date(item.log_ended) : new Date(0),
-                  created_on: item.created_on ? new Date(item.created_on) : new Date(0),
-                };
-                return (
-                  <View style={styles.igCard}>
-                    {/* Username at top */}
-                    <Text style={styles.igUsername}>{username}</Text>
-                    {/* Map with replay in the middle */}
-                    <View style={styles.igMapContainer}>
-                      <LogRouteMapWithReplay log={logForMap} height={220} />
-                    </View>
-                    {/* Info below map */}
-                    <View style={styles.igInfoRow}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.igBoat}>{boatName}</Text>
-                        <Text style={styles.igBoatModel}>{boatModel}</Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.igTime}>{logTime}</Text>
-                        <Text style={styles.igDuration}>Duration: {formatDuration(durationSec)}</Text>
-                      </View>
-                    </View>
-                    {item.description ? (
-                      <Text style={styles.igDescription}>{item.description}</Text>
-                    ) : null}
-                    {item.crew_members?.length ? (
-                      <Text style={styles.igCrew}>Crew: {item.crew_members.join(', ')}</Text>
-                    ) : null}
+          {/* Pull-to-refresh for friends logs */}
+          <FlatList
+            data={friendsFeed}
+            keyExtractor={item => String(item.id)}
+            renderItem={({ item }) => {
+              const username = item.user?.username || 'Unknown User';
+              const boatName = item.boat?.name || '';
+              const boatModel = item.boat?.model || '';
+              const logTime = item.log_started ? dayjs(item.log_started).format('YYYY-MM-DD HH:mm') : '';
+              const durationSec = item.log_started && item.log_ended ? Math.round((new Date(item.log_ended).getTime() - new Date(item.log_started).getTime()) / 1000) : 0;
+              const formatDuration = (seconds: number) => {
+                if (isNaN(seconds) || seconds < 0) return '0s';
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = seconds % 60;
+                return [h ? `${h}h` : '', m ? `${m}m` : '', `${s}s`].filter(Boolean).join(' ');
+              };
+              // Convert log fields to Date for LogRouteMapWithReplay
+              const logForMap = {
+                ...item,
+                log_started: item.log_started ? new Date(item.log_started) : new Date(0),
+                log_ended: item.log_ended ? new Date(item.log_ended) : new Date(0),
+                created_on: item.created_on ? new Date(item.created_on) : new Date(0),
+              };
+              return (
+                <View style={styles.igCard}>
+                  {/* Username at top */}
+                  <Text style={styles.igUsername}>{username}</Text>
+                  {/* Map with replay in the middle */}
+                  <View style={styles.igMapContainer}>
+                    <LogRouteMapWithReplay log={logForMap} height={220} />
                   </View>
-                );
-              }}
-              contentContainerStyle={{ paddingBottom: 32 }}
-            />
-          )}
+                  {/* Info below map */}
+                  <View style={styles.igInfoRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.igBoat}>{boatName}</Text>
+                      <Text style={styles.igBoatModel}>{boatModel}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.igTime}>{logTime}</Text>
+                      <Text style={styles.igDuration}>Duration: {formatDuration(durationSec)}</Text>
+                    </View>
+                  </View>
+                  {item.description ? (
+                    <Text style={styles.igDescription}>{item.description}</Text>
+                  ) : null}
+                  {item.crew_members?.length ? (
+                    <Text style={styles.igCrew}>Crew: {item.crew_members.join(', ')}</Text>
+                  ) : null}
+                </View>
+              );
+            }}
+            contentContainerStyle={{ paddingBottom: 32 }}
+            ListEmptyComponent={feedLoading ? <ActivityIndicator style={{ marginTop: 32 }} /> : <Text style={styles.emptyText}>No logs from friends yet.</Text>}
+            refreshing={feedLoading}
+            onRefresh={() => {
+              refetchFriends();
+              refetchRequests();
+              queryClient.invalidateQueries({ queryKey: ["friendsFeed"] });
+            }}
+          />
         </View>
       )}
 
@@ -259,9 +262,8 @@ export default function Friend() {
                   <View style={styles.searchResultRow}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.searchResultName}>
-                        {item.username || item.email?.split('@')[0] || 'User'}
+                        {item.username || 'User'}
                       </Text>
-                      <Text style={styles.searchResultEmail}>{item.email}</Text>
                     </View>
                     {status === 'Requested' ? (
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -308,7 +310,7 @@ export default function Friend() {
                           status === 'Respond' && styles.actionButtonRespond,
                         ]}
                         disabled={status !== 'Add'}
-                        onPress={() => handleSendRequest(item.email)}
+                        onPress={() => handleSendRequest(item.username)}
                       >
                         <Text style={styles.actionButtonText}>{status}</Text>
                       </TouchableOpacity>
@@ -367,12 +369,11 @@ export default function Friend() {
                 renderItem={({ item }) => (
                   <View style={styles.friendRow}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.friendName}>{item.name || item.email}</Text>
-                      <Text style={styles.friendEmail}>{item.email}</Text>
+                      <Text style={styles.friendName}>{item.username || item.name || 'Unknown User'}</Text>
                     </View>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.actionButtonRemove]}
-                      onPress={() => handleRemoveFriend(item.id, item.email)}
+                      onPress={() => handleRemoveFriend(item.id, item.username || item.name || 'Unknown User')}
                     >
                       <Ionicons name="person-remove" size={20} color="#fff" />
                     </TouchableOpacity>
@@ -417,36 +418,45 @@ const styles = StyleSheet.create({
   logDate: { color: '#888', fontSize: 13 },
   // New styles for Instagram-style card
   igCard: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    margin: 12,
+    backgroundColor: '#f7f9fc',
+    borderRadius: 18,
+    margin: 16,
     marginBottom: 0,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    shadowColor: '#2E66E7',
+    shadowOpacity: 0.13,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
     padding: 0,
     overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: '#2E66E7',
   },
   igUsername: {
     fontWeight: 'bold',
-    fontSize: 17,
-    padding: 12,
+    fontSize: 18,
+    padding: 14,
     paddingBottom: 0,
     color: '#2E66E7',
+    letterSpacing: 0.2,
+    backgroundColor: '#eaf0fa',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
   },
   igMapContainer: {
     marginTop: 8,
     marginBottom: 8,
-    borderRadius: 10,
+    borderRadius: 12,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e3e8f0',
   },
   igInfoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingBottom: 4,
+    paddingHorizontal: 16,
+    paddingBottom: 6,
+    marginTop: 2,
   },
   igBoat: {
     fontWeight: '600',
@@ -470,14 +480,14 @@ const styles = StyleSheet.create({
   igDescription: {
     fontSize: 15,
     color: '#333',
-    paddingHorizontal: 12,
-    paddingBottom: 6,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
     paddingTop: 2,
   },
   igCrew: {
     fontSize: 13,
     color: '#666',
-    paddingHorizontal: 12,
-    paddingBottom: 10,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
 });

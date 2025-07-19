@@ -12,12 +12,12 @@ const badRequestStatus = 400;
 const notFoundStatus = 404;
 const internalServerError = 500;
 
-// Send a friend request by email or userId
+// Send a friend request by username, email, or userId
 export async function sendFriendRequest(req: Request, res: Response) {
   try {
     const senderId = req.body.userId;
-    const { email, userId } = req.body;
-    const rawResult = await FriendService.sendFriendRequest(senderId, email, userId);
+    const { receiver_username, email, userId } = req.body;
+    const rawResult = await FriendService.sendFriendRequest(senderId, receiver_username, email, userId);
 
     // Fetch sender details for the response
     const sender = await UserService.getUserById(senderId);
@@ -79,7 +79,9 @@ export async function getFriends(req: Request, res: Response) {
   try {
     const userId = parseInt(req.params.userId, 10);
     const friends: FriendUserDTO[] = await FriendService.getFriends(userId);
-    return res.status(okStatus).json(friends);
+    // Remove email from response for security
+    const friendsNoEmail = friends.map(f => ({ id: f.id, username: f.username, name: f.name }));
+    return res.status(okStatus).json(friendsNoEmail);
   } catch (err: any) {
     res.status(internalServerError).json({ message: err.message });
   }
@@ -140,7 +142,7 @@ export async function getFriendsLogs(req: Request, res: Response) {
   try {
     const userId = parseInt(req.params.userId, 10);
     const rawLogs = await FriendService.getFriendsLogs(userId);
-    // Each log must include: user (id, username, email) and boat (name, model)
+    // Each log must include: user (id, username) and boat (name, model)
     const logs: FriendsLogDTO[] = rawLogs.map((log: any) => ({
       id: log.id,
       boat_id: log.boat_id,
@@ -158,9 +160,8 @@ export async function getFriendsLogs(req: Request, res: Response) {
         ? {
             id: log.boat.user.id,
             username: log.boat.user.username,
-            email: log.boat.user.email,
           }
-        : { id: 0, username: 'Unknown User', email: '' },
+        : { id: 0, username: 'Unknown User' },
     }));
     return res.status(okStatus).json(logs);
   } catch (err: any) {

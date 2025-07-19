@@ -29,7 +29,7 @@ export function useFriendRequests() {
 export function useSendFriendRequest() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ email }: { email: string }) => sendFriendRequest(email),
+    mutationFn: async ({ username }: { username: string }) => sendFriendRequest(username),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
     },

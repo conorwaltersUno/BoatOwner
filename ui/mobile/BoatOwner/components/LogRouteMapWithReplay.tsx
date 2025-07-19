@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
 import MapView, { Polyline, Marker } from 'react-native-maps';
 import dayjs from 'dayjs';
 import { LogDTO } from '@/interfaces/log/log';
 import Slider from '@react-native-community/slider';
+import { Ionicons } from '@expo/vector-icons';
 
 interface LogRouteMapWithReplayProps {
   log: LogDTO;
@@ -19,6 +20,8 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
   const [replayIndex, setReplayIndex] = useState(0);
   const [isReplaying, setIsReplaying] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const [mapRegion, setMapRegion] = useState<any>(undefined);
+  const mapRef = useRef<MapView | null>(null);
 
   useEffect(() => {
     setReplayIndex(0);
@@ -33,11 +36,11 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
           if (prev < log.coordinates.length - 1) {
             return prev + 1;
           } else {
-            setIsReplaying(false);
-            return prev;
+            // Loop back to start
+            return 0;
           }
         });
-      }, Math.max(10, 100 / speed)); // speed up or slow down
+      }, Math.max(10, 100 / speed));
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -102,6 +105,7 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
       <TouchableOpacity activeOpacity={onMapPress ? 0.7 : 1} onPress={onMapPress} disabled={!onMapPress}>
         <View style={[styles.mapContainer, { height }]}> 
           <MapView
+            ref={mapRef}
             style={styles.map}
             initialRegion={{
               latitude: log?.coordinates?.[0]?.latitude || 37.78825,
@@ -109,6 +113,8 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             }}
+            region={mapRegion}
+            onRegionChangeComplete={region => setMapRegion(region)}
           >
             <Polyline
               coordinates={log?.coordinates || []}
@@ -139,26 +145,31 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
               />
             )}
           </MapView>
+          {/* Recenter button */}
+          <TouchableOpacity
+            style={styles.recenterBtn}
+            onPress={() => {
+              if (log?.coordinates?.length > 0 && mapRef.current) {
+                mapRef.current.animateToRegion({
+                  latitude: log.coordinates[replayIndex].latitude,
+                  longitude: log.coordinates[replayIndex].longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                });
+              }
+            }}
+            accessibilityLabel="Recenter on current log location"
+          >
+            <Ionicons name="locate" size={22} color="#2E66E7" />
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
       {showReplayControls && (
         <View style={{ marginTop: 8 }}>
-          {/* Slider for timeline */}
-          <Slider
-            style={{ width: '100%', height: 32 }}
-            minimumValue={0}
-            maximumValue={log?.coordinates?.length ? log.coordinates.length - 1 : 0}
-            value={replayIndex}
-            onValueChange={val => setReplayIndex(Math.round(val))}
-            minimumTrackTintColor="#2E66E7"
-            maximumTrackTintColor="#eaf0fa"
-            thumbTintColor="#2E66E7"
-            disabled={!log?.coordinates?.length}
-          />
-          {/* Play/Pause and Speed Controls */}
-          <View style={styles.replayControlsRow}>
+          {/* Slider for timeline with play/pause to the left */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity
-              style={[styles.playPauseButton, isReplaying ? styles.pauseButton : styles.playButton]}
+              style={[styles.playPauseButton, isReplaying ? styles.pauseButton : styles.playButton, { marginRight: 8, borderRadius: 16, padding: 6, minWidth: 28, minHeight: 28, marginLeft: 4 }]}
               onPress={() => {
                 if (isReplaying) {
                   setIsReplaying(false);
@@ -169,21 +180,22 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
               }}
               disabled={!log?.coordinates?.length}
             >
-              <Text style={styles.playPauseButtonText}>{isReplaying ? 'Pause' : 'Play'}</Text>
+              <Ionicons name={isReplaying ? 'pause' : 'play'} size={16} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.replayButton, { minWidth: 44, minHeight: 40, alignItems: 'center', justifyContent: 'center' }]}
-              onPress={() => {
-                setReplayIndex(0);
-                setIsReplaying(false);
-              }}
+            <Slider
+              style={{ flex: 1, height: 24 }}
+              minimumValue={0}
+              maximumValue={log?.coordinates?.length ? log.coordinates.length - 1 : 0}
+              value={replayIndex}
+              onValueChange={val => setReplayIndex(Math.round(val))}
+              minimumTrackTintColor="#2E66E7"
+              maximumTrackTintColor="#eaf0fa"
+              thumbTintColor="#2E66E7"
               disabled={!log?.coordinates?.length}
-              accessibilityLabel="Replay from start"
-            >
-              <Text style={styles.replayIcon}>⟲</Text>
-            </TouchableOpacity>
+            />
+            {/* Speed and replay controls to the right */}
             <TouchableOpacity
-              style={[styles.speedBtn, { minWidth: 60, minHeight: 40, alignItems: 'center', justifyContent: 'center' }]}
+              style={[styles.speedBtn, { minWidth: 60, minHeight: 40, alignItems: 'center', justifyContent: 'center', marginLeft: 8 }]} 
               onPress={() => {
                 const idx = SPEEDS.indexOf(speed);
                 setSpeed(SPEEDS[(idx + 1) % SPEEDS.length]);
@@ -192,6 +204,17 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
               accessibilityLabel={`Change replay speed (current: ${speed}x)`}
             >
               <Text style={styles.speedBtnText}>{speed}x</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.replayButton, { minWidth: 44, minHeight: 40, alignItems: 'center', justifyContent: 'center', marginLeft: 4 }]} 
+              onPress={() => {
+                setReplayIndex(0);
+                setIsReplaying(false);
+              }}
+              disabled={!log?.coordinates?.length}
+              accessibilityLabel="Replay from start"
+            >
+              <Text style={styles.replayIcon}>⟲</Text>
             </TouchableOpacity>
           </View>
           {/* Progress info */}
@@ -294,6 +317,20 @@ const styles = StyleSheet.create({
     color: '#2E66E7',
     fontWeight: '600',
     fontSize: SCREEN_WIDTH > 400 ? 15 : 13,
+  },
+  recenterBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 7,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+    zIndex: 20,
   },
 });
 

@@ -16,7 +16,9 @@ export interface FriendRequestDTO {
 // Friend user DTO for friend list
 export interface FriendUserDTO {
   id: number;
-  email: string;
+  username: string;
+  // Removed email for security
+  // email: string;
   name?: string | null;
 }
 
@@ -37,6 +39,8 @@ export interface FriendsLogDTO {
   // The user who owns the log (the friend)
   user: {
     id: number;
-    email: string;
+    username: string;
+    // Removed email for security
+    // email: string;
   };
 }
