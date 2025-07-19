@@ -125,7 +125,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setAuthenticated(false);
           setUser(null);
           setAuthLoading(false);
-          console.log('[AuthContext] setUser(null) - error in auth-check', err);
+          // Only log error in development
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[AuthContext] setUser(null) - error in auth-check', err);
+          }
           router.replace("/(auth)/SignIn");
           return;
         }

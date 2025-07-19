@@ -1,9 +1,16 @@
 import { prisma } from "../utilities";
 
-// Send a friend request by email or userId
-async function sendFriendRequest(senderId: number, email?: string, userId?: number) {
+// Send a friend request by username, email, or userId
+async function sendFriendRequest(
+  senderId: number,
+  receiver_username?: string,
+  email?: string,
+  userId?: number
+) {
   let receiver: any = null;
-  if (email) {
+  if (receiver_username) {
+    receiver = await prisma.user.findUnique({ where: { username: receiver_username } });
+  } else if (email) {
     receiver = await prisma.user.findUnique({ where: { email } });
   } else if (userId) {
     receiver = await prisma.user.findUnique({ where: { id: userId } });
@@ -93,7 +100,7 @@ async function getFriends(userId: number) {
   });
   const friendUsers = await prisma.user.findMany({
     where: { id: { in: friends.map((f) => f.friend_id) } },
-    select: { id: true, email: true },
+    select: { id: true, username: true },
   });
   return friendUsers;
 }
@@ -148,7 +155,7 @@ async function getFriendsLogs(userId: number) {
         select: {
           name: true,
           model: true,
-          user: { select: { id: true, username: true, email: true } },
+          user: { select: { id: true, username: true } },
         },
       },
     },
@@ -228,9 +235,10 @@ async function cancelPendingFriendRequest(requestId: number, userId: number) {
   const request = await prisma.friend_requests.findUnique({ where: { id: requestId } });
   if (!request) throw new Error("Friend request not found");
   if (request.sender_id !== userId) throw new Error("Not authorized to cancel this request");
-  if (request.status !== "pending") throw new Error("Only pending requests can be cancelled");
+  if (request.status !== "pending") throw new Error("Cannot cancel a non-pending request");
+
   await prisma.friend_requests.delete({ where: { id: requestId } });
-  return true;
+  return "Friend request canceled";
 }
 
 export const FriendService = {

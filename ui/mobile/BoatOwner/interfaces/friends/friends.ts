@@ -1,6 +1,6 @@
 export interface FriendUserDTO {
   id: number;
-  email: string;
+  username: string;
   name?: string | null;
 }
 
@@ -33,7 +33,7 @@ export interface FriendsLogDTO {
   };
   user: {
     id: number;
-    email: string;
+    username: string;
     name?: string | null;
   };
 }

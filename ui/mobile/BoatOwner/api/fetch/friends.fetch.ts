@@ -41,14 +41,14 @@ export const fetchFriendRequests = async (): Promise<FriendRequestDTO[]> => {
 };
 
 // POST /friends/request
-export const sendFriendRequest = async (email: string): Promise<FriendRequestDTO> => {
+export const sendFriendRequest = async (username: string): Promise<FriendRequestDTO> => {
   const userId = await getUserId();
   const response = await authFetch(`${apiUrl}/friends/request`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, userId }),
+    body: JSON.stringify({ receiver_username: username, userId }),
   });
-  if (response.status !== 201) {
+  if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || "Failed to send friend request");
   }

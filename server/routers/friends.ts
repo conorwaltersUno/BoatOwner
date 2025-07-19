@@ -27,9 +27,11 @@ FriendsRouter.route("/request").post(
             schema: {
               type: 'object',
               properties: {
+                receiver_username: { type: 'string', example: 'frienduser' },
                 email: { type: 'string', example: 'friend@email.com' },
                 userId: { type: 'integer', example: 2 }
-              }
+              },
+              required: ['receiver_username']
             }
           }
         }
@@ -40,6 +42,7 @@ FriendsRouter.route("/request").post(
       #swagger.responses[500] = { description: 'Internal server error' }
     */
   [
+    body("receiver_username").optional().isString().withMessage("Username must be a string"),
     body("email").optional().isEmail().withMessage("Email must be valid"),
     body("userId").optional().isInt().withMessage("User ID must be an integer"),
   ],

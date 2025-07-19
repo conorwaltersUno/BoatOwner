@@ -159,59 +159,28 @@ export const definitions = {
   createExpenseResponse: { $ref: "#/definitions/expensesDTO" },
   updateExpenseResponse: { $ref: "#/definitions/expensesDTO" },
 
-  /**
-   * @swagger
-   * components:
-   *   schemas:
-   *     FriendDTO:
-   *       type: object
-   *       properties:
-   *         id:
-   *           type: integer
-   *         user_id:
-   *           type: integer
-   *         friend_id:
-   *           type: integer
-   *         created_at:
-   *           type: string
-   *         friend_details:
-   *           type: object
-   *           properties:
-   *             id:
-   *               type: integer
-   *             username:
-   *               type: string
-   *             email:
-   *               type: string
-   *     FriendRequestDTO:
-   *       type: object
-   *       properties:
-   *         id:
-   *           type: integer
-   *         sender_id:
-   *           type: integer
-   *         receiver_id:
-   *           type: integer
-   *         status:
-   *           type: string
-   *           enum: [pending, accepted, rejected]
-   *         created_at:
-   *           type: string
-   *         updated_at:
-   *           type: string
-   *         sender_details:
-   *           type: object
-   *           properties:
-   *             id:
-   *               type: integer
-   *             username:
-   *               type: string
-   *             email:
-   *               type: string
-   *     CreateFriendRequestDTO:
-   *       type: object
-   *       properties:
-   *         receiver_username:
-   *           type: string
-   */
+  // Friend Definitions
+  friendDTO: {
+    id: 1,
+    user_id: 1,
+    friend_id: 2,
+    created_at: "2023-07-04T12:00:00Z",
+    friend_details: {
+      id: 2,
+      username: "frienduser",
+      email: "friend@email.com",
+    },
+  },
+  friendRequestDTO: {
+    receiver_username: "frienduser",
+    userId: 1,
+  },
+  createFriendRequestDTO: {
+    receiver_username: "frienduser",
+  },
+  getAllFriendsResponse: [{ $ref: "#/definitions/friendDTO" }],
+  getFriendByIdResponse: { $ref: "#/definitions/friendDTO" },
+  getFriendRequestsResponse: [{ $ref: "#/definitions/friendRequestDTO" }],
+  createFriendRequestResponse: { $ref: "#/definitions/friendRequestDTO" },
+  updateFriendRequestResponse: { $ref: "#/definitions/friendRequestDTO" },
 };
