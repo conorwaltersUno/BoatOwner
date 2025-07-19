@@ -19,7 +19,7 @@ async function getAllLogs(req: Request, res: Response) {
     const logs: LogDTO[] | null = await LogService.getAllLogs();
 
     if (!logs || logs.length == 0) {
-      return res.status(204).json("No logs found");
+      return res.status(204).json({ message: "No logs found" });
     }
 
     return res.status(okStatus).json(logs);

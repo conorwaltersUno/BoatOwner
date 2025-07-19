@@ -17,7 +17,7 @@ async function getAllBoats(req: Request, res: Response) {
 
     return res.status(okStatus).json(boats);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -32,7 +32,7 @@ async function getBoatById(req: Request, res: Response) {
 
     return res.status(okStatus).json(boat);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -51,7 +51,7 @@ async function createBoat(req: Request, res: Response) {
 
     return res.status(createdStatus).json(boat);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -66,7 +66,7 @@ async function updateBoat(req: Request, res: Response) {
 
     return res.status(okStatus).json(boat);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -81,7 +81,7 @@ async function deleteBoat(req: Request, res: Response) {
 
     return res.sendStatus(noContentStatus);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 

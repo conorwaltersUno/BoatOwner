@@ -74,7 +74,7 @@ describe("ExpenseController", () => {
       await getAllExpenses(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
-      expect(response._getJSONData()).toEqual("Test error");
+      expect(response._getJSONData()).toEqual({ message: "Test error" });
     });
   });
 
@@ -138,7 +138,7 @@ describe("ExpenseController", () => {
       await getExpenseById(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
-      expect(response._getJSONData()).toEqual("Test error");
+      expect(response._getJSONData()).toEqual({ message: "Test error" });
     });
   });
 
@@ -202,7 +202,7 @@ describe("ExpenseController", () => {
       await getExpensesByBoatId(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
-      expect(response._getJSONData()).toEqual("Test error");
+      expect(response._getJSONData()).toEqual({ message: "Test error" });
     });
   });
 
@@ -296,7 +296,7 @@ describe("ExpenseController", () => {
       await createExpense(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
-      expect(response._getJSONData()).toEqual("Test error");
+      expect(response._getJSONData()).toEqual({ message: "Test error" });
     });
   });
 
@@ -381,7 +381,7 @@ describe("ExpenseController", () => {
       await updateExpense(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
-      expect(response._getJSONData()).toEqual("Test error");
+      expect(response._getJSONData()).toEqual({ message: "Test error" });
     });
   });
 
@@ -427,7 +427,7 @@ describe("ExpenseController", () => {
       await deleteExpense(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
-      expect(response._getJSONData()).toEqual("Test error");
+      expect(response._getJSONData()).toEqual({ message: "Test error" });
     });
   });
 });

@@ -23,7 +23,6 @@ export const fetchExpenses = async (boatId: number) => {
     const data: ExpenseDTO[] = await response.json();
     return data;
   } catch (err: any) {
-    console.log(`Failed to fetch expenses: ${err.message}`);
     return []; // Always return an array, never undefined
   }
 };

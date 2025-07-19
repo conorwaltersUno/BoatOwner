@@ -7,9 +7,11 @@ import {
   getPendingRequests,
   getFriendsLogs,
   searchUsers,
+  cancelPendingFriendRequestController,
 } from "../controllers/friends";
 import { validator } from "../middleware/expressValidator";
 import { body, param, query } from "express-validator";
+import { auth } from "../middleware/auth";
 
 const FriendsRouter = Router();
 
@@ -181,7 +183,13 @@ FriendsRouter.route("/:userId/logs").get(
 
 // Search for users to add as friends
 FriendsRouter.route("/search").post(
-  [body("q").isString().isLength({ min: 2 }).withMessage("Query must be at least 2 characters")],
+  [
+    body("q")
+      .isString()
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("Search query must be at least 1 character")
+  ],
   (req, res, next) => {
     validator(req, res, next);
   },

@@ -1,88 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Platform, ToastAndroid } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSearchUsers, useSendFriendRequest, useFriendsList, useFriendsLogs, useRemoveFriend, useCancelPendingFriendRequest, useAcceptFriendRequest, usePendingRequests } from '@/hooks/useFriends';
-import { LogDTO } from '@/interfaces/log/log';
-import LogDetailModal from '@/components/LogDetailModal';
-import LogRouteMapWithReplay from '@/components/LogRouteMapWithReplay';
-import type { UserSearchResult } from '@/interfaces/friends';
+import { useFriends, useFriendRequests, useSendFriendRequest, useRespondToFriendRequest, useRemoveFriend, useFriendsFeed } from '@/hooks/useFriends';
+import { searchUsers } from '@/api/fetch/friends.fetch';
 import { useAuth } from '../../context/AuthContext';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { useFocusEffect } from '@react-navigation/native';
+import type { UserSearchResult } from '@/interfaces/friends';
 
 export default function Friend() {
-  // Move ALL hooks to the top before any conditional return
   const [activeTab, setActiveTab] = useState<'logs' | 'manage'>('logs');
   const [searchQuery, setSearchQuery] = useState('');
-  const { data: searchResults, isLoading: searchLoading, error: searchError } = useSearchUsers(searchQuery);
-  const { mutate: sendRequest, isPending: sending } = useSendFriendRequest();
-  const { data: friendsList, isLoading: friendsLoading, error: friendsError, refetch: refetchFriendsList } = useFriendsList();
-  const { data: friendsLogs = [], isLoading: logsLoading, error: logsError } = useFriendsLogs();
-  const { mutate: removeFriend } = useRemoveFriend();
-  const { mutate: cancelRequest, isPending: isCancelling } = useCancelPendingFriendRequest();
-  const { mutate: acceptRequest } = useAcceptFriendRequest();
-  const { user: currentUser } = useAuth();
-  const [selectedLog, setSelectedLog] = useState<LogDTO | null>(null);
-  const [isLogModalVisible, setLogModalVisible] = useState(false);
-  const { data: pendingRequests = [], isLoading: pendingLoading, refetch: refetchPendingRequests } = usePendingRequests();
+  const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const { friends, refetch: refetchFriends } = useFriends();
+  const { requests, refetch: refetchRequests } = useFriendRequests();
+  const sendFriendRequest = useSendFriendRequest();
+  const respondToFriendRequest = useRespondToFriendRequest();
+  const removeFriend = useRemoveFriend();
+  const { feed: friendsFeed, isLoading: feedLoading } = useFriendsFeed();
+  const { user } = useAuth();
 
-  console.log('[FriendScreen] currentUser:', currentUser);
-  console.log('[FriendScreen] friendsList:', friendsList);
-  // Always default searchResults to [] for safety
-  const safeSearchResults = searchResults || [];
-  console.log('[FriendScreen] searchResults:', safeSearchResults);
-  console.log('[FriendScreen] friendsLogs:', friendsLogs);
-
-  // Refetch on tab focus to ensure up-to-date state for all users
-  useFocusEffect(
-    React.useCallback(() => {
-      refetchPendingRequests();
-      refetchFriendsList();
-    }, [refetchPendingRequests, refetchFriendsList])
-  );
-
-  // Helper for nicer success alerts
-  const showSuccess = (message: string) => {
-    if (Platform.OS === 'android') {
-      ToastAndroid.show(message, ToastAndroid.SHORT);
-    } else {
-      Alert.alert('Success', message);
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
     }
-  };
+    if (trimmed.length < 1) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    const timeout = setTimeout(async () => {
+      try {
+        const results = await searchUsers(trimmed);
+        setSearchResults(
+          results.map((u: any) => ({
+            id: u.id,
+            username: u.username || u.name || u.email?.split('@')[0] || 'User',
+            email: u.email,
+            friendStatus: u.friendStatus,
+            pendingRequestId: u.pendingRequestId,
+          }))
+        );
+      } catch {
+        setSearchResults([]);
+      }
+      setSearchLoading(false);
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
 
-  const handleSendRequest = (username: string) => {
-    sendRequest(username, {
-      onSuccess: () => showSuccess('Friend request sent!'),
-      onError: (error: any) => Alert.alert('Error', error.message),
-    });
-  };
-
-  const handleRemoveFriend = (friendId: number) => {
-    Alert.alert(
-      'Remove Friend',
-      'Are you sure you want to remove this friend?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            removeFriend(friendId, {
-              onSuccess: () => showSuccess('Friend removed successfully!'),
-              onError: (error: any) => Alert.alert('Error', error.message),
-            });
-          },
-        },
-      ]
-    );
-  };
-
-  // New helper to interpret friendStatus from search results
-  const getUserFriendStatusFromResult = (user: UserSearchResult) => {
-    if (user.friendStatus === 'pending') return 'Requested';
-    if (user.friendStatus === 'incoming') return 'Respond';
-    return 'Add';
-  };
+  // Refetch on tab focus
+  useFocusEffect(
+    useCallback(() => {
+      refetchFriends();
+      refetchRequests();
+    }, [refetchFriends, refetchRequests])
+  );
 
   // Helper for Toast/Alert
   function showToast(msg: string) {
@@ -93,607 +71,270 @@ export default function Friend() {
     }
   }
 
-  // Use currentUser.id if available
-  const currentUserId = currentUser?.id ?? null;
-  console.log('[FriendScreen] currentUserId:', currentUserId);
+  // Friend request status helper
+  function getUserFriendStatus(user: UserSearchResult) {
+    if (user.friendStatus === 'pending') return 'Requested';
+    if (user.friendStatus === 'incoming') return 'Respond';
+    if (friends.some(f => f.id === user.id)) return 'Friends';
+    return 'Add';
+  }
 
-  // Helper: Filter incoming friend requests from friendsList
-  const incomingRequests = (Array.isArray(pendingRequests) && currentUser?.id)
-    ? pendingRequests.filter(r => r.status === 'pending' && r.receiver_id === currentUser.id)
-    : [];
+  console.log('currentUser:', user);
+  const incomingRequests = requests.filter(r => r.status === 'pending');
+  console.log('incomingRequests:', incomingRequests);
   const incomingCount = incomingRequests.length;
-
-  // Collapsible state: open if there are requests, closed if none
-  const [incomingOpen, setIncomingOpen] = useState(incomingCount > 0);
-  React.useEffect(() => {
-    setIncomingOpen(incomingCount > 0);
+  const [incomingOpen, setIncomingOpen] = useState(incomingCount >= 0);
+  useEffect(() => {
+    setIncomingOpen(incomingCount >= 0);
   }, [incomingCount]);
 
+  // Remove friend handler
+  const handleRemoveFriend = (friendId: number, email: string) => {
+    Alert.alert(
+      'Remove Friend',
+      `Are you sure you want to remove ${email} from your friends?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            removeFriend.mutate(friendId, {
+              onSuccess: () => {
+                showToast('Friend removed');
+                refetchFriends();
+              },
+              onError: (err: any) => {
+                showToast(err?.message || 'Could not remove friend.');
+              },
+            });
+          },
+        },
+      ]
+    );
+  };
+
+  // Send friend request handler
+  const handleSendRequest = (email: string) => {
+    sendFriendRequest.mutate(
+      { email },
+      {
+        onSuccess: () => {
+          showToast('Friend request sent');
+          setSearchResults([]);
+          setSearchQuery('');
+          refetchRequests();
+        },
+        onError: (err: any) => {
+          showToast(err?.message || 'Could not send friend request.');
+        },
+      }
+    );
+  };
+
+  // Respond to friend request handler
+  const handleRespondRequest = (requestId: number, accept: boolean) => {
+    respondToFriendRequest.mutate(
+      { requestId, accept },
+      {
+        onSuccess: () => {
+          showToast(accept ? 'Friend request accepted' : 'Friend request declined');
+          refetchFriends();
+          refetchRequests();
+        },
+        onError: (err: any) => {
+          showToast(err?.message || 'Could not respond to friend request.');
+        },
+      }
+    );
+  };
+
+  // UI rendering
   return (
     <View style={styles.container}>
-      {/* Loading guard */}
-      {(searchLoading || friendsLoading) && (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#2E66E7" />
-          <Text style={styles.emptyText}>Loading friends data...</Text>
-        </View>
-      )}
-      {/* Error guard */}
-      {!(searchLoading || friendsLoading) && (searchError || friendsError) && (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={styles.errorText}>{
-            (typeof searchError === 'object' && searchError && 'message' in searchError && (searchError as any).message) ||
-            (typeof friendsError === 'object' && friendsError && 'message' in friendsError && (friendsError as any).message) ||
-            'Unable to load friends data.'
-          }</Text>
-        </View>
-      )}
-      {/* Main content, only if not loading or error */}
-      {!(searchLoading || friendsLoading) && !(searchError || friendsError) && (
-        <>
-          {/* Tab Switcher */}
-          <View style={styles.tabContainer}>
-            <TouchableOpacity
-              style={[styles.tabButton, activeTab === 'logs' && styles.tabButtonActive]}
-              onPress={() => {
-                console.log('[FriendScreen] Switch to logs tab');
-                setActiveTab('logs');
-              }}
-            >
-              <Text style={[styles.tabText, activeTab === 'logs' && styles.tabTextActive]}>Friends' Logs</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tabButton, activeTab === 'manage' && styles.tabButtonActive]}
-              onPress={() => {
-                console.log('[FriendScreen] Switch to manage tab');
-                setActiveTab('manage');
-              }}
-            >
-              <Text style={[styles.tabText, activeTab === 'manage' && styles.tabTextActive]}>Manage Friends</Text>
-            </TouchableOpacity>
-          </View>
+      {/* Tab Switcher */}
+      <View style={styles.tabSwitcher}>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'logs' && styles.tabActive]}
+          onPress={() => setActiveTab('logs')}
+        >
+          <Text style={[styles.tabText, activeTab === 'logs' && styles.tabTextActive]}>Friends' Logs</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'manage' && styles.tabActive]}
+          onPress={() => setActiveTab('manage')}
+        >
+          <Text style={[styles.tabText, activeTab === 'manage' && styles.tabTextActive]}>Manage Friends</Text>
+        </TouchableOpacity>
+      </View>
 
-          {/* Tab Content */}
-          {activeTab === 'logs' ? (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Friends' Logs</Text>
-              {logsLoading && <ActivityIndicator />}
-              {logsError && <Text style={styles.errorText}>Error loading friends' logs</Text>}
-              <FlatList
-                data={friendsLogs}
-                keyExtractor={item => item.id.toString()}
-                renderItem={({ item }) => {
-                  console.log('[FriendScreen] Rendering log item:', item);
-                  // --- FRIENDS_LOGS_FIX: Robustly extract user and boat info for display ---
-                  // This logic tries multiple possible fields for user and boat info to handle various backend response shapes.
-                  // User: tries owner, user, friend, friend_details, username fields in order.
-                  // Boat: tries boat.name/model, boat_name, boat_model, and falls back to boat ID or 'Unknown'.
-                  // This ensures the UI always displays the most accurate info available, and never shows 'Unknown User' unless all options are missing.
-                  const user =
-                    item.owner?.username ? item.owner :
-                    item.user?.username ? item.user :
-                    item.friend?.username ? item.friend :
-                    item.friend_details?.username ? item.friend_details :
-                    item.username ? { username: item.username } :
-                    {};
-                  const boat =
-                    item.boat?.name || item.boat?.model ? item.boat :
-                    (item.boat_name || item.boat_model) ? { name: item.boat_name, model: item.boat_model } :
-                    null;
-                  const boatName = boat?.name || item.boat_name || item.boatName || null;
-                  const boatModel = boat?.model || item.boat_model || item.boatModel || null;
-                  const boatId = item.boat_id || item.boatId || null;
-                  // Remove unused variable lint warning by using default for user
-                  const username = user.username || 'Unknown User';
-                  return (
-                    <TouchableOpacity
-                      activeOpacity={0.8}
-                      onPress={() => { setSelectedLog(item); setLogModalVisible(true); }}
-                      style={styles.logCard}
-                    >
-                      {/* User Info (Top) */}
-                      <View style={styles.logUserRow}>
-                        <View style={styles.avatarCircleLarge}>
-                          <Text style={styles.avatarTextLarge}>{username[0]?.toUpperCase() || '?'}</Text>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.logUsername}>{username}</Text>
-                        </View>
-                      </View>
-                      {/* Log Content (Middle): Route Map with Replay */}
-                      <LogRouteMapWithReplay log={item} height={180} showReplayControls onMapPress={() => { setSelectedLog(item); setLogModalVisible(true); }} />
-                      {/* Log Meta (Bottom) */}
-                      <View style={styles.logMetaRow}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.logMetaText}>
-                            <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>User: </Text>
-                            {username}
-                          </Text>
-                          <Text style={styles.logMetaText}>
-                            <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>Boat: </Text>
-                            {boatName ? boatName : boatId ? `ID ${boatId}` : 'Unknown'}
-                            {boatModel ? `  •  ${boatModel}` : ''}
-                          </Text>
-                          <Text style={styles.logMetaText}>
-                            <Text style={{ fontWeight: 'bold', color: '#2E66E7' }}>Start: </Text>
-                            {item.log_started ? new Date(item.log_started).toLocaleString() : 'N/A'}
-                          </Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                }}
-                ListEmptyComponent={!logsLoading ? <Text style={styles.emptyText}>No friends' logs yet.</Text> : null}
-              />
-              {selectedLog && (
-                <LogDetailModal
-                  modalVisibility={isLogModalVisible}
-                  setModalVisibility={setLogModalVisible}
-                  log={selectedLog}
-                />
-              )}
-            </View>
+      {/* Friends' Logs Tab */}
+      {activeTab === 'logs' && (
+        <View style={{ flex: 1 }}>
+          {feedLoading ? (
+            <ActivityIndicator style={{ marginTop: 32 }} />
+          ) : friendsFeed.length === 0 ? (
+            <Text style={styles.emptyText}>No logs from friends yet.</Text>
           ) : (
-            <View>
-              {/* Search Users */}
-              <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search users by username..."
-                  value={searchQuery}
-                  onChangeText={text => {
-                    console.log('[FriendScreen] Search query changed:', text);
-                    setSearchQuery(text);
-                  }}
-                  autoCapitalize="none"
-                />
-                {searchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => {
-                    console.log('[FriendScreen] Clear search query');
-                    setSearchQuery('');
-                  }}>
-                    <Ionicons name="close-circle" size={20} color="#aaa" />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {/* Search Results Section (only if searchQuery is present) */}
-              {searchQuery.length > 0 && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Search Results</Text>
-                  <FlatList
-                    data={safeSearchResults}
-                    keyExtractor={item => item.id.toString()}
-                    renderItem={({ item }) => {
-                      const status = getUserFriendStatusFromResult(item);
-                      return (
-                        <View style={styles.userCard}>
-                          <View style={styles.avatarCircle}>
-                            <Text style={styles.avatarText}>{item.username[0]?.toUpperCase() || '?'}</Text>
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.username}>{item.username}</Text>
-                            <Text style={styles.email}>{item.email}</Text>
-                          </View>
-                          {status === 'Add' && (
-                            <TouchableOpacity
-                              style={styles.addButton}
-                              onPress={() => handleSendRequest(item.username)}
-                              disabled={sending}
-                            >
-                              <Text style={styles.addButtonText}>Add</Text>
-                            </TouchableOpacity>
-                          )}
-                          {status === 'Requested' && typeof item.pendingRequestId === 'number' && (
-                            <TouchableOpacity
-                              style={[styles.addButton, styles.addButtonDisabled]}
-                              onPress={() => cancelRequest(item.pendingRequestId!, {
-                                onSuccess: () => showToast('Request cancelled'),
-                                onError: (e) => showToast(e.message || 'Error cancelling'),
-                              })}
-                              disabled={isCancelling}
-                            >
-                              <Text style={styles.addButtonText}>Cancel</Text>
-                            </TouchableOpacity>
-                          )}
-                          {status === 'Respond' && typeof item.pendingRequestId === 'number' && (
-                            <TouchableOpacity
-                              style={styles.addButton}
-                              onPress={() => acceptRequest(item.pendingRequestId!, {
-                                onSuccess: () => showSuccess('Friend request accepted!'),
-                                onError: (error: any) => Alert.alert('Error', error.message),
-                              })}
-                            >
-                              <Text style={styles.addButtonText}>Respond</Text>
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                      );
-                    }}
-                    ListEmptyComponent={<Text style={styles.emptyText}>No users found.</Text>}
-                  />
+            <FlatList
+              data={friendsFeed}
+              keyExtractor={item => String(item.id)}
+              renderItem={({ item }) => (
+                <View style={styles.logCard}>
+                  <Text style={styles.logUser}>{item.user?.name || item.user?.email || 'Friend'}</Text>
+                  <Text style={styles.logDate}>{new Date(item.created_on).toLocaleString()}</Text>
+                  {/* Add more log fields as needed */}
                 </View>
               )}
-
-              {/* Collapsible Incoming Requests Section (always show if there are incoming requests) */}
-              {incomingCount > 0 && (
-                <CollapsibleSection
-                  title={
-                    <View style={styles.incomingHeader}>
-                      <Text style={styles.incomingHeaderText}>Incoming Friend Requests</Text>
-                      {incomingCount > 0 && (
-                        <View style={styles.notificationBadge}>
-                          <Text style={styles.notificationBadgeText}>{incomingCount}</Text>
-                        </View>
-                      )}
-                    </View>
-                  }
-                  initiallyCollapsed={incomingCount === 0}
-                >
-                  <FlatList
-                    data={incomingRequests}
-                    keyExtractor={item => item.id.toString()}
-                    style={{ maxHeight: 220, height: 220 }}
-                    renderItem={({ item }) => (
-                      <View style={styles.userCard}>
-                        <View style={styles.avatarCircle}>
-                          <Text style={styles.avatarText}>{item.sender_details.username[0]?.toUpperCase() || '?'}</Text>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.username}>{item.sender_details.username}</Text>
-                          <Text style={styles.email}>{item.sender_details.email}</Text>
-                        </View>
-                        <TouchableOpacity
-                          style={styles.acceptButton}
-                          onPress={() => {
-                            Alert.alert(
-                              'Accept Friend Request',
-                              `Accept friend request from ${item.sender_details.username}?`,
-                              [
-                                { text: 'No' },
-                                {
-                                  text: 'Yes',
-                                  onPress: () => acceptRequest(item.id, {
-                                    onSuccess: () => showSuccess('Friend request accepted!'),
-                                    onError: (error: any) => Alert.alert('Error', error.message),
-                                  }),
-                                },
-                              ]
-                            );
-                          }}
-                        >
-                          <Text style={{ color: '#fff', fontWeight: '600' }}>Accept</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.rejectButton}
-                          onPress={() => {
-                            Alert.alert(
-                              'Decline Friend Request',
-                              `Decline friend request from ${item.sender_details.username}?`,
-                              [
-                                { text: 'No' },
-                                {
-                                  text: 'Yes',
-                                  onPress: () => cancelRequest(item.id, {
-                                    onSuccess: () => showToast('Request declined'),
-                                    onError: (e) => showToast(e.message || 'Error declining'),
-                                  }),
-                                },
-                              ]
-                            );
-                          }}
-                        >
-                          <Text style={{ color: '#fff', fontWeight: '600' }}>Decline</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                    ListEmptyComponent={<Text style={styles.emptyText}>No incoming friend requests.</Text>}
-                  />
-                </CollapsibleSection>
-              )}
-
-              {/* Friends List */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Your Friends</Text>
-                {friendsLoading && <ActivityIndicator />}
-                <FlatList
-                  data={friendsList || []}
-                  keyExtractor={item => item.id.toString()}
-                  renderItem={({ item }) => {
-                    console.log('[FriendScreen] Rendering friend:', item);
-                    return (
-                      <View style={styles.friendCard}>
-                        <View style={styles.avatarCircle}>
-                          <Text style={styles.avatarText}>{item.friend_details.username[0]?.toUpperCase() || '?'}</Text>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.username}>{item.friend_details.username}</Text>
-                          <Text style={styles.email}>{item.friend_details.email}</Text>
-                        </View>
-                        <TouchableOpacity onPress={() => handleRemoveFriend(item.friend_id)}>
-                          <Ionicons name="person-remove" size={20} color="#FF3B30" />
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  }}
-                  ListEmptyComponent={!friendsLoading ? <Text style={styles.emptyText}>No friends yet.</Text> : null}
-                />
-              </View>
-            </View>
+              contentContainerStyle={{ paddingBottom: 32 }}
+            />
           )}
-        </>
+        </View>
+      )}
+
+      {/* Manage Friends Tab */}
+      {activeTab === 'manage' && (
+        <View style={{ flex: 1 }}>
+          {/* Search Users */}
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search users by username or email"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery.trim().length > 0 && searchQuery.trim().length < 1 && (
+            <Text style={{ color: 'red', textAlign: 'center' }}>Enter at least 1 character to search.</Text>
+          )}
+          {searchLoading && <ActivityIndicator style={{ marginVertical: 8 }} />}
+          {searchQuery.trim().length >= 1 && !searchLoading && (
+            <FlatList
+              data={searchResults}
+              keyExtractor={item => String(item.id)}
+              renderItem={({ item }) => {
+                const status = getUserFriendStatus(item);
+                return (
+                  <View style={styles.searchResultRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.searchResultName}>
+                        {item.username || item.email?.split('@')[0] || 'User'}
+                      </Text>
+                      <Text style={styles.searchResultEmail}>{item.email}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[
+                        styles.actionButton,
+                        status === 'Add' && styles.actionButtonAdd,
+                        status === 'Requested' && styles.actionButtonRequested,
+                        status === 'Friends' && styles.actionButtonFriends,
+                        status === 'Respond' && styles.actionButtonRespond,
+                      ]}
+                      disabled={status !== 'Add'}
+                      onPress={() => handleSendRequest(item.email)}
+                    >
+                      <Text style={styles.actionButtonText}>{status}</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              }}
+              ListEmptyComponent={<Text style={styles.emptyText}>No users found.</Text>}
+              style={{ maxHeight: 200 }}
+            />
+          )}
+
+          {/* Incoming Friend Requests */}
+          <CollapsibleSection
+            title={`Incoming Requests${incomingCount > 0 ? ` (${incomingCount})` : ''}`}
+            initiallyCollapsed={!incomingOpen}
+          >
+            {incomingRequests.length === 0 ? (
+              <Text style={styles.emptyText}>No incoming requests.</Text>
+            ) : (
+              <FlatList
+                data={incomingRequests}
+                keyExtractor={item => String(item.id)}
+                renderItem={({ item }) => (
+                  <View style={styles.requestRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.requestName}>{item.sender_details?.username || item.sender_details?.email || 'User'}</Text>
+                      <Text style={styles.requestEmail}>{item.sender_details?.email}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.actionButtonAdd]}
+                      onPress={() => handleRespondRequest(item.id, true)}
+                    >
+                      <Text style={styles.actionButtonText}>Accept</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.actionButtonRequested]}
+                      onPress={() => handleRespondRequest(item.id, false)}
+                    >
+                      <Text style={styles.actionButtonText}>Decline</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            )}
+          </CollapsibleSection>
+
+          {/* Friends List */}
+          <CollapsibleSection title={`Your Friends (${friends.length})`} initiallyCollapsed={false}>
+            {friends.length === 0 ? (
+              <Text style={styles.emptyText}>You have no friends yet.</Text>
+            ) : (
+              <FlatList
+                data={friends}
+                keyExtractor={item => String(item.id)}
+                renderItem={({ item }) => (
+                  <View style={styles.friendRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.friendName}>{item.name || item.email}</Text>
+                      <Text style={styles.friendEmail}>{item.email}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.actionButtonRemove]}
+                      onPress={() => handleRemoveFriend(item.id, item.email)}
+                    >
+                      <Ionicons name="person-remove" size={20} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            )}
+          </CollapsibleSection>
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9f9f9',
-    paddingHorizontal: 20,
-    paddingTop: 24,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginBottom: 18,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-    backgroundColor: 'transparent',
-  },
-  section: {
-    marginBottom: 22,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 10,
-  },
-  sectionSubtitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#666',
-    marginBottom: 8,
-  },
-  userCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 10,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
-  },
-  friendCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 10,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
-  },
-  avatarCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#e0e7ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  avatarText: {
-    fontWeight: 'bold',
-    fontSize: 18,
-    color: '#2E66E7',
-  },
-  avatarCircleLarge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#e0e7ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  avatarTextLarge: {
-    fontWeight: 'bold',
-    fontSize: 22,
-    color: '#2E66E7',
-  },
-  logCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginBottom: 22,
-    padding: 0,
-    overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  logUserRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  logUsername: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2E66E7',
-  },
-  logMetaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    backgroundColor: '#f7f7fa',
-  },
-  logMetaText: {
-    fontSize: 13,
-    color: '#888',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    marginBottom: 18,
-    backgroundColor: '#e0e7ff',
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  tabButtonActive: {
-    backgroundColor: '#2E66E7',
-  },
-  tabText: {
-    fontSize: 16,
-    color: '#2E66E7',
-    fontWeight: '600',
-  },
-  tabTextActive: {
-    color: '#fff',
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#666',
-    fontStyle: 'italic',
-    marginTop: 10,
-  },
-  errorText: {
-    color: '#e74c3c',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  addButton: {
-    backgroundColor: '#2E66E7',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-    marginLeft: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addButtonDisabled: {
-    backgroundColor: '#b3c6f7',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  acceptButton: {
-    backgroundColor: '#2ecc71',
-    borderRadius: 8,
-    padding: 8,
-    marginLeft: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rejectButton: {
-    backgroundColor: '#e74c3c',
-    borderRadius: 8,
-    padding: 8,
-    marginLeft: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  username: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2E66E7',
-  },
-  email: {
-    fontSize: 13,
-    color: '#888',
-  },
-  // New styles for incoming friend requests section
-  incomingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  incomingHeaderText: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#2E66E7',
-  },
-  notificationBadge: {
-    backgroundColor: '#e74c3c',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-    marginLeft: 8,
-  },
-  notificationBadgeText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 13,
-  },
-  incomingContainerOpen: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    marginBottom: 18,
-    padding: 10,
-    minHeight: 80,
-    maxHeight: 260,
-    flexGrow: 0,
-    flexShrink: 0,
-    // Take up about 1/3 of the available vertical space
-    height: 220,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
-  },
-  incomingContainerClosed: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    marginBottom: 18,
-    padding: 10,
-    minHeight: 60,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
-  },
+  container: { flex: 1, backgroundColor: '#fff', paddingTop: 8 },
+  tabSwitcher: { flexDirection: 'row', marginBottom: 8, borderBottomWidth: 1, borderColor: '#eee' },
+  tabButton: { flex: 1, padding: 12, alignItems: 'center' },
+  tabActive: { borderBottomWidth: 2, borderColor: '#007AFF' },
+  tabText: { fontSize: 16, color: '#888' },
+  tabTextActive: { color: '#007AFF', fontWeight: 'bold' },
+  searchInput: { borderWidth: 1, borderColor: '#eee', borderRadius: 8, padding: 10, margin: 8, fontSize: 16 },
+  searchResultRow: { flexDirection: 'row', alignItems: 'center', padding: 8, borderBottomWidth: 1, borderColor: '#f0f0f0' },
+  searchResultName: { fontWeight: 'bold', fontSize: 16 },
+  searchResultEmail: { color: '#888', fontSize: 13 },
+  actionButton: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: 6, marginLeft: 8 },
+  actionButtonAdd: { backgroundColor: '#007AFF' },
+  actionButtonRequested: { backgroundColor: '#aaa' },
+  actionButtonFriends: { backgroundColor: '#4CAF50' },
+  actionButtonRespond: { backgroundColor: '#FFA500' },
+  actionButtonRemove: { backgroundColor: '#E53935' },
+  actionButtonText: { color: '#fff', fontWeight: 'bold' },
+  emptyText: { textAlign: 'center', color: '#888', marginVertical: 16 },
+  requestRow: { flexDirection: 'row', alignItems: 'center', padding: 8, borderBottomWidth: 1, borderColor: '#f0f0f0' },
+  requestName: { fontWeight: 'bold', fontSize: 16 },
+  requestEmail: { color: '#888', fontSize: 13 },
+  friendRow: { flexDirection: 'row', alignItems: 'center', padding: 8, borderBottomWidth: 1, borderColor: '#f0f0f0' },
+  friendName: { fontWeight: 'bold', fontSize: 16 },
+  friendEmail: { color: '#888', fontSize: 13 },
+  logCard: { backgroundColor: '#f9f9f9', borderRadius: 8, padding: 12, margin: 8, marginBottom: 0 },
+  logUser: { fontWeight: 'bold', fontSize: 15, marginBottom: 2 },
+  logDate: { color: '#888', fontSize: 13 },
 });

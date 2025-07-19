@@ -19,26 +19,36 @@ export async function sendFriendRequest(req: Request, res: Response) {
     const { email, userId } = req.body;
     const rawResult = await FriendService.sendFriendRequest(senderId, email, userId);
 
-    if (rawResult === "not_found") {
-      return res.status(notFoundStatus).json({ message: "User not found" });
-    }
-    if (rawResult === "self") {
-      return res.status(badRequestStatus).json({ message: "Cannot send friend request to yourself" });
-    }
-    if (rawResult === "already_friends") {
-      return res.status(badRequestStatus).json({ message: "Already friends" });
-    }
-    if (rawResult === "already_sent") {
-      return res.status(badRequestStatus).json({ message: "Friend request already sent" });
-    }
-    // Convert 'created' property to ISO string if present
+    // Fetch sender details for the response
+    const sender = await UserService.getUserById(senderId);
+    const sender_details = sender
+      ? { id: sender.id, username: sender.username, email: sender.email }
+      : { id: senderId, username: '', email: '' };
+
     const result: FriendRequestDTO = {
-      ...rawResult,
-      created: rawResult.created instanceof Date ? rawResult.created.toISOString() : rawResult.created,
+      id: rawResult.id,
+      sender_id: rawResult.sender_id,
+      receiver_id: rawResult.receiver_id,
+      status: rawResult.status as 'pending' | 'accepted' | 'rejected',
+      created_at: rawResult.created_at instanceof Date ? rawResult.created_at.toISOString() : rawResult.created_at,
+      updated_at: rawResult.updated_at instanceof Date ? rawResult.updated_at.toISOString() : rawResult.updated_at,
+      sender_details,
     };
     return res.status(createdStatus).json(result);
   } catch (err: any) {
-    return res.status(internalServerError).json({ message: err.message || "Internal server error" });
+    if (err.message === "User not found") {
+      return res.status(notFoundStatus).json({ message: err.message });
+    }
+    if (err.message === "Cannot send friend request to yourself") {
+      return res.status(badRequestStatus).json({ message: err.message });
+    }
+    if (err.message === "Already friends") {
+      return res.status(badRequestStatus).json({ message: err.message });
+    }
+    if (err.message === "Friend request already sent") {
+      return res.status(badRequestStatus).json({ message: err.message });
+    }
+    res.status(internalServerError).json({ message: err.message });
   }
 }
 
@@ -60,7 +70,7 @@ export async function respondToFriendRequest(req: Request, res: Response) {
     }
     return res.status(okStatus).json({ message: result });
   } catch (err: any) {
-    return res.status(internalServerError).json({ message: err.message || "Internal server error" });
+    res.status(internalServerError).json({ message: err.message });
   }
 }
 
@@ -71,7 +81,7 @@ export async function getFriends(req: Request, res: Response) {
     const friends: FriendUserDTO[] = await FriendService.getFriends(userId);
     return res.status(okStatus).json(friends);
   } catch (err: any) {
-    return res.status(internalServerError).json({ message: err.message || "Internal server error" });
+    res.status(internalServerError).json({ message: err.message });
   }
 }
 
@@ -87,7 +97,7 @@ export async function removeFriend(req: Request, res: Response) {
     }
     return res.sendStatus(noContentStatus);
   } catch (err: any) {
-    return res.status(internalServerError).json({ message: err.message || "Internal server error" });
+    res.status(internalServerError).json({ message: err.message });
   }
 }
 
@@ -101,23 +111,27 @@ export async function getPendingRequests(req: Request, res: Response) {
     // Fetch sender info for each request
     const requests: FriendRequestDTO[] = await Promise.all(
       rawRequests.map(async (req: any) => {
-        // If sender info is already joined, use it; otherwise, fetch it
         let sender = req.sender;
         if (!sender) {
-          // Lazy-load sender info if not present
           const user = await UserService.getUserById(req.sender_id);
-          sender = user ? { id: user.id, email: user.email } : undefined;
+          sender = user
+            ? { id: user.id, username: user.username, email: user.email }
+            : { id: req.sender_id, username: '', email: '' };
         }
         return {
-          ...req,
-          created: req.created instanceof Date ? req.created.toISOString() : req.created,
-          sender,
+          id: req.id,
+          sender_id: req.sender_id,
+          receiver_id: req.receiver_id,
+          status: req.status as 'pending' | 'accepted' | 'rejected',
+          created_at: req.created_at instanceof Date ? req.created_at.toISOString() : req.created_at,
+          updated_at: req.updated_at instanceof Date ? req.updated_at.toISOString() : req.updated_at,
+          sender_details: sender,
         };
       })
     );
     return res.status(okStatus).json(requests);
   } catch (err: any) {
-    return res.status(internalServerError).json({ message: err.message || "Internal server error" });
+    res.status(internalServerError).json({ message: err.message });
   }
 }
 
@@ -132,7 +146,7 @@ export async function getFriendsLogs(req: Request, res: Response) {
     }));
     return res.status(okStatus).json(logs);
   } catch (err: any) {
-    return res.status(internalServerError).json({ message: err.message || "Internal server error" });
+    res.status(internalServerError).json({ message: err.message });
   }
 }
 
@@ -145,7 +159,7 @@ export async function searchUsers(req: Request, res: Response) {
     const results = await FriendService.searchUsers(q, userId);
     return res.status(200).json(results);
   } catch (err: any) {
-    return res.status(500).json({ message: err.message || "Internal server error" });
+    res.status(500).json({ message: err.message });
   }
 }
 
@@ -164,7 +178,7 @@ export async function cancelPendingFriendRequestController(req: Request, res: Re
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    await cancelPendingFriendRequest(requestId, userId);
+    await FriendService.cancelPendingFriendRequest(requestId, userId);
     return res.status(204).send();
   } catch (err: any) {
     if (err.message === 'Friend request not found') {
@@ -176,6 +190,6 @@ export async function cancelPendingFriendRequestController(req: Request, res: Re
     if (err.message === 'Only pending requests can be cancelled') {
       return res.status(400).json({ message: err.message });
     }
-    return res.status(500).json({ message: 'Failed to cancel friend request' });
+    res.status(500).json({ message: 'Failed to cancel friend request' });
   }
 }

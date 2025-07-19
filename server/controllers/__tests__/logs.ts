@@ -47,7 +47,7 @@ describe("LogsController", () => {
       await getAllLogs(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.NO_CONTENT);
-      expect(response._getJSONData()).toEqual("No logs found");
+      expect(response._getJSONData()).toEqual({ message: "No logs found" });
     });
 
     it("should return a 500 error when an exception is thrown", async () => {

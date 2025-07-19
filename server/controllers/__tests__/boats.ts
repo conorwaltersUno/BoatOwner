@@ -79,7 +79,7 @@ describe("BoatController", () => {
       await getBoatById(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
-      expect(response._getJSONData()).toEqual("Test error");
+      expect(response._getJSONData()).toEqual({ message: "Test error" });
     });
   });
 
@@ -135,7 +135,7 @@ describe("BoatController", () => {
       await createBoat(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
-      expect(response._getJSONData()).toEqual("Test error");
+      expect(response._getJSONData()).toEqual({ message: "Test error" });
     });
   });
 
@@ -196,7 +196,7 @@ describe("BoatController", () => {
       await updateBoat(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
-      expect(response._getJSONData()).toEqual("Test error");
+      expect(response._getJSONData()).toEqual({ message: "Test error" });
     });
   });
 
@@ -249,7 +249,7 @@ describe("BoatController", () => {
       await deleteBoat(request, response);
 
       expect(response._getStatusCode()).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
-      expect(response._getJSONData()).toEqual("Test error");
+      expect(response._getJSONData()).toEqual({ message: "Test error" });
     });
   });
 });

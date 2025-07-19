@@ -18,7 +18,7 @@ async function getAllExpenses(req: Request, res: Response) {
     }
     return res.status(okStatus).json(expenses);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -33,7 +33,7 @@ async function getExpenseById(req: Request, res: Response) {
 
     return res.status(okStatus).json(expense);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -48,7 +48,7 @@ async function getExpensesByBoatId(req: Request, res: Response) {
 
     return res.status(okStatus).json(expenses);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -66,7 +66,7 @@ async function createExpense(req: Request, res: Response) {
 
     return res.status(createdStatus).json(expense);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -81,7 +81,7 @@ async function updateExpense(req: Request, res: Response) {
 
     return res.status(okStatus).json(expense);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -96,7 +96,7 @@ async function deleteExpense(req: Request, res: Response) {
 
     return res.sendStatus(noContentStatus);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 

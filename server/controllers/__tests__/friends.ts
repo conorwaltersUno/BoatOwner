@@ -2,6 +2,7 @@ import httpMocks, { createResponse, MockResponse } from "node-mocks-http";
 import { Response } from "express";
 import { when } from "jest-when";
 import { FriendService } from "../../services/friends";
+import { UserService } from "../../services";
 import {
   sendFriendRequest,
   respondToFriendRequest,
@@ -18,6 +19,12 @@ describe("FriendsController", () => {
   const mockUser = { id: 1, email: "user@email.com", name: "User" };
   const mockFriend = { id: 2, email: "friend@email.com", name: "Friend" };
 
+  beforeAll(() => {
+    jest.spyOn(UserService, "getUserById").mockImplementation(async (id: number) => {
+      return { id, email: "user@email.com", username: "user1", password: "", created: new Date().toISOString() };
+    });
+  });
+
   describe("sendFriendRequest", () => {
     it("should return 201 and the request when successful", async () => {
       const now = new Date();
@@ -33,7 +40,13 @@ describe("FriendsController", () => {
         sender_id: 1,
         receiver_id: 2,
         status: "pending",
-        created: now.toISOString(),
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+        sender_details: {
+          id: 1,
+          username: "user1",
+          email: "user@email.com",
+        },
       };
 
       when(FriendService.sendFriendRequest)
@@ -180,8 +193,13 @@ describe("FriendsController", () => {
           sender_id: 1,
           receiver_id: 2,
           status: "pending",
-          created: now.toISOString(),
-          sender: mockUser,
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
+          sender_details: {
+            id: 1,
+            username: "user1",
+            email: "user@email.com",
+          },
         },
       ];
 

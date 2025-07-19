@@ -6,7 +6,7 @@ function signAccessToken(payload) {
     // Increase access token expiry to 4 hours
     return jwt.sign({ payload }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "4h" });
   } catch (error: any) {
-    throw Error(error.message);
+    throw new Error(error.message);
   }
 }
 
@@ -15,7 +15,7 @@ function signRefreshToken(payload) {
     // Increase refresh token expiry to 30 days (already set, but clarify)
     return jwt.sign({ payload }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "30d" });
   } catch (error: any) {
-    throw Error(error.message);
+    throw new Error(error.message);
   }
 }
 
@@ -31,7 +31,7 @@ function verifyRefreshToken(token) {
       });
     });
   } catch (error: any) {
-    throw Error(error.message);
+    throw new Error(error.message);
   }
 }
 
@@ -47,7 +47,7 @@ function verifyAccessToken(token) {
       });
     });
   } catch (error: any) {
-    throw Error(error.message);
+    throw new Error(error.message);
   }
 }
 

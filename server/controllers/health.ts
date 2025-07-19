@@ -7,6 +7,6 @@ export default async function health(req: Request, res: Response) {
   try {
     return res.sendStatus(okStatus);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }

@@ -20,7 +20,7 @@ async function getAllTasks(req: Request, res: Response) {
 
     return res.status(okStatus).json(tasks);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -35,7 +35,7 @@ async function getTaskById(req: Request, res: Response) {
 
     return res.status(okStatus).json(task);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -50,7 +50,7 @@ async function getTasksByBoatId(req: Request, res: Response) {
 
     return res.status(okStatus).json(tasks);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -68,7 +68,7 @@ async function createTask(req: Request, res: Response) {
 
     return res.status(createdStatus).json(task);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -83,7 +83,7 @@ async function updateTask(req: Request, res: Response) {
 
     return res.status(okStatus).json(task);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -98,7 +98,7 @@ async function deleteTask(req: Request, res: Response) {
 
     return res.sendStatus(noContentStatus);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 

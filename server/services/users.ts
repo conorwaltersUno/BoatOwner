@@ -11,7 +11,7 @@ async function getAllUsers(): Promise<UserDTO[]> {
     });
     return users.map(u => ({ ...u, created: u.created instanceof Date ? u.created.toISOString() : u.created }));
   } catch (error: any) {
-    throw Error("Error retrieving users: " + error.message);
+    throw new Error("Error retrieving users: " + error.message);
   }
 }
 
@@ -22,7 +22,7 @@ async function getUserById(userId: number): Promise<UserDTO | null> {
     });
     return user ? { ...user, created: user.created instanceof Date ? user.created.toISOString() : user.created } : null;
   } catch (error: any) {
-    throw Error(`No user found with id: ${userId}`);
+    throw new Error(`No user found with id: ${userId}`);
   }
 }
 
@@ -38,7 +38,7 @@ async function generateNewAccessToken(body: refreshTokenDTO) {
       userid: user.id,
     });
   } catch (error: any) {
-    throw Error(`Error in generating new accessToken: ${error.message}`);
+    throw new Error(`Error in generating new accessToken: ${error.message}`);
   }
 }
 
@@ -49,7 +49,7 @@ async function getUserByEmail(body: CreateUserDTO): Promise<UserDTO | null> {
     });
     return user ? { ...user, created: user.created instanceof Date ? user.created.toISOString() : user.created } : null;
   } catch (error: any) {
-    throw Error(`Error getting user by email: ${error}`);
+    throw new Error(`Error getting user by email: ${error}`);
   }
 }
 
@@ -88,7 +88,7 @@ async function updateUser(userId: number, data: UpdateUserDTO): Promise<UserDTO 
     });
     return updatedUser ? { ...updatedUser, created: updatedUser.created instanceof Date ? updatedUser.created.toISOString() : updatedUser.created } : null;
   } catch (error: any) {
-    throw Error(`Error updating user with id: ${userId} - ${error.message}`);
+    throw new Error(`Error updating user with id: ${userId} - ${error.message}`);
   }
 }
 
@@ -102,7 +102,7 @@ async function deleteUser(userId: number): Promise<boolean> {
 
     return true;
   } catch (error: any) {
-    throw Error(`Error deleting user with id: ${userId} - ${error.message}`);
+    throw new Error(`Error deleting user with id: ${userId} - ${error.message}`);
   }
 }
 

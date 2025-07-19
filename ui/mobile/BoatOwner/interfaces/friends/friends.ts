@@ -8,12 +8,13 @@ export interface FriendRequestDTO {
   id: number;
   sender_id: number;
   receiver_id: number;
-  status: string;
-  created: string;
-  sender?: {
+  status: 'pending' | 'accepted' | 'rejected';
+  created_at: string;
+  updated_at: string;
+  sender_details: {
     id: number;
+    username: string;
     email: string;
-    name?: string | null;
   };
 }
 

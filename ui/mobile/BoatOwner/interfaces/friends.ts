@@ -31,5 +31,5 @@ export interface UserSearchResult {
   username: string;
   email: string;
   friendStatus?: 'pending' | 'incoming' | 'none';
-  pendingRequestId?: number | null; // <-- Add this property for backend support
+  pendingRequestId?: number | null;
 }

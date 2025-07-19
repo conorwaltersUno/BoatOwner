@@ -28,7 +28,7 @@ export const searchUsers = async (q: string): Promise<FriendUserDTO[]> => {
     body: JSON.stringify({ q, userId: Number(userId) }),
   });
   if (!response.ok) throw new Error("Failed to search users");
-  return response.json();
+  return await response.json();
 };
 
 // GET /friends/requests/:userId
@@ -36,7 +36,8 @@ export const fetchFriendRequests = async (): Promise<FriendRequestDTO[]> => {
   const userId = await getUserId();
   const response = await authFetch(`${apiUrl}/friends/requests/${userId}`);
   if (!response.ok) throw new Error("Failed to fetch friend requests");
-  return await response.json();
+  const data = await response.json();
+  return data;
 };
 
 // POST /friends/request

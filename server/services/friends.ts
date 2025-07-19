@@ -8,8 +8,8 @@ async function sendFriendRequest(senderId: number, email?: string, userId?: numb
   } else if (userId) {
     receiver = await prisma.user.findUnique({ where: { id: userId } });
   }
-  if (!receiver) return "not_found";
-  if (receiver.id === senderId) return "self";
+  if (!receiver) throw new Error("User not found");
+  if (receiver.id === senderId) throw new Error("Cannot send friend request to yourself");
 
   // Check if already friends
   const alreadyFriends = await prisma.friends.findFirst({
@@ -20,7 +20,7 @@ async function sendFriendRequest(senderId: number, email?: string, userId?: numb
       ],
     },
   });
-  if (alreadyFriends) return "already_friends";
+  if (alreadyFriends) throw new Error("Already friends");
 
   // Check if a request already exists (any status)
   const existingRequest = await prisma.friend_requests.findFirst({
@@ -32,7 +32,7 @@ async function sendFriendRequest(senderId: number, email?: string, userId?: numb
 
   if (existingRequest) {
     if (existingRequest.status === "pending") {
-      return "already_sent";
+      throw new Error("Friend request already sent");
     } else {
       // Update the existing request to pending and reset any relevant fields
       const updatedRequest = await prisma.friend_requests.update({
@@ -100,6 +100,7 @@ async function getFriends(userId: number) {
 
 // Remove a friend
 async function removeFriend(userId: number, friendId: number) {
+  // Delete friend relationship (bidirectional)
   const deleted = await prisma.friends.deleteMany({
     where: {
       OR: [
@@ -108,6 +109,17 @@ async function removeFriend(userId: number, friendId: number) {
       ],
     },
   });
+
+  // Cascade delete all friend requests between these users
+  await prisma.friend_requests.deleteMany({
+    where: {
+      OR: [
+        { sender_id: userId, receiver_id: friendId },
+        { sender_id: friendId, receiver_id: userId },
+      ],
+    },
+  });
+
   return deleted.count > 0;
 }
 
@@ -140,7 +152,7 @@ async function getFriendsLogs(userId: number) {
   return logs;
 }
 
-// Search for users by email or name, excluding certain userId
+// Search for users by email or username, excluding certain userId
 async function searchUsers(query: string, excludeUserId: number) {
   // Get current friends' IDs
   const friends = await prisma.friends.findMany({
@@ -149,16 +161,29 @@ async function searchUsers(query: string, excludeUserId: number) {
   });
   const friendIds = friends.map((f) => f.friend_id);
 
-  // Search users by email or name, excluding self and current friends
+  // Search users by email or username, excluding self and current friends
   const users = await prisma.user.findMany({
     where: {
       id: { notIn: [excludeUserId, ...friendIds] },
-      OR: [{ email: { contains: query, mode: "insensitive" } }],
+      OR: [
+        { email: { contains: query, mode: "insensitive" } },
+        { username: { contains: query, mode: "insensitive" } },
+      ],
     },
-    select: { id: true, email: true },
+    select: { id: true, email: true, username: true },
     take: 10,
   });
   return users;
+}
+
+// Cancel a pending friend request (sender can cancel only if pending)
+async function cancelPendingFriendRequest(requestId: number, userId: number) {
+  const request = await prisma.friend_requests.findUnique({ where: { id: requestId } });
+  if (!request) throw new Error('Friend request not found');
+  if (request.sender_id !== userId) throw new Error('Not authorized to cancel this request');
+  if (request.status !== 'pending') throw new Error('Only pending requests can be cancelled');
+  await prisma.friend_requests.delete({ where: { id: requestId } });
+  return true;
 }
 
 export const FriendService = {
@@ -169,4 +194,5 @@ export const FriendService = {
   getPendingRequests,
   getFriendsLogs,
   searchUsers,
+  cancelPendingFriendRequest,
 };
