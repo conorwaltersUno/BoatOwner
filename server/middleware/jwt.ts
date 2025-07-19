@@ -3,7 +3,8 @@ import createError from "http-errors";
 
 function signAccessToken(payload) {
   try {
-    return jwt.sign({ payload }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "30m" });
+    // Increase access token expiry to 4 hours
+    return jwt.sign({ payload }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "4h" });
   } catch (error: any) {
     throw Error(error.message);
   }
@@ -11,6 +12,7 @@ function signAccessToken(payload) {
 
 function signRefreshToken(payload) {
   try {
+    // Increase refresh token expiry to 30 days (already set, but clarify)
     return jwt.sign({ payload }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: "30d" });
   } catch (error: any) {
     throw Error(error.message);

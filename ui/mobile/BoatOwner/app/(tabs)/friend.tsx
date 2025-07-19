@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Platform, ToastAndroid } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSearchUsers, useSendFriendRequest, usePendingRequests, useAcceptFriendRequest, useRejectFriendRequest, useFriendsList, useFriendsLogs } from '@/hooks/useFriends';
+import { useSearchUsers, useSendFriendRequest, usePendingRequests, useAcceptFriendRequest, useRejectFriendRequest, useFriendsList, useFriendsLogs, useRemoveFriend } from '@/hooks/useFriends';
 import { LogDTO } from '@/interfaces/log/log';
 import LogDetailModal from '@/components/LogDetailModal';
 import LogRouteMapWithReplay from '@/components/LogRouteMapWithReplay';
@@ -17,6 +17,7 @@ export default function Friend() {
   const { mutate: rejectRequest } = useRejectFriendRequest();
   const { data: friendsList, isLoading: friendsLoading, error: friendsError } = useFriendsList();
   const { data: friendsLogs = [], isLoading: logsLoading, error: logsError } = useFriendsLogs();
+  const { mutate: removeFriend } = useRemoveFriend();
   const [selectedLog, setSelectedLog] = useState<LogDTO | null>(null);
   const [isLogModalVisible, setLogModalVisible] = useState(false);
 
@@ -44,28 +45,50 @@ export default function Friend() {
     );
   }
 
-  const isUserFriendOrPending = (username: string) => {
-    const lower = username.toLowerCase();
-    const isFriend = friendsList?.some(f => f.friend_details.username.toLowerCase() === lower);
-    const isPending = pendingRequests?.some(r => r.sender_details.username.toLowerCase() === lower);
-    return isFriend || isPending;
+  // Helper for nicer success alerts
+  const showSuccess = (message: string) => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+      Alert.alert('Success', message);
+    }
   };
 
   const handleSendRequest = (username: string) => {
     sendRequest(username, {
-      onSuccess: () => Alert.alert('Success', 'Friend request sent!'),
+      onSuccess: () => showSuccess('Friend request sent!'),
       onError: (error: any) => Alert.alert('Error', error.message),
     });
   };
 
   const handleAcceptRequest = (requestId: number) => {
     acceptRequest(requestId, {
-      onSuccess: () => Alert.alert('Success', 'Friend request accepted!'),
+      onSuccess: () => showSuccess('Friend request accepted!'),
     });
   };
 
   const handleRejectRequest = (requestId: number) => {
     rejectRequest(requestId);
+  };
+
+  const handleRemoveFriend = (friendId: number) => {
+    Alert.alert(
+      'Remove Friend',
+      'Are you sure you want to remove this friend?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            removeFriend(friendId, {
+              onSuccess: () => showSuccess('Friend removed successfully!'),
+              onError: (error: any) => Alert.alert('Error', error.message),
+            });
+          },
+        },
+      ]
+    );
   };
 
   // Helper: determine friend request state for a username
@@ -215,13 +238,13 @@ export default function Friend() {
                 data={searchResults || []}
                 keyExtractor={item => item.id.toString()}
                 renderItem={({ item }) => {
-                  const status = getUserFriendStatusFromResult(item);
+                  // Use friendStatus from the backend for correct button state
                   let buttonText = 'Add';
                   let disabled = false;
-                  if (status === 'Requested') {
+                  if (item.friendStatus === 'pending') {
                     buttonText = 'Requested';
                     disabled = true;
-                  } else if (status === 'Respond') {
+                  } else if (item.friendStatus === 'incoming') {
                     buttonText = 'Respond';
                     disabled = true;
                   }
@@ -291,6 +314,9 @@ export default function Friend() {
                     <Text style={styles.username}>{item.friend_details.username}</Text>
                     <Text style={styles.email}>{item.friend_details.email}</Text>
                   </View>
+                  <TouchableOpacity onPress={() => handleRemoveFriend(item.friend_id)}>
+                    <Ionicons name="person-remove" size={20} color="#FF3B30" />
+                  </TouchableOpacity>
                 </View>
               )}
               ListEmptyComponent={!friendsLoading ? <Text style={styles.emptyText}>No friends yet.</Text> : null}

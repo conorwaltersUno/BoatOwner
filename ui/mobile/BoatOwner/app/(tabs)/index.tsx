@@ -4,6 +4,7 @@ import MapView, { Polyline, Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
 import LoggingModal from "../../components/SaveLogModal";
+import { authFetch } from "@/api/fetch/auth.fetch";
 
 export default function HomeScreen() {
   const mapRef = useRef<MapView>(null);
@@ -20,6 +21,9 @@ export default function HomeScreen() {
   const [zoomLevel, setZoomLevel] = useState({ latitudeDelta: 0.01, longitudeDelta: 0.01 });
   const [isFollowingUser, setIsFollowingUser] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+
+  // --- Keep-alive timer state ---
+  const keepAliveIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -58,9 +62,24 @@ export default function HomeScreen() {
     }
   }, [region, zoomLevel]);
 
+  // --- Keep-alive logic ---
+  const startKeepAlive = () => {
+    if (keepAliveIntervalRef.current) return;
+    keepAliveIntervalRef.current = setInterval(() => {
+      // Call a lightweight authenticated endpoint to keep session alive
+      authFetch("/api/health").catch(() => {}); // ignore errors
+    }, 2 * 60 * 1000); // every 2 minutes
+  };
+  const stopKeepAlive = () => {
+    if (keepAliveIntervalRef.current) {
+      clearInterval(keepAliveIntervalRef.current);
+      keepAliveIntervalRef.current = null;
+    }
+  };
+
   const startLogging = async () => {
     if (watcher) return;
-
+    startKeepAlive();
     setLocations([]);
     setSeconds(0);
     setStartTime(new Date());
@@ -103,6 +122,7 @@ export default function HomeScreen() {
   };
 
   const stopLogging = () => {
+    stopKeepAlive();
     if (watcher) {
       setEndTime(new Date());
       watcher.remove();
