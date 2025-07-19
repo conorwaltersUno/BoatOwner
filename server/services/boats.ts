@@ -9,7 +9,7 @@ async function getAllBoats(): Promise<BoatDTO[]> {
       },
     });
   } catch (error: any) {
-    throw Error("Error retrieving boats: " + error.message);
+    throw new Error("Error retrieving boats: " + error.message);
   }
 }
 
@@ -21,7 +21,7 @@ async function getBoatByUserId(userId: number): Promise<BoatDTO | null> {
       },
     });
   } catch (error: any) {
-    throw Error(`No boat found for user id: ${userId}`);
+    throw new Error(`No boat found for user id: ${userId}`);
   }
 }
 
@@ -33,7 +33,7 @@ async function getBoatById(boatId: number): Promise<BoatDTO | null> {
       },
     });
   } catch (error: any) {
-    throw Error(`No boat found with id: ${boatId}`);
+    throw new Error(`No boat found with id: ${boatId}`);
   }
 }
 
@@ -49,7 +49,7 @@ async function createBoat(data: CreateBoatDTO): Promise<BoatDTO> {
 
     return newBoat;
   } catch (error: any) {
-    throw Error("Error creating boat: " + error.message);
+    throw new Error("Error creating boat: " + error.message);
   }
 }
 
@@ -68,7 +68,7 @@ async function updateBoat(boatId: number, data: UpdateBoatDTO): Promise<BoatDTO 
 
     return updatedBoat;
   } catch (error: any) {
-    throw Error(`Error updating boat with id: ${boatId} - ${error.message}`);
+    throw new Error(`Error updating boat with id: ${boatId} - ${error.message}`);
   }
 }
 
@@ -82,7 +82,7 @@ async function deleteBoat(boatId: number): Promise<boolean> {
 
     return true;
   } catch (error: any) {
-    throw Error(`Error deleting boat with id: ${boatId} - ${error.message}`);
+    throw new Error(`Error deleting boat with id: ${boatId} - ${error.message}`);
   }
 }
 

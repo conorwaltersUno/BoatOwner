@@ -2,6 +2,8 @@ export interface UserDTO {
   id: number;
   email: string;
   password: string;
+  username: string; // NEW
+  created: string;
 }
 
 export interface CreateUserDTO {
@@ -9,6 +11,7 @@ export interface CreateUserDTO {
   boat_model: string;
   email: string;
   password: string;
+  username: string; // NEW
 }
 
 export interface refreshTokenDTO {

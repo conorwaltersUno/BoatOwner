@@ -18,7 +18,7 @@ async function getAllExpenses(req: Request, res: Response) {
     }
     return res.status(okStatus).json(expenses);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -33,7 +33,7 @@ async function getExpenseById(req: Request, res: Response) {
 
     return res.status(okStatus).json(expense);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -43,12 +43,12 @@ async function getExpensesByBoatId(req: Request, res: Response) {
     const expenses: ExpenseDTO[] = await ExpenseService.getExpensesByBoatId(Number(req.params.boat_id));
 
     if (expenses.length === 0) {
-      return res.status(notFoundStatus).json({ message: "No expenses found for this boat" });
+      return res.status(notFoundStatus).json([]);
     }
 
     return res.status(okStatus).json(expenses);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -59,14 +59,12 @@ async function createExpense(req: Request, res: Response) {
       ...req.body,
       boat_id: Number(req.params.boat_id),
     });
-
     if (!expense) {
       return res.status(badRequestStatus).json({ message: "Error creating expense, please try again" });
     }
-
     return res.status(createdStatus).json(expense);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -81,7 +79,7 @@ async function updateExpense(req: Request, res: Response) {
 
     return res.status(okStatus).json(expense);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -96,7 +94,7 @@ async function deleteExpense(req: Request, res: Response) {
 
     return res.sendStatus(noContentStatus);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 

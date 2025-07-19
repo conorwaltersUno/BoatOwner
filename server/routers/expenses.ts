@@ -9,7 +9,7 @@ import {
 } from "../controllers";
 import { validator } from "../middleware/expressValidator";
 import { body, param } from "express-validator";
-// import { auth } from "../middleware/auth";
+import { auth } from "../middleware/auth";
 
 const ExpenseRouter = Router();
 
@@ -30,7 +30,7 @@ ExpenseRouter.route("/").get(
         description: "Internal server error"
       }
     */
-  // auth,
+  auth,
   (async (req, res) => {
     await getAllExpenses(req, res);
   }) as RequestHandler
@@ -62,7 +62,7 @@ ExpenseRouter.route("/:id").get(
         description: "Internal server error"
       }
     */
-  // auth,
+  auth,
   [param("id").isInt().withMessage("ID must be an integer")],
   (req, res, next) => {
     validator(req, res, next);
@@ -98,7 +98,7 @@ ExpenseRouter.route("/boat/:boat_id/expenses").get(
         description: "Internal server error"
       }
     */
-  // auth,
+  auth,
   [param("boat_id").isInt().withMessage("Boat ID must be an integer")],
   (req, res, next) => {
     validator(req, res, next);
@@ -142,7 +142,7 @@ ExpenseRouter.route("/:boat_id").post(
         description: "Internal server error"
       }
     */
-  // auth,
+  auth,
   [
     param("boat_id").isInt().withMessage("Boat ID must be an integer"),
     body("expense_type").exists().isString().notEmpty().withMessage("Expense type is required"),
@@ -198,7 +198,7 @@ ExpenseRouter.route("/:id").put(
         description: "Internal server error"
       }
     */
-  // auth,
+  auth,
   [
     param("id").isInt().withMessage("ID must be an integer"),
     body("expense_type").optional().isString().notEmpty().withMessage("Expense type cannot be empty"),
@@ -238,7 +238,7 @@ ExpenseRouter.route("/:id").delete(
         description: "Internal server error"
       }
     */
-  // auth,
+  auth,
   [param("id").isInt().withMessage("ID must be an integer")],
   (req, res, next) => {
     validator(req, res, next);

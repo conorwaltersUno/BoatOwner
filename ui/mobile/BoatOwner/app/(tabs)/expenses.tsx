@@ -6,8 +6,6 @@ import {
   ActivityIndicator,
   TouchableWithoutFeedback,
   SafeAreaView,
-  Button,
-  ScrollView,
   TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
@@ -50,9 +48,7 @@ export default function Expenses() {
           onPress={() => {
             /* Optionally add a refetch here */
           }}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </TouchableOpacity>
+        ></TouchableOpacity>
       </View>
     );
   }

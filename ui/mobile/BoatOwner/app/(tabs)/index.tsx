@@ -3,12 +3,12 @@ import React, { useEffect, useRef, useState } from "react";
 import MapView, { Polyline, Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
-import LoggingModal from "../../../components/SaveLogModal";
+import LoggingModal from "../../components/SaveLogModal";
+import { authFetch } from "@/api/fetch/auth.fetch";
 
 export default function HomeScreen() {
   const mapRef = useRef<MapView>(null);
 
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [watcher, setWatcher] = useState<Location.LocationSubscription | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -22,6 +22,9 @@ export default function HomeScreen() {
   const [isFollowingUser, setIsFollowingUser] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
 
+  // --- Keep-alive timer state ---
+  const keepAliveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -31,13 +34,11 @@ export default function HomeScreen() {
       }
 
       const currentLocation = await Location.getCurrentPositionAsync({});
-      setLocation(currentLocation);
-      const initialRegion = {
+      setRegion({
         latitude: currentLocation.coords.latitude,
         longitude: currentLocation.coords.longitude,
         ...zoomLevel,
-      };
-      setRegion(initialRegion);
+      });
     })();
   }, []);
 
@@ -55,9 +56,30 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, [watcher]);
 
+  React.useEffect(() => {
+    if (region) {
+      mapRef.current?.animateToRegion(region, 500);
+    }
+  }, [region, zoomLevel]);
+
+  // --- Keep-alive logic ---
+  const startKeepAlive = () => {
+    if (keepAliveIntervalRef.current) return;
+    keepAliveIntervalRef.current = setInterval(() => {
+      // Call a lightweight authenticated endpoint to keep session alive
+      authFetch("/api/health").catch(() => {}); // ignore errors
+    }, 2 * 60 * 1000); // every 2 minutes
+  };
+  const stopKeepAlive = () => {
+    if (keepAliveIntervalRef.current) {
+      clearInterval(keepAliveIntervalRef.current);
+      keepAliveIntervalRef.current = null;
+    }
+  };
+
   const startLogging = async () => {
     if (watcher) return;
-
+    startKeepAlive();
     setLocations([]);
     setSeconds(0);
     setStartTime(new Date());
@@ -70,7 +92,6 @@ export default function HomeScreen() {
       },
       (newLoc) => {
         const { latitude, longitude } = newLoc.coords;
-        setLocation(newLoc);
 
         const newRegion = {
           latitude,
@@ -101,36 +122,13 @@ export default function HomeScreen() {
   };
 
   const stopLogging = () => {
+    stopKeepAlive();
     if (watcher) {
       setEndTime(new Date());
       watcher.remove();
       setWatcher(null);
       setModalVisible(true);
     }
-  };
-
-  const resetLoggingState = () => {
-    setLocations([]);
-    setStartTime(null);
-    setSeconds(0);
-    setLocation(null);
-    setIsFollowingUser(true);
-  };
-
-  const handleModalClose = () => {
-    Alert.alert("Confirm", "Are you sure you want to close this log, you will lose any unsaved data?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-      {
-        text: "Yes, Close",
-        onPress: () => {
-          setModalVisible(false);
-          resetLoggingState();
-        },
-      },
-    ]);
   };
 
   const formatTime = (s: number) => {

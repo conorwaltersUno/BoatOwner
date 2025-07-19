@@ -31,6 +31,10 @@ const doc = {
       name: "Task",
       description: "Endpoints",
     },
+    {
+      name: "Friends",
+      description: "Endpoints",
+    },
   ],
   definitions: definitions,
 
@@ -53,5 +57,41 @@ const doc = {
 
 const outputFile = "./swaggerSchema/swagger_output.json";
 const endpointsFiles = ["./app.ts"];
+
+/**
+ * @swagger
+ * /api/friends/requests/{id}:
+ *   delete:
+ *     summary: Cancel a pending friend request sent by the current user
+ *     tags:
+ *       - Friends
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: The ID of the friend request to cancel
+ *     responses:
+ *       200:
+ *         description: Friend request cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Invalid request or not pending
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Not authorized to cancel this request
+ *       404:
+ *         description: Friend request not found
+ */
 
 swaggerAutogen({ openapi: "3.0.0" })(outputFile, endpointsFiles, doc);

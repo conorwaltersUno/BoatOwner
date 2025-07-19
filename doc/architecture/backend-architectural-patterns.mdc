@@ -1,0 +1,33 @@
+# Backend Architectural Patterns
+
+## Purpose
+This document defines architectural rules and patterns for backend development in this project. Future contributors and agents should follow these guidelines to ensure consistency, maintainability, and scalability.
+
+## General Principles
+- Use modular and layered architecture (e.g., controllers, services, middleware, routers).
+- Follow SOLID principles and separation of concerns.
+- Use TypeScript for type safety and clarity.
+- All database access should go through Prisma ORM.
+- API endpoints must be RESTful and documented in Swagger.
+- Use environment variables for configuration and secrets.
+- Write unit and integration tests for all controllers and services.
+
+## Folder Structure
+- `controllers/`: Handle HTTP requests and responses.
+- `services/`: Business logic and data manipulation.
+- `middleware/`: Express middleware for authentication, validation, etc.
+- `routers/`: Route definitions and endpoint grouping.
+- `prisma/`: Database schema and access layer.
+
+## Security
+- Validate all user input.
+- Use JWT for authentication.
+- Store sensitive data securely.
+
+## Documentation
+- Update this file with new patterns or rules as the project evolves.
+- Document all public APIs in Swagger.
+
+---
+
+*Add new rules and patterns below as needed.*

@@ -10,7 +10,7 @@ async function getAllTasks(): Promise<TaskDTO[]> {
       },
     });
   } catch (error: any) {
-    throw Error("Error retrieving tasks: " + error.message);
+    throw new Error("Error retrieving tasks: " + error.message);
   }
 }
 
@@ -22,7 +22,7 @@ async function getTaskById(taskId: number): Promise<TaskDTO | null> {
       },
     });
   } catch (error: any) {
-    throw Error(`No task found with id: ${taskId}`);
+    throw new Error(`No task found with id: ${taskId}`);
   }
 }
 
@@ -37,7 +37,7 @@ async function getTasksByBoatId(boatId: number): Promise<TaskDTO[]> {
       },
     });
   } catch (error: any) {
-    throw Error(`Error retrieving tasks for boat id: ${boatId} - ${error.message}`);
+    throw new Error(`Error retrieving tasks for boat id: ${boatId} - ${error.message}`);
   }
 }
 
@@ -54,7 +54,7 @@ async function createTask(data: CreateTaskDTO): Promise<TaskDTO> {
 
     return newTask;
   } catch (error: any) {
-    throw Error("Error creating task: " + error.message);
+    throw new Error("Error creating task: " + error.message);
   }
 }
 
@@ -72,7 +72,7 @@ async function updateTask(taskId: number, data: UpdateTaskDTO): Promise<TaskDTO 
 
     return updatedTask;
   } catch (error: any) {
-    throw Error(`Error updating task with id: ${taskId} - ${error.message}`);
+    throw new Error(`Error updating task with id: ${taskId} - ${error.message}`);
   }
 }
 
@@ -86,7 +86,7 @@ async function deleteTask(taskId: number): Promise<boolean> {
 
     return true;
   } catch (error: any) {
-    throw Error(`Error deleting task with id: ${taskId} - ${error.message}`);
+    throw new Error(`Error deleting task with id: ${taskId} - ${error.message}`);
   }
 }
 

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERYKEYS } from "@/constants/query";
-import { ExpenseDTO, UpdateExpenseDTO } from "../interfaces/expenses/expense";
+import { UpdateExpenseDTO } from "../interfaces/expenses/expense";
 import { updateExpense } from "@/api/fetch/expenses.fetch";
 
 function useUpdateExpense() {

@@ -7,8 +7,10 @@ import { UserRouter } from "./routers/users";
 import { BoatRouter } from "./routers/boats";
 import { LogRouter } from "./routers/logs";
 import { TaskRouter } from "./routers/tasks";
-import { ExpenseRouter } from "./routers/expenses";
 import { auth } from "./middleware/auth";
+import { FriendsRouter } from "./routers/friends";
+import { AuthRouter } from "./routers/authCheck";
+import { ExpenseRouter } from "./routers/expenses";
 
 const app = express();
 
@@ -26,6 +28,8 @@ app.use(auth);
 app.use("/boat", BoatRouter);
 app.use("/logs", LogRouter);
 app.use("/tasks", TaskRouter);
+app.use("/friends", FriendsRouter);
+app.use("/auth-check", AuthRouter);
 app.use("/expenses", ExpenseRouter);
 
 app.use((err, req: Request, res: Response, next: NextFunction) => {

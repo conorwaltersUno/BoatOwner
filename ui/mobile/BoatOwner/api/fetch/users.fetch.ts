@@ -9,11 +9,11 @@ const apiUrl = isLocalDev
   ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + `:${APIPort.localPort}`
   : `https://${apiBaseUrl}:${APIPort.localPort}`;
 
-export async function signUp(email: string, password: string, boat_name: string, boat_model: string) {
+export async function signUp(email: string, password: string, username: string, boat_name: string, boat_model: string) {
   const res = await fetch(`${apiUrl}${APIRoutes.users}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password, boat_name, boat_model }),
+    body: JSON.stringify({ email, password, username, boat_name, boat_model }),
   });
   if (!res.ok) throw new Error((await res.json()).message || "Sign up failed");
   return res.json();

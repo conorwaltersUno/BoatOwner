@@ -15,20 +15,22 @@ export const fetchExpenses = async (boatId: number) => {
     const response = await authFetch(`${apiUrl}/expenses/boat/${boatId}/expenses`);
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
-      if (response.status === 404 && errorBody.message && errorBody.message.startsWith("No expenses found")) {
+      if (response.status === 404) {
         return [];
       }
-      throw new Error(errorBody.message || `Failed to fetch expenses: ${response.statusText}`);
+      throw new Error(errorBody.message || "Failed to fetch expenses");
     }
     const data: ExpenseDTO[] = await response.json();
     return data;
   } catch (err: any) {
-    throw new Error(`Failed to fetch expenses: ${err.message}`);
+    return []; // Always return an array, never undefined
   }
 };
 
 export const postExpense = async (boatId: number, expense: CreateExpenseDTO) => {
   try {
+    console.log(`Posting expense for boat ${boatId}:`, expense);
+    // Use the correct backend route for creating an expense
     const response = await authFetch(`${apiUrl}/expenses/${boatId}`, {
       method: "POST",
       headers: {
@@ -39,12 +41,17 @@ export const postExpense = async (boatId: number, expense: CreateExpenseDTO) => 
         amount: Number(expense.amount),
       }),
     });
-    if (!response.ok) {
-      throw new Error(`Failed to add expense: ${response.statusText}`);
+    console.log(`Response url: ${response.url}`);
+    console.log(`Response status: ${response.status}`);
+    // Only log the response json if the response is ok
+    if (response.ok) {
+      const data: ExpenseDTO = await response.json();
+      console.log(`Response json:`, data);
+      return data;
+    } else {
+      const errorBody = await response.json().catch(() => ({}));
+      throw new Error(errorBody.message || `Failed to add expense: ${response.statusText}`);
     }
-
-    const data: ExpenseDTO = await response.json();
-    return data;
   } catch (err: any) {
     throw new Error(`Failed to add expense: ${err.message}`);
   }

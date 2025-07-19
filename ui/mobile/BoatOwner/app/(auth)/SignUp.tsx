@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useSignUp } from "@/hooks/useSignUp";
 import { useAuth } from "@/context/AuthContext";
@@ -17,17 +17,20 @@ type SignUpScreenProps = {
 };
 
 export default function SignUpScreen({ navigation }: SignUpScreenProps) {
-  const [form, setForm] = useState({ email: "", password: "", boat_name: "", boat_model: "" });
-  const { mutate, isPending, error, data } = useSignUp();
+  const [form, setForm] = useState({ email: "", password: "", username: "", boat_name: "", boat_model: "" });
+  const { mutateAsync, isPending, error } = useSignUp();
   const { setAuthenticated } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (data) {
+  const handleSignUp = async () => {
+    try {
+      const data = await mutateAsync(form);
       setAuthenticated(true);
-      router.replace("/(tabs)/(home)");
+      router.replace("/(tabs)");
+    } catch (err) {
+      // error is handled by react-query
     }
-  }, [data]);
+  };
 
   return (
     <View style={styles.container}>
@@ -51,6 +54,13 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
         style={styles.input}
       />
       <TextInput
+        placeholder="Username"
+        value={form.username}
+        onChangeText={(username) => setForm((f) => ({ ...f, username }))}
+        style={styles.input}
+        autoCapitalize="none"
+      />
+      <TextInput
         placeholder="Boat Name"
         value={form.boat_name}
         onChangeText={(boat_name) => setForm((f) => ({ ...f, boat_name }))}
@@ -63,7 +73,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
         style={styles.input}
       />
       {error && <Text style={styles.error}>{error.message}</Text>}
-      <Button title={isPending ? "Signing Up..." : "Sign Up"} onPress={() => mutate(form)} />
+      <Button title={isPending ? "Signing Up..." : "Sign Up"} onPress={handleSignUp} />
       <View style={styles.dividerContainer}>
         <View style={styles.divider} />
         <Text style={styles.dividerText}>or</Text>

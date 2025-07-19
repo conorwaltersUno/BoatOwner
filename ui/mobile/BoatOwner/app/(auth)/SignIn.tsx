@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { useSignIn } from "@/hooks/useSignIn";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { saveTokens } from "@/utils/tokenStorage";
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -16,18 +17,25 @@ type SignInScreenProps = {
   navigation: NativeStackNavigationProp<AuthStackParamList, "SignIn">;
 };
 
+// If using Expo Router or React Navigation, wrap the component with <Screen> and set headerShown: false
+// @ts-ignore
 export default function SignInScreen({ navigation }: SignInScreenProps) {
   const [form, setForm] = useState({ email: "", password: "" });
-  const { mutate, isPending, error, data } = useSignIn();
+  const { mutateAsync, isPending, error } = useSignIn();
   const { setAuthenticated } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (data) {
+  const handleSignIn = async () => {
+    try {
+      const data = await mutateAsync(form);
+      const { accessToken, refreshToken, userId, boatId } = data;
+      await saveTokens(accessToken, refreshToken, userId, boatId);
       setAuthenticated(true);
-      router.replace("/(tabs)/(home)");
+      router.replace("/(tabs)");
+    } catch (err) {
+      // error is handled by react-query
     }
-  }, [data]);
+  };
 
   return (
     <View style={styles.container}>
@@ -51,7 +59,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
         style={styles.input}
       />
       {error && <Text style={styles.error}>{error.message}</Text>}
-      <Button title={isPending ? "Signing In..." : "Sign In"} onPress={() => mutate(form)} />
+      <Button title={isPending ? "Signing In..." : "Sign In"} onPress={handleSignIn} />
       <View style={styles.dividerContainer}>
         <View style={styles.divider} />
         <Text style={styles.dividerText}>or</Text>
@@ -69,6 +77,11 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
     </View>
   );
 }
+
+// For Expo Router: (if using file-based routing)
+// <Screen options={{ headerShown: false }} />
+// For React Navigation Stack: (if using stack)
+// options={{ headerShown: false }}
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#f9f9f9" },

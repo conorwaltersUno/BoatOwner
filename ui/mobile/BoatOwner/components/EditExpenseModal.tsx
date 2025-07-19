@@ -6,7 +6,6 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   StyleSheet,
   TouchableOpacity,
   TouchableWithoutFeedback,

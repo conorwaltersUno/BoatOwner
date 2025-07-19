@@ -19,7 +19,7 @@ async function getAllUsers(req: Request, res: Response) {
 
     return res.status(okStatus).json(users);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -34,7 +34,7 @@ async function getUserById(req: Request, res: Response) {
 
     return res.status(okStatus).json(user);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -71,7 +71,7 @@ async function createUser(req: Request, res: Response) {
       .status(createdStatus)
       .json({ accessToken, refreshToken, user: createdUserInfo.UserDTO, boatId: createdUserInfo.BoatDTO.id });
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -97,7 +97,7 @@ async function signInUser(req: Request, res: Response) {
     });
     res.status(okStatus).json({ accessToken, refreshToken, userId: user.id, boatId: boat.id });
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -109,7 +109,7 @@ async function generateNewAccessToken(req: Request, res: Response) {
       accessToken: data,
     });
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -129,7 +129,7 @@ async function updateUser(req: Request, res: Response) {
 
     return res.status(okStatus).json(user);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 
@@ -144,7 +144,7 @@ async function deleteUser(req: Request, res: Response) {
 
     return res.sendStatus(noContentStatus);
   } catch (error: any) {
-    res.status(internalServerError).json(error.message);
+    res.status(internalServerError).json({ message: error.message });
   }
 }
 

@@ -10,7 +10,7 @@ async function getAllExpenses(): Promise<ExpenseDTO[]> {
       },
     });
   } catch (error: any) {
-    throw Error("Error retrieving expenses: " + error.message);
+    throw new Error("Error retrieving expenses: " + error.message);
   }
 }
 
@@ -22,7 +22,7 @@ async function getExpenseById(expenseId: number): Promise<ExpenseDTO | null> {
       },
     });
   } catch (error: any) {
-    throw Error(`No expense found with id: ${expenseId}`);
+    throw new Error(`No expense found with id: ${expenseId}`);
   }
 }
 
@@ -37,7 +37,7 @@ async function getExpensesByBoatId(boatId: number): Promise<ExpenseDTO[]> {
       },
     });
   } catch (error: any) {
-    throw Error(`Error retrieving expenses for boat id: ${boatId} - ${error.message}`);
+    throw new Error(`Error retrieving expenses for boat id: ${boatId} - ${error.message}`);
   }
 }
 
@@ -55,7 +55,7 @@ async function createExpense(data: CreateExpenseDTO): Promise<ExpenseDTO> {
 
     return newExpense;
   } catch (error: any) {
-    throw Error("Error creating expense: " + error.message);
+    throw new Error("Error creating expense: " + error.message);
   }
 }
 
@@ -74,7 +74,7 @@ async function updateExpense(expenseId: number, data: UpdateExpenseDTO): Promise
 
     return updatedExpense;
   } catch (error: any) {
-    throw Error(`Error updating expense with id: ${expenseId} - ${error.message}`);
+    throw new Error(`Error updating expense with id: ${expenseId} - ${error.message}`);
   }
 }
 
@@ -88,7 +88,7 @@ async function deleteExpense(expenseId: number): Promise<boolean> {
 
     return true;
   } catch (error: any) {
-    throw Error(`Error deleting expense with id: ${expenseId} - ${error.message}`);
+    throw new Error(`Error deleting expense with id: ${expenseId} - ${error.message}`);
   }
 }
 
