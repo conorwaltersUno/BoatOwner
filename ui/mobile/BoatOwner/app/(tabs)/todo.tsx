@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ActivityIndicator, ScrollView, Alert, TouchableOpacity } from "react-native";
-import { PanGestureHandler, State } from "react-native-gesture-handler";
+import { Swipeable } from "react-native-gesture-handler";
 import { FontAwesome } from "@expo/vector-icons";
 
 import TaskModal from "../../components/TaskModal/TaskModal";
@@ -79,36 +79,58 @@ export default function Todo() {
     );
   }
 
-  const renderDraggableTaskCard = (task: TaskDTO) => (
-    <PanGestureHandler
-      key={task.id}
-      onHandlerStateChange={({ nativeEvent }) => {
-        if (nativeEvent.state === State.END && nativeEvent.translationX > 100) {
-          task.status = "completed";
-          handleUpdateTask(task);
-        } else if (nativeEvent.state === State.END && nativeEvent.translationX < 100) {
-          task.status = "pending";
-          handleUpdateTask(task);
-        }
-      }}
-    >
-      <ThemedView style={[styles.taskCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <View style={styles.taskContent}>
-          <View>
-            <ThemedText style={[styles.taskDescription, { color: theme.text }, task.status === "completed" && styles.completedTask]}>{task.description}</ThemedText>
-            <ThemedText style={[styles.taskStatus, { color: theme.text + '99' }]}>Status: {task.status}</ThemedText>
-          </View>
-          <FontAwesome
-            name="trash"
-            color={theme.error || '#E74C3C'}
-            size={20}
-            onPress={() => handleDeleteTask(task.id)}
-            style={styles.deleteIcon}
-          />
+  const renderSwipeableTaskCard = (task: TaskDTO, isPending: boolean) => {
+    // Left swipe for pending -> completed, right swipe for completed -> pending
+    const renderLeftActions = () => (
+      isPending ? (
+        <View style={{ flex: 1, backgroundColor: '#27ae60', justifyContent: 'center', alignItems: 'flex-start', borderRadius: 8, marginBottom: 10 }}>
+          <ThemedText style={{ color: 'white', fontWeight: 'bold', fontSize: 16, paddingHorizontal: 24 }}>Mark Completed</ThemedText>
         </View>
-      </ThemedView>
-    </PanGestureHandler>
-  );
+      ) : null
+    );
+    const renderRightActions = () => (
+      !isPending ? (
+        <View style={{ flex: 1, backgroundColor: '#2E66E7', justifyContent: 'center', alignItems: 'flex-end', borderRadius: 8, marginBottom: 10 }}>
+          <ThemedText style={{ color: 'white', fontWeight: 'bold', fontSize: 16, paddingHorizontal: 24 }}>Mark Pending</ThemedText>
+        </View>
+      ) : null
+    );
+    return (
+      <Swipeable
+        key={task.id}
+        renderLeftActions={isPending ? renderLeftActions : undefined}
+        renderRightActions={!isPending ? renderRightActions : undefined}
+        onSwipeableLeftOpen={() => {
+          if (isPending) {
+            handleUpdateTask({ ...task, status: 'completed' });
+          }
+        }}
+        onSwipeableRightOpen={() => {
+          if (!isPending) {
+            handleUpdateTask({ ...task, status: 'pending' });
+          }
+        }}
+        overshootRight={false}
+        overshootLeft={false}
+      >
+        <ThemedView style={[styles.taskCard, { backgroundColor: theme.card, borderColor: theme.border }]}> 
+          <View style={styles.taskContent}>
+            <View>
+              <ThemedText style={[styles.taskDescription, { color: theme.text }, !isPending && styles.completedTask]}>{task.description}</ThemedText>
+              <ThemedText style={[styles.taskStatus, { color: theme.text + '99' }]}>Status: {task.status}</ThemedText>
+            </View>
+            <FontAwesome
+              name="trash"
+              color={theme.error || '#E74C3C'}
+              size={16}
+              onPress={() => handleDeleteTask(task.id)}
+              style={[styles.deleteIcon, { opacity: 0.7, marginLeft: 4 }]}
+            />
+          </View>
+        </ThemedView>
+      </Swipeable>
+    );
+  };
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>  
@@ -120,13 +142,13 @@ export default function Todo() {
         {pendingTasks.length === 0 ? (
           <ThemedText style={[styles.noTasksText, { color: theme.text + '99' }]}>No pending tasks</ThemedText>
         ) : (
-          pendingTasks.map(renderDraggableTaskCard)
+          pendingTasks.map((task) => renderSwipeableTaskCard(task, true))
         )}
         <ThemedText style={[styles.sectionTitle, { color: theme.primary, marginTop: 24 }]}>Completed Tasks</ThemedText>
         {completedTasks.length === 0 ? (
           <ThemedText style={[styles.noTasksText, { color: theme.text + '99' }]}>No completed tasks</ThemedText>
         ) : (
-          completedTasks.map(renderDraggableTaskCard)
+          completedTasks.map((task) => renderSwipeableTaskCard(task, false))
         )}
         <TaskModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddTask} />
       </ScrollView>
