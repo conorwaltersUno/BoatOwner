@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import MapView, { Polyline, Region, PROVIDER_DEFAULT } from "react-native-maps";
 import * as Location from "expo-location";
@@ -21,6 +21,7 @@ export default function HomeScreen() {
   const [zoomLevel, setZoomLevel] = useState({ latitudeDelta: 0.01, longitudeDelta: 0.01 });
   const [isFollowingUser, setIsFollowingUser] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // --- Keep-alive timer state ---
   const keepAliveIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -32,7 +33,6 @@ export default function HomeScreen() {
         Alert.alert("Permission to access location was denied");
         return;
       }
-
       const currentLocation = await Location.getCurrentPositionAsync({});
       setRegion({
         latitude: currentLocation.coords.latitude,
@@ -141,6 +141,11 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      {(!region || !isMapReady) && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#007AFF" />
+        </View>
+      )}
       {region && (
         <MapView
           ref={mapRef}
@@ -157,6 +162,7 @@ export default function HomeScreen() {
             });
           }}
           onPanDrag={() => setIsFollowingUser(false)}
+          onMapReady={() => setIsMapReady(true)}
         >
           {locations.length > 1 && (
             <Polyline
@@ -284,5 +290,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#333",
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
 });
