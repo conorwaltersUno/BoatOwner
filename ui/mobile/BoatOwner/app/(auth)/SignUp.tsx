@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, TextInput, Button, StyleSheet, TouchableOpacity } from "react-native";
 import { useSignUp } from "@/hooks/useSignUp";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { FontAwesome5 } from "@expo/vector-icons";
+
+import { useTheme } from "@/context/ThemeContext";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -21,6 +25,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   const { mutateAsync, isPending, error } = useSignUp();
   const { setAuthenticated } = useAuth();
   const router = useRouter();
+  const { theme } = useTheme();
 
   const handleSignUp = async () => {
     try {
@@ -33,92 +38,93 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
   };
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }] }>
       <View style={styles.logoContainer}>
-        <FontAwesome5 name="ship" size={64} color="#2E66E7" />
+        <FontAwesome5 name="ship" size={64} color={theme.primary} />
       </View>
-      <Text style={styles.title}>Create your BoatOwner account</Text>
+      <ThemedText style={[styles.title, { color: theme.primary }]}>Create your BoatOwner account</ThemedText>
       <TextInput
         placeholder="Email"
         value={form.email}
         onChangeText={(email) => setForm((f) => ({ ...f, email }))}
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
         autoCapitalize="none"
         keyboardType="email-address"
+        placeholderTextColor={theme.text + '99'}
       />
       <TextInput
         placeholder="Password"
         value={form.password}
         onChangeText={(password) => setForm((f) => ({ ...f, password }))}
         secureTextEntry
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
+        placeholderTextColor={theme.text + '99'}
       />
       <TextInput
         placeholder="Username"
         value={form.username}
         onChangeText={(username) => setForm((f) => ({ ...f, username }))}
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
         autoCapitalize="none"
+        placeholderTextColor={theme.text + '99'}
       />
       <TextInput
         placeholder="Boat Name"
         value={form.boat_name}
         onChangeText={(boat_name) => setForm((f) => ({ ...f, boat_name }))}
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
+        placeholderTextColor={theme.text + '99'}
       />
       <TextInput
         placeholder="Boat Model"
         value={form.boat_model}
         onChangeText={(boat_model) => setForm((f) => ({ ...f, boat_model }))}
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
+        placeholderTextColor={theme.text + '99'}
       />
-      {error && <Text style={styles.error}>{error.message}</Text>}
-      <Button title={isPending ? "Signing Up..." : "Sign Up"} onPress={handleSignUp} />
+      {error && <ThemedText style={[styles.error, { color: '#e74c3c' }]}>{error.message}</ThemedText>}
+      <Button title={isPending ? "Signing Up..." : "Sign Up"} onPress={handleSignUp} color={theme.primary} />
       <View style={styles.dividerContainer}>
-        <View style={styles.divider} />
-        <Text style={styles.dividerText}>or</Text>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: theme.border }]} />
+        <ThemedText style={[styles.dividerText, { color: theme.text + '99' }]}>or</ThemedText>
+        <View style={[styles.divider, { backgroundColor: theme.border }]} />
       </View>
-      <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-        <Text style={styles.socialButtonText}>Sign up with Apple</Text>
+      <TouchableOpacity style={[styles.socialButton, { backgroundColor: '#000' }]} activeOpacity={0.7}>
+        <ThemedText style={[styles.socialButtonText, { color: '#fff' }]}>Sign up with Apple</ThemedText>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.socialButton, styles.googleButton]} activeOpacity={0.7}>
-        <Text style={styles.socialButtonText}>Sign up with Google</Text>
+      <TouchableOpacity style={[styles.socialButton, styles.googleButton, { backgroundColor: theme.card, borderColor: theme.border }]} activeOpacity={0.7}>
+        <ThemedText style={[styles.socialButtonText, { color: theme.text }]}>Sign up with Google</ThemedText>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.replace("/(auth)/SignIn")}>
-        <Text style={styles.signinText}>Already have an account? Sign In</Text>
+      <TouchableOpacity onPress={() => router.replace("/(auth)/SignIn")}> 
+        <ThemedText style={[styles.signinText, { color: theme.primary }]}>Already have an account? Sign In</ThemedText>
       </TouchableOpacity>
-    </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#f9f9f9" },
+  container: { flex: 1, justifyContent: "center", padding: 24 },
   logoContainer: { alignItems: "center", marginBottom: 16 },
-  title: { fontSize: 24, fontWeight: "bold", color: "#2E66E7", textAlign: "center", marginBottom: 24 },
+  title: { fontSize: 24, fontWeight: "bold", textAlign: "center", marginBottom: 24 },
+  modalTitle: { fontSize: 20, fontWeight: "600", textAlign: "center", marginBottom: 24 },
   input: {
     borderWidth: 1,
-    borderColor: "#d0d0d0",
     marginBottom: 14,
     padding: 10,
     borderRadius: 8,
-    backgroundColor: "#fff",
   },
-  error: { color: "#e74c3c", marginBottom: 8, textAlign: "center" },
+  error: { marginBottom: 8, textAlign: "center" },
   dividerContainer: { flexDirection: "row", alignItems: "center", marginVertical: 18 },
-  divider: { flex: 1, height: 1, backgroundColor: "#e0e0e0" },
-  dividerText: { marginHorizontal: 10, color: "#888" },
+  divider: { flex: 1, height: 1 },
+  dividerText: { marginHorizontal: 10 },
   socialButton: {
-    backgroundColor: "#222",
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 12,
   },
   googleButton: {
-    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#d0d0d0",
   },
   socialButtonText: {
     color: "#fff",
@@ -126,7 +132,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   signinText: {
-    color: "#2E66E7",
     textAlign: "center",
     marginTop: 18,
     fontWeight: "500",

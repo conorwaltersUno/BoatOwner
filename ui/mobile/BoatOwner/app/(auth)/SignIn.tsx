@@ -1,10 +1,13 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, TextInput, Button, StyleSheet, TouchableOpacity } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { useSignIn } from "@/hooks/useSignIn";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { saveTokens } from "@/utils/tokenStorage";
+import { useTheme } from "@/context/ThemeContext";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -24,6 +27,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   const { mutateAsync, isPending, error } = useSignIn();
   const { setAuthenticated } = useAuth();
   const router = useRouter();
+  const { theme } = useTheme();
 
   const handleSignIn = async () => {
     try {
@@ -38,43 +42,47 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.logoContainer}>
-        <FontAwesome5 name="ship" size={64} color="#000000" />
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.logoContainer, { marginBottom: 32 }]}> {/* Adjusted margin for spacing */}
+        <FontAwesome5 name="ship" size={64} color={theme.text} />
       </View>
-      <Text style={styles.title}>BoatOwner</Text>
+      <ThemedText style={{ color: theme.primary, fontWeight: "bold", fontSize: 22, textAlign: "center", marginBottom: 24 }}>
+        Boat Owner
+      </ThemedText>
       <TextInput
         placeholder="Email"
         value={form.email}
         onChangeText={(email) => setForm((f) => ({ ...f, email }))}
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
         autoCapitalize="none"
         keyboardType="email-address"
+        placeholderTextColor={theme.text + '99'}
       />
       <TextInput
         placeholder="Password"
         value={form.password}
         onChangeText={(password) => setForm((f) => ({ ...f, password }))}
         secureTextEntry
-        style={styles.input}
+        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
+        placeholderTextColor={theme.text + '99'}
       />
-      {error && <Text style={styles.error}>{error.message}</Text>}
-      <Button title={isPending ? "Signing In..." : "Sign In"} onPress={handleSignIn} />
+      {error && <ThemedText style={[styles.error, { color: '#e74c3c' }]}>{error.message}</ThemedText>}
+      <Button title={isPending ? "Signing In..." : "Sign In"} onPress={handleSignIn} color={theme.primary} />
       <View style={styles.dividerContainer}>
-        <View style={styles.divider} />
-        <Text style={styles.dividerText}>or</Text>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: theme.border }]} />
+        <ThemedText style={[styles.dividerText, { color: theme.text + '99' }]}>or</ThemedText>
+        <View style={[styles.divider, { backgroundColor: theme.border }]} />
       </View>
-      <TouchableOpacity style={styles.socialButton} activeOpacity={0.7}>
-        <Text style={styles.socialButtonText}>Sign in with Apple</Text>
+      <TouchableOpacity style={[styles.socialButton, { backgroundColor: '#000' }]} activeOpacity={0.7}>
+        <ThemedText style={[styles.socialButtonText, { color: '#fff' }]}>Sign in with Apple</ThemedText>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.socialButton, styles.googleButton]} activeOpacity={0.7}>
-        <Text style={styles.socialButtonText}>Sign in with Google</Text>
+      <TouchableOpacity style={[styles.socialButton, styles.googleButton, { backgroundColor: theme.card, borderColor: theme.border }]} activeOpacity={0.7}>
+        <ThemedText style={[styles.socialButtonText, { color: theme.text }]}>Sign in with Google</ThemedText>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.replace("/(auth)/SignUp")}>
-        <Text style={styles.signupText}>Don't have an account? Sign Up</Text>
+        <ThemedText style={[styles.signupText, { color: theme.primary }]}>Don't have an account? Sign Up</ThemedText>
       </TouchableOpacity>
-    </View>
+    </ThemedView>
   );
 }
 
@@ -84,43 +92,43 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
 // options={{ headerShown: false }}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24, backgroundColor: "#f9f9f9" },
-  logoContainer: { alignItems: "center", marginBottom: 16 },
-  title: { fontSize: 28, fontWeight: "bold", color: "#2E66E7", textAlign: "center", marginBottom: 24 },
+  container: { flex: 1, justifyContent: "center", padding: 24 },
+  logoContainer: { alignItems: "center", marginBottom: 32 }, // Increased marginBottom for spacing
+  title: { fontSize: 28, fontWeight: "bold", textAlign: "center", marginBottom: 24 },
   input: {
     borderWidth: 1,
-    borderColor: "#d0d0d0",
     marginBottom: 14,
     padding: 10,
     borderRadius: 8,
-    backgroundColor: "#fff",
   },
-  error: { color: "#e74c3c", marginBottom: 8, textAlign: "center" },
+  error: { marginBottom: 8, textAlign: "center" },
   dividerContainer: { flexDirection: "row", alignItems: "center", marginVertical: 18 },
-  divider: { flex: 1, height: 1, backgroundColor: "#e0e0e0" },
-  dividerText: { marginHorizontal: 10, color: "#888" },
+  divider: { flex: 1, height: 1 },
+  dividerText: { marginHorizontal: 10 },
   socialButton: {
-    backgroundColor: "#222",
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 12,
   },
   googleButton: {
-    backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#d0d0d0",
   },
   socialButtonText: {
-    color: "#fff",
     fontWeight: "600",
     fontSize: 16,
   },
   signupText: {
-    color: "#2E66E7",
     textAlign: "center",
     marginTop: 18,
     fontWeight: "500",
     fontSize: 15,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 24,
   },
 });

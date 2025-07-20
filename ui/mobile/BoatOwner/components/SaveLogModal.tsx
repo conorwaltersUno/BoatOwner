@@ -18,6 +18,8 @@ import { LocationPoint, SaveLogDTO } from "../interfaces/log/log";
 import { useSaveLog } from "@/hooks/useSaveLog";
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from "@/context/ThemeContext";
+import { ThemedText } from "@/components/ThemedText";
 
 interface SaveLogModalProps {
   modalVisibility: boolean;
@@ -35,6 +37,10 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
   endTime,
 }) => {
   const { mutate: saveLog } = useSaveLog();
+  const { theme } = useTheme();
+
+  const [step, setStep] = React.useState(0); // 0: Description, 1: Crew, 2: Map
+  const [localError, setLocalError] = React.useState<string | null>(null);
 
   const validationSchema = Yup.object().shape({
     description: Yup.string().trim().required("Description is required."),
@@ -52,229 +58,365 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
     };
     saveLog(log);
     setModalVisibility(false);
+    setStep(0);
   };
 
-  const REPLAY_SPEEDS = [0.5, 1, 1.5, 2, 5, 10];
+  // --- Route Replay State (copied and adapted from LogRouteMapWithReplay) ---
+  const REPLAY_SPEEDS = [0.5, 1, 1.5, 2, 5, 10, 20, 50];
   const [replayIndex, setReplayIndex] = React.useState(0);
   const [isReplaying, setIsReplaying] = React.useState(false);
   const [replaySpeed, setReplaySpeed] = React.useState(1);
+  const [replayProgress, setReplayProgress] = React.useState(0); // floating point progress
+  const [isFollowing, setIsFollowing] = React.useState(true);
   const [mapRegion, setMapRegion] = React.useState<any>(undefined);
   const mapRef = React.useRef<MapView | null>(null);
 
   React.useEffect(() => {
     setReplayIndex(0);
+    setReplayProgress(0);
     setIsReplaying(false);
     setReplaySpeed(1);
+    setIsFollowing(true);
   }, [locations]);
 
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
+    const TICK_MS = 4;
     if (isReplaying && locations.length > 1) {
       interval = setInterval(() => {
-        setReplayIndex(prev => {
-          if (prev < locations.length - 1) {
-            return prev + 1;
-          } else {
-            // Loop back to start
+        setReplayProgress((prev) => {
+          const next = prev + replaySpeed * (TICK_MS / 1000);
+          if (next >= locations.length - 1) {
+            setIsReplaying(false);
             return 0;
           }
+          return next;
         });
-      }, Math.max(10, 100 / replaySpeed));
+      }, TICK_MS);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isReplaying, locations, replaySpeed]);
 
+  // Interpolated pin position for smoother following at high speeds
+  const getInterpolatedCoord = () => {
+    if (!locations.length) return null;
+    const idx = Math.floor(replayProgress);
+    const frac = replayProgress - idx;
+    const curr = locations[idx];
+    const next = locations[idx + 1] || curr;
+    if (replaySpeed > 10 && next && curr) {
+      return {
+        latitude: curr.latitude + (next.latitude - curr.latitude) * frac,
+        longitude: curr.longitude + (next.longitude - curr.longitude) * frac,
+      };
+    }
+    return curr;
+  };
+
+  // Keep replayIndex in sync with replayProgress
+  React.useEffect(() => {
+    if (locations.length > 1) {
+      const idx = Math.floor(replayProgress);
+      setReplayIndex(Math.min(idx, locations.length - 1));
+    }
+  }, [replayProgress, locations]);
+
+  // When user drags slider, update both replayIndex and replayProgress
+  const handleSliderChange = (val: number) => {
+    setReplayIndex(val);
+    setReplayProgress(val);
+    setIsReplaying(false);
+  };
+
+  // When replay starts, follow pin
+  React.useEffect(() => {
+    if (isReplaying) setIsFollowing(true);
+  }, [isReplaying]);
+
+  // Follow pin as replayIndex changes, unless user has panned/zoomed
+  React.useEffect(() => {
+    if (
+      isFollowing &&
+      locations.length > 0 &&
+      mapRef.current
+    ) {
+      const interp = getInterpolatedCoord();
+      if (interp) {
+        mapRef.current.animateToRegion({
+          latitude: interp.latitude,
+          longitude: interp.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }, replaySpeed > 10 ? 80 : 350);
+      }
+    }
+  }, [replayIndex, replayProgress, isFollowing, locations, replaySpeed]);
+
   return (
     <Modal visible={modalVisibility} transparent animationType="slide">
-      <TouchableWithoutFeedback onPress={() => setModalVisibility(false)}>
-        <View style={styles.modalOverlay}>
+      <TouchableWithoutFeedback onPress={() => { setModalVisibility(false); setStep(0); }}>
+        <View style={[styles.modalOverlay, { backgroundColor: theme.modalOverlay }] }>
           <TouchableWithoutFeedback>
             <KeyboardAvoidingView
               behavior={Platform.OS === "ios" ? "padding" : undefined}
               keyboardVerticalOffset={100}
-              style={styles.modalContainer}
+              style={[
+                styles.modalContainer,
+                {
+                  backgroundColor: theme.background,
+                  borderColor: theme.border,
+                  width: '98%',
+                  maxWidth: 540,
+                  height: '60%',
+                  borderRadius: 20,
+                  padding: 0,
+                },
+              ]}
             >
-              <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                <View style={styles.innerContainer}>
-                  <Text style={styles.modalTitle}>Trip Summary</Text>
-                  <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
-                  <Formik
-                    initialValues={{
-                      description: "",
-                      crewMembers: [""],
-                    }}
-                    validationSchema={validationSchema}
-                    onSubmit={(values, { resetForm }) => {
-                      handleSave(values);
-                      resetForm();
-                    }}
-                  >
-                    {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
-                      <>
-                        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-                          <View style={styles.sectionCard}>
-                            <Text style={styles.sectionTitle}>Description</Text>
-                            <TextInput
-                              style={[styles.input, styles.textArea]}
-                              placeholder="Describe your trip..."
-                              value={values.description}
-                              onChangeText={handleChange("description")}
-                              onBlur={handleBlur("description")}
-                              multiline
-                              numberOfLines={4}
-                              textAlignVertical="top"
-                            />
-                            {errors.description && touched.description && (
-                              <Text style={styles.errorText}>Description cannot be empty.</Text>
-                            )}
-                          </View>
-                          <View style={styles.sectionCard}>
-                            <Text style={styles.sectionTitle}>Crew Members</Text>
-                            {values.crewMembers.map((member, idx) => (
-                              <View key={idx} style={styles.crewRow}>
-                                <TextInput
-                                  style={[styles.input, { flex: 1 }]}
-                                  placeholder={`Crew Member ${idx + 1}`}
-                                  value={member}
-                                  onChangeText={(text) => {
-                                    const updated = [...values.crewMembers];
-                                    updated[idx] = text;
-                                    setFieldValue("crewMembers", updated);
-                                  }}
-                                />
-                                {idx > 0 && (
-                                  <TouchableOpacity
-                                    style={styles.deleteButton}
-                                    onPress={() => {
-                                      const updated = values.crewMembers.filter((_, i) => i !== idx);
-                                      setFieldValue("crewMembers", updated);
-                                    }}
-                                  >
-                                    <Text style={styles.deleteButtonText}>🗑️</Text>
-                                  </TouchableOpacity>
-                                )}
-                              </View>
-                            ))}
-                            <TouchableOpacity
-                              onPress={() => {
-                                setFieldValue("crewMembers", [...values.crewMembers, ""]);
-                              }}
-                              style={styles.addButton}
-                            >
-                              <Text style={styles.addButtonText}>+ Add Crew Member</Text>
-                            </TouchableOpacity>
-                            {Array.isArray(errors.crewMembers) &&
-                              errors.crewMembers.some((err) => err) &&
-                              touched.crewMembers && (
-                                <Text style={styles.errorText}>Crew member name cannot be empty.</Text>
-                              )}
-                          </View>
-                          <View style={styles.sectionCard}>
-                            <Text style={styles.sectionTitle}>Route Map</Text>
-                            <View style={{ marginBottom: 16 }}>
-                              <MapView
-                                ref={mapRef}
-                                style={styles.map}
-                                initialRegion={{
-                                  latitude: locations[0]?.latitude || 37.78825,
-                                  longitude: locations[0]?.longitude || -122.4324,
-                                  latitudeDelta: 0.01,
-                                  longitudeDelta: 0.01,
+              <Formik
+                initialValues={{ description: "", crewMembers: [""] }}
+                validationSchema={validationSchema}
+                onSubmit={(values, { resetForm }) => { handleSave(values); resetForm(); }}
+              >
+                {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
+                  <View style={styles.innerContainer}>
+                    <ThemedText style={[styles.modalTitle, { color: theme.primary }]} accessibilityRole="header">Save Trip</ThemedText>
+                    <ThemedText style={[styles.dateText, { color: theme.text + '99' }]}>{new Date().toLocaleDateString()}</ThemedText>
+                    {/* Stepper indicator */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 18 }}>
+                      {[0,1,2].map((s) => (
+                        <View key={s} style={{ width: 18, height: 6, borderRadius: 3, marginHorizontal: 4, backgroundColor: step === s ? theme.primary : theme.border }} />
+                      ))}
+                    </View>
+                    {/* Step 0: Description */}
+                    {step === 0 && (
+                      <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.border }] }>
+                        <ThemedText style={[styles.sectionTitle, { color: theme.primary }]}>Description</ThemedText>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            styles.textArea,
+                            { backgroundColor: theme.input, color: theme.text, borderColor: theme.border },
+                          ]}
+                          placeholder="Describe your trip..."
+                          placeholderTextColor={theme.placeholder}
+                          value={values.description}
+                          onChangeText={text => {
+                            handleChange("description")(text);
+                            setLocalError(null);
+                          }}
+                          onBlur={handleBlur("description")}
+                          multiline
+                          numberOfLines={4}
+                          textAlignVertical="top"
+                        />
+                        {(localError && step === 0) && (
+                          <ThemedText style={styles.errorText}>{localError}</ThemedText>
+                        )}
+                        {errors.description && touched.description && !localError && (
+                          <ThemedText style={styles.errorText}>Description cannot be empty.</ThemedText>
+                        )}
+                        <View style={styles.buttonContainer}>
+                          <TouchableOpacity
+                            onPress={() => {
+                              if (!values.description.trim()) {
+                                setLocalError('Description cannot be empty.');
+                                return;
+                              }
+                              setLocalError(null);
+                              setStep(1);
+                            }}
+                            style={[styles.saveButton, { backgroundColor: theme.primary }]}
+                          >
+                            <ThemedText style={styles.saveButtonText}>Next</ThemedText>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => { setModalVisibility(false); setStep(0); setLocalError(null); }} style={[styles.cancelButton, { backgroundColor: theme.card, borderColor: theme.border }] }>
+                            <ThemedText style={[styles.cancelText, { color: theme.error }]}>Cancel</ThemedText>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
+                    {/* Step 1: Crew Members */}
+                    {step === 1 && (
+                      <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.border }] }>
+                        <ThemedText style={[styles.sectionTitle, { color: theme.primary }]}>Crew Members</ThemedText>
+                        <ScrollView style={{ maxHeight: 180 }} contentContainerStyle={{ paddingBottom: 4 }}>
+                          {values.crewMembers.map((member, idx) => (
+                            <View key={idx} style={styles.crewRow}>
+                              <TextInput
+                                style={[
+                                  styles.input,
+                                  { flex: 1, backgroundColor: theme.input, color: theme.text, borderColor: theme.border },
+                                ]}
+                                placeholder={`Crew Member ${idx + 1}`}
+                                placeholderTextColor={theme.placeholder}
+                                value={member}
+                                onChangeText={text => {
+                                  const updated = [...values.crewMembers];
+                                  updated[idx] = text;
+                                  setFieldValue("crewMembers", updated);
+                                  setLocalError(null);
                                 }}
-                                region={mapRegion}
-                                onRegionChangeComplete={region => setMapRegion(region)}
-                              >
-                                <Polyline coordinates={locations} strokeWidth={4} strokeColor="#2E66E7" />
-                                {locations.length > 0 && (
-                                  <Marker
-                                    coordinate={locations[replayIndex]}
-                                    pinColor="#E74C3C"
-                                    title="Current Position"
-                                  />
-                                )}
-                              </MapView>
-                              {/* Replay Controls */}
-                              {locations.length > 1 && (
-                                <View style={{ marginTop: 10 }}>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    {/* Play/Pause button to the left of the slider, smaller */}
-                                    <TouchableOpacity
-                                      onPress={() => setIsReplaying(!isReplaying)}
-                                      style={{ backgroundColor: '#2E66E7', borderRadius: 16, padding: 6, marginRight: 8, marginLeft: 4 }}
-                                    >
-                                      <Ionicons name={isReplaying ? 'pause' : 'play'} size={16} color="#fff" />
-                                    </TouchableOpacity>
-                                    <Slider
-                                      style={{ flex: 1, height: 24, marginRight: 0, marginLeft: 0 }}
-                                      minimumValue={0}
-                                      maximumValue={locations.length - 1}
-                                      value={replayIndex}
-                                      onValueChange={(val: number) => setReplayIndex(Math.round(val))}
-                                      minimumTrackTintColor="#2E66E7"
-                                      maximumTrackTintColor="#eaf0fa"
-                                      thumbTintColor="#2E66E7"
-                                    />
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 12 }}>
-                                      <TouchableOpacity
-                                        onPress={() => setReplaySpeed(prev => {
-                                          const idx = REPLAY_SPEEDS.indexOf(prev);
-                                          return REPLAY_SPEEDS[(idx + 1) % REPLAY_SPEEDS.length];
-                                        })}
-                                        style={{ backgroundColor: '#eee', borderRadius: 20, padding: 8, marginRight: 4 }}
-                                      >
-                                        <Text style={styles.speedBtn}>{replaySpeed}x</Text>
-                                      </TouchableOpacity>
-                                      <TouchableOpacity
-                                        onPress={() => {
-                                          setReplayIndex(0);
-                                          setIsReplaying(false);
-                                        }}
-                                        accessibilityLabel="Restart log replay"
-                                        style={{ backgroundColor: '#eaf0fa', borderRadius: 20, padding: 8, marginRight: 4, marginLeft: 4 }}
-                                      >
-                                        <Text style={styles.replayBtn}>⟲</Text>
-                                      </TouchableOpacity>
-                                    </View>
-                                  </View>
-                                </View>
-                              )}
-                              {/* Recenter button */}
-                              {locations.length > 0 && (
+                              />
+                              {idx > 0 && (
                                 <TouchableOpacity
-                                  style={styles.recenterBtn}
+                                  style={styles.deleteButton}
                                   onPress={() => {
-                                    if (locations.length > 0 && mapRef.current) {
-                                      mapRef.current.animateToRegion({
-                                        latitude: locations[replayIndex].latitude,
-                                        longitude: locations[replayIndex].longitude,
-                                        latitudeDelta: 0.01,
-                                        longitudeDelta: 0.01,
-                                      });
-                                    }
+                                    const updated = values.crewMembers.filter((_, i) => i !== idx);
+                                    setFieldValue("crewMembers", updated);
+                                    setLocalError(null);
                                   }}
-                                  accessibilityLabel="Recenter on current log location"
                                 >
-                                  <Ionicons name="locate" size={22} color="#2E66E7" />
+                                  <ThemedText style={styles.deleteButtonText}>🗑️</ThemedText>
                                 </TouchableOpacity>
                               )}
                             </View>
-                          </View>
+                          ))}
                         </ScrollView>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setFieldValue("crewMembers", [...values.crewMembers, ""]);
+                            setLocalError(null);
+                          }}
+                          style={styles.addButton}
+                        >
+                          <ThemedText style={styles.addButtonText}>+ Add Crew Member</ThemedText>
+                        </TouchableOpacity>
+                        {(localError && step === 1) && (
+                          <ThemedText style={styles.errorText}>{localError}</ThemedText>
+                        )}
+                        {Array.isArray(errors.crewMembers) && errors.crewMembers.some((err) => err) && touched.crewMembers && !localError && (
+                          <ThemedText style={styles.errorText}>Crew member name cannot be empty.</ThemedText>
+                        )}
                         <View style={styles.buttonContainer}>
-                          <TouchableOpacity onPress={() => handleSubmit()} style={styles.saveButton}>
-                            <Text style={styles.saveButtonText}>Save Trip</Text>
+                          <TouchableOpacity onPress={() => { setStep(0); setLocalError(null); }} style={[styles.cancelButton, { backgroundColor: theme.card, borderColor: theme.border }] }>
+                            <ThemedText style={[styles.cancelText, { color: theme.error }]}>Back</ThemedText>
                           </TouchableOpacity>
-                          <TouchableOpacity onPress={() => setModalVisibility(false)} style={styles.cancelButton}>
-                            <Text style={styles.cancelText}>Cancel</Text>
+                          <TouchableOpacity
+                            onPress={() => {
+                              if (values.crewMembers.some((m) => !m.trim())) {
+                                setLocalError('Crew member name cannot be empty.');
+                                return;
+                              }
+                              setLocalError(null);
+                              setStep(2);
+                            }}
+                            style={[styles.saveButton, { backgroundColor: theme.primary }]}
+                          >
+                            <ThemedText style={styles.saveButtonText}>Next</ThemedText>
                           </TouchableOpacity>
                         </View>
-                      </>
+                      </View>
                     )}
-                  </Formik>
-                </View>
-              </ScrollView>
+                    {/* Step 2: Route Map */}
+                    {step === 2 && (
+                      <View style={[styles.sectionCard, { backgroundColor: theme.card, borderColor: theme.border }] }>
+                        <ThemedText style={[styles.sectionTitle, { color: theme.primary }]}>Route Map</ThemedText>
+                        <View style={{ marginBottom: 16 }}>
+                          <MapView
+                            ref={mapRef}
+                            style={[styles.map, { borderColor: theme.border }]}
+                            initialRegion={{
+                              latitude: locations[0]?.latitude || 37.78825,
+                              longitude: locations[0]?.longitude || -122.4324,
+                              latitudeDelta: 0.01,
+                              longitudeDelta: 0.01,
+                            }}
+                            region={mapRegion}
+                            onRegionChangeComplete={region => setMapRegion(region)}
+                            onPanDrag={() => setIsFollowing(false)}
+                            onTouchStart={() => setIsFollowing(false)}
+                          >
+                            <Polyline coordinates={locations} strokeWidth={4} strokeColor={theme.primary} />
+                            {locations.length > 0 && (
+                              <Marker
+                                coordinate={getInterpolatedCoord() || locations[replayIndex]}
+                                pinColor={theme.error}
+                                title="Current Position"
+                              />
+                            )}
+                          </MapView>
+                          {/* Replay Controls */}
+                          {locations.length > 1 && (
+                            <View style={{ marginTop: 10 }}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <TouchableOpacity
+                                  onPress={() => setIsReplaying(!isReplaying)}
+                                  style={{ backgroundColor: theme.primary, borderRadius: 16, padding: 6, marginRight: 8, marginLeft: 4 }}
+                                >
+                                  <Ionicons name={isReplaying ? 'pause' : 'play'} size={16} color={theme.buttonText} />
+                                </TouchableOpacity>
+                                <Slider
+                                  style={{ flex: 1, height: 24, marginRight: 0, marginLeft: 0 }}
+                                  minimumValue={0}
+                                  maximumValue={locations.length - 1}
+                                  value={replayIndex}
+                                  onValueChange={handleSliderChange}
+                                  minimumTrackTintColor={theme.primary}
+                                  maximumTrackTintColor={theme.cardSecondary}
+                                  thumbTintColor={theme.primary}
+                                />
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 12 }}>
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      const idx = REPLAY_SPEEDS.indexOf(replaySpeed);
+                                      setReplaySpeed(REPLAY_SPEEDS[(idx + 1) % REPLAY_SPEEDS.length]);
+                                    }}
+                                    style={{ backgroundColor: theme.input, borderRadius: 20, padding: 8, marginRight: 4 }}
+                                  >
+                                    <ThemedText style={[styles.speedBtn, { color: theme.primary }]}>{replaySpeed}x</ThemedText>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    onPress={() => {
+                                      setReplayIndex(0);
+                                      setReplayProgress(0);
+                                      setIsReplaying(false);
+                                    }}
+                                    accessibilityLabel="Restart log replay"
+                                    style={{ backgroundColor: theme.cardSecondary, borderRadius: 20, padding: 8, marginRight: 4, marginLeft: 4 }}
+                                  >
+                                    <ThemedText style={[styles.replayBtn, { color: theme.primary }]}>⟲</ThemedText>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            </View>
+                          )}
+                          {/* Recenter button */}
+                          {locations.length > 0 && (
+                            <TouchableOpacity
+                              style={[styles.recenterBtn, { backgroundColor: theme.input, borderColor: theme.border }]}
+                              onPress={() => {
+                                if (locations.length > 0 && mapRef.current) {
+                                  const interp = getInterpolatedCoord();
+                                  mapRef.current.animateToRegion({
+                                    latitude: interp ? interp.latitude : locations[replayIndex].latitude,
+                                    longitude: interp ? interp.longitude : locations[replayIndex].longitude,
+                                    latitudeDelta: 0.01,
+                                    longitudeDelta: 0.01,
+                                  });
+                                }
+                              }}
+                              accessibilityLabel="Recenter on current log location"
+                            >
+                              <Ionicons name="locate" size={22} color={theme.primary} />
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                        <View style={styles.buttonContainer}>
+                          <TouchableOpacity onPress={() => setStep(1)} style={[styles.cancelButton, { backgroundColor: theme.card, borderColor: theme.border }] }>
+                            <ThemedText style={[styles.cancelText, { color: theme.error }]}>Back</ThemedText>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => handleSubmit()} style={[styles.saveButton, { backgroundColor: theme.primary }]}> 
+                            <ThemedText style={styles.saveButtonText}>Save Trip</ThemedText>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </Formik>
             </KeyboardAvoidingView>
           </TouchableWithoutFeedback>
         </View>
@@ -286,14 +428,12 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(30, 40, 60, 0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContainer: {
-    width: "92%",
-    height: "82%",
-    backgroundColor: "#fff",
+    width: "98%",
+    height: "60%",
     borderRadius: 18,
     padding: 0,
     shadowColor: "#000",
@@ -312,14 +452,12 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#2E66E7",
     marginBottom: 2,
     textAlign: "center",
     letterSpacing: 0.5,
   },
   dateText: {
     fontSize: 15,
-    color: "#888",
     textAlign: "center",
     marginBottom: 12,
     fontWeight: "500",
@@ -354,8 +492,8 @@ const styles = StyleSheet.create({
     color: "#222",
   },
   textArea: {
-    minHeight: 80,
-    maxHeight: 160,
+    minHeight: 170,
+    maxHeight: 250,
     paddingTop: 12,
   },
   crewRow: {
@@ -402,7 +540,6 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    backgroundColor: "#4CAF50",
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",

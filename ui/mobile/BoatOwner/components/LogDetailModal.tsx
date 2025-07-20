@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import {
   Modal,
   View,
-  Text,
   TextInput,
   StyleSheet,
   TouchableOpacity,
@@ -14,14 +13,14 @@ import {
 } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { UpdateLogDTO } from "../interfaces/log/log";
 import { useUpdateLog } from "@/hooks/useUpdateLog";
 import dayjs from "dayjs";
-import LogRouteMapWithReplay from "./LogRouteMapWithReplay";
 import { LogDTO } from '../interfaces/log/log';
-import MapView, { Polyline, Marker } from 'react-native-maps';
+import MapView, { Polyline, Marker, Region } from 'react-native-maps';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from "@/context/ThemeContext";
+import { ThemedText } from "@/components/ThemedText";
 
 interface LogDetailModalProps {
   modalVisibility: boolean;
@@ -34,13 +33,231 @@ const REPLAY_SPEEDS = [0.5, 1, 1.5, 2, 5, 10];
 
 const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setModalVisibility, log, onLogUpdated }) => {
   const { mutate: updateLog } = useUpdateLog();
+  const { theme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [localLog, setLocalLog] = useState<LogDTO>(log);
   const [replayIndex, setReplayIndex] = useState(0);
   const [isReplaying, setIsReplaying] = useState(false);
   const [replaySpeed, setReplaySpeed] = useState(1);
+  const [mapRegion, setMapRegion] = useState(() => {
+    if (log.coordinates?.[0]) {
+      return {
+        latitude: log.coordinates[0].latitude,
+        longitude: log.coordinates[0].longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      };
+    } else {
+      return {
+        latitude: 37.78825,
+        longitude: -122.4324,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      };
+    }
+  });
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<MapView | null>(null);
+  // --- PAGE STATE FOR TABS ---
+  const [activeTab, setActiveTab] = useState<'details' | 'log'>('details');
+
+  // --- THEME-AWARE STYLES ---
+  const themedStyles = {
+    dynamicModalContainer: {
+      ...styles.dynamicModalContainer,
+      backgroundColor: theme.card,
+      borderColor: theme.border,
+      shadowColor: theme.text,
+      shadowOpacity: 0.18,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 8,
+    },
+    mapContainerDynamic: {
+      ...styles.mapContainerDynamic,
+      backgroundColor: theme.cardSecondary,
+    },
+    innerContainer: {
+      ...styles.innerContainer,
+      backgroundColor: theme.card,
+    },
+    headerRow: {
+      ...styles.headerRow,
+    },
+    modalTitle: {
+      ...styles.modalTitle,
+      color: theme.primary,
+    },
+    closeButton: {
+      ...styles.closeButton,
+      backgroundColor: theme.cardSecondary,
+    },
+    closeButtonText: {
+      ...styles.closeButtonText,
+      color: theme.primary,
+    },
+    sectionTitle: {
+      ...styles.sectionTitle,
+      color: theme.primary,
+    },
+    input: {
+      ...styles.input,
+      backgroundColor: theme.input,
+      color: theme.text,
+      borderColor: theme.border,
+    },
+    crewMemberRow: {
+      ...styles.crewMemberRow,
+      backgroundColor: theme.cardSecondary,
+    },
+    crewMemberText: {
+      ...styles.crewMemberText,
+      color: theme.primary,
+    },
+    addButtonHorizontal: {
+      ...styles.addButtonHorizontal,
+      backgroundColor: theme.cardSecondary,
+    },
+    addButtonText: {
+      ...styles.addButtonText,
+      color: theme.primary,
+    },
+    deleteButtonText: {
+      ...styles.deleteButtonText,
+      color: theme.error,
+    },
+    detailContainer: {
+      ...styles.detailContainer,
+      backgroundColor: theme.cardSecondary,
+      borderColor: theme.border,
+    },
+    detailTitle: {
+      ...styles.detailTitle,
+      color: theme.primary,
+    },
+    detailLabel: {
+      ...styles.detailLabel,
+      color: theme.text,
+    },
+    detailLabelCrew: {
+      ...styles.detailLabelCrew,
+      color: theme.primary,
+    },
+    detailValue: {
+      ...styles.detailValue,
+      color: theme.textSecondary,
+    },
+    editButton: {
+      ...styles.editButton,
+      backgroundColor: theme.button,
+    },
+    editButtonText: {
+      ...styles.editButtonText,
+      color: theme.buttonText,
+    },
+    saveButton: {
+      ...styles.saveButton,
+      backgroundColor: theme.success,
+    },
+    saveButtonText: {
+      ...styles.saveButtonText,
+      color: theme.buttonText,
+    },
+    cancelButton: {
+      ...styles.cancelButton,
+      backgroundColor: theme.cardSecondary,
+    },
+    cancelText: {
+      ...styles.cancelText,
+      color: theme.error,
+    },
+    sliderRow: {
+      ...styles.sliderRow,
+    },
+    replayBtn: {
+      backgroundColor: '#2E66E7',
+      color: '#fff',
+      fontWeight: 'bold',
+      fontSize: 22,
+      borderRadius: 18,
+      width: 36,
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 0,
+      paddingHorizontal: 0,
+      marginRight: 8,
+      marginLeft: 4,
+    },
+    speedBtn: {
+      ...styles.speedBtn,
+      backgroundColor: theme.cardSecondary,
+      color: theme.primary,
+    },
+    sliderInfoText: {
+      ...styles.sliderInfoText,
+      color: theme.textSecondary,
+    },
+    recenterBtn: {
+      ...styles.recenterBtn,
+      backgroundColor: theme.card,
+      shadowColor: theme.shadow,
+    },
+    errorText: {
+      ...styles.errorText,
+      color: theme.error,
+    },
+    tabSwitcher: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      marginBottom: 12,
+      marginTop: 2,
+      // gap: 0, // Not supported in React Native
+    },
+    tabButton: {
+      flex: 1,
+      paddingVertical: 12,
+      borderBottomWidth: 3,
+      borderColor: 'transparent',
+      alignItems: 'center' as const,
+      backgroundColor: theme.cardSecondary,
+    },
+    tabButtonActive: {
+      borderColor: theme.primary,
+      backgroundColor: theme.card,
+    },
+    tabText: {
+      fontSize: 16,
+      fontWeight: '600' as const,
+      color: theme.text,
+    },
+    tabTextActive: {
+      color: theme.primary,
+      fontWeight: '700' as const,
+    },
+    tripLogBanner: {
+      flexDirection: 'row' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      backgroundColor: theme.primary,
+      borderRadius: 10,
+      marginBottom: 10,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      shadowColor: theme.primary,
+      shadowOpacity: 0.12,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+      elevation: 2,
+    },
+    tripLogBannerText: {
+      color: theme.buttonText,
+      fontWeight: '700' as const,
+      fontSize: 17,
+      marginLeft: 8,
+    },
+  };
 
   useEffect(() => {
     setLocalLog(log);
@@ -164,277 +381,282 @@ const LogDetailModal: React.FC<LogDetailModalProps> = ({ modalVisibility, setMod
 
   const renderLogDetails = () => {
     if (!localLog) return null;
-
     return (
-      <View style={styles.detailContainer}>
-        <Text style={styles.detailTitle}>Trip Details</Text>
+      <View style={themedStyles.detailContainer}>
+        <ThemedText style={themedStyles.detailTitle}>Trip Details</ThemedText>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Description:</Text>
-          <Text style={styles.detailValue}>{localLog.description || ""}</Text>
+          <ThemedText style={themedStyles.detailLabel}>Description:</ThemedText>
+          <ThemedText style={themedStyles.detailValue}>{localLog.description || ""}</ThemedText>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Start Time:</Text>
-          <Text style={styles.detailValue}>
-            {localLog.log_started ? dayjs(localLog.log_started).format("YYYY-MM-DD HH:mm") : "N/A"}
-          </Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>End Time:</Text>
-          <Text style={styles.detailValue}>
-            {localLog.log_ended ? dayjs(localLog.log_ended).format("YYYY-MM-DD HH:mm") : "N/A"}
-          </Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Created On:</Text>
-          <Text style={styles.detailValue}>
-            {localLog.created_on ? dayjs(localLog.created_on).format("YYYY-MM-DD HH:mm") : "N/A"}
-          </Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Duration:</Text>
-          <Text style={styles.detailValue}>{getTotalDuration()}</Text>
-        </View>
-        <Text style={styles.detailLabelCrew}>Crew Members:</Text>
+        <ThemedText style={themedStyles.detailLabelCrew}>Crew Members:</ThemedText>
         <View style={styles.crewMembersHorizontal}>
           {localLog.crew_members.map((crew, index) => (
-            <View key={index} style={styles.crewMemberRow}>
-              <Text style={styles.crewMemberText}>{crew}</Text>
+            <View key={index} style={themedStyles.crewMemberRow}>
+              <ThemedText style={themedStyles.crewMemberText}>{crew}</ThemedText>
             </View>
           ))}
+        </View>
+        <View style={styles.detailRow}>
+          <ThemedText style={themedStyles.detailLabel}>Start Time:</ThemedText>
+          <ThemedText style={themedStyles.detailValue}>
+            {localLog.log_started ? dayjs(localLog.log_started).format("YYYY-MM-DD HH:mm") : "N/A"}
+          </ThemedText>
+        </View>
+        <View style={styles.detailRow}>
+          <ThemedText style={themedStyles.detailLabel}>End Time:</ThemedText>
+          <ThemedText style={themedStyles.detailValue}>
+            {localLog.log_ended ? dayjs(localLog.log_ended).format("YYYY-MM-DD HH:mm") : "N/A"}
+          </ThemedText>
+        </View>
+        <View style={styles.detailRow}>
+          <ThemedText style={themedStyles.detailLabel}>Created On:</ThemedText>
+          <ThemedText style={themedStyles.detailValue}>
+            {localLog.created_on ? dayjs(localLog.created_on).format("YYYY-MM-DD HH:mm") : "N/A"}
+          </ThemedText>
+        </View>
+        <View style={styles.detailRow}>
+          <ThemedText style={themedStyles.detailLabel}>Duration:</ThemedText>
+          <ThemedText style={themedStyles.detailValue}>{getTotalDuration()}</ThemedText>
         </View>
       </View>
     );
   };
 
+  // Update mapRegion when user pans/zooms
+  const handleRegionChangeComplete = (region: Region) => {
+    setMapRegion(region);
+  };
+
   return (
-    <Modal visible={modalVisibility} transparent animationType="fade">
-      <View style={styles.modalOverlay}>
-        <TouchableWithoutFeedback onPress={() => setModalVisibility(false)}>
-          <View style={StyleSheet.absoluteFill} />
-        </TouchableWithoutFeedback>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          keyboardVerticalOffset={100}
-          style={{ flex: 1, width: "100%", justifyContent: 'center', alignItems: 'center' }}
-        >
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View style={styles.dynamicModalContainer}>
-              <View style={styles.innerContainer}>
-                <View style={styles.headerRow}>
-                  <Text style={styles.modalTitle}>{isEditing ? "Edit Log" : "Log Details"}</Text>
-                  <TouchableOpacity onPress={() => setModalVisibility(false)} style={styles.closeButton}>
-                    <Text style={styles.closeButtonText}>✕</Text>
+    <Modal visible={modalVisibility} transparent animationType="slide">
+      <View style={[styles.modalOverlay, { backgroundColor: theme.modalOverlay }] }>
+        <View style={themedStyles.dynamicModalContainer}>
+          <TouchableWithoutFeedback onPress={() => setModalVisibility(false)}>
+            <View style={StyleSheet.absoluteFill} />
+          </TouchableWithoutFeedback>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={100}
+            style={{ flex: 1, width: "100%", justifyContent: 'center', alignItems: 'center' }}
+          >
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={[themedStyles.innerContainer, { justifyContent: 'flex-end' }] }>
+                <View style={[themedStyles.headerRow, { position: 'relative' }] }>
+                  <ThemedText style={themedStyles.modalTitle}>{isEditing ? "Edit Log" : "Log Details"}</ThemedText>
+                  <TouchableOpacity
+                    onPress={() => setModalVisibility(false)}
+                    style={{ position: 'absolute', right: 0, top: 0, padding: 8, zIndex: 10 }}
+                    accessibilityLabel="Close modal"
+                  >
+                    <ThemedText style={themedStyles.closeButtonText}>✕</ThemedText>
                   </TouchableOpacity>
                 </View>
-                {/* Map + Replay UI */}
-                <View style={styles.mapContainerDynamic}>
-                  <View style={{ position: 'relative' }}>
-                    <MapView
-                      ref={mapRef}
-                      style={{ width: '100%', height: 220, borderRadius: 12 }}
-                      initialRegion={
-                        localLog.coordinates?.[0]
-                          ? {
-                              latitude: localLog.coordinates[0].latitude,
-                              longitude: localLog.coordinates[0].longitude,
-                              latitudeDelta: 0.05,
-                              longitudeDelta: 0.05,
-                            }
-                          : {
-                              latitude: 37.78825,
-                              longitude: -122.4324,
-                              latitudeDelta: 0.05,
-                              longitudeDelta: 0.05,
-                            }
-                      }
-                      region={
-                        localLog.coordinates?.[replayIndex]
-                          ? {
-                              latitude: localLog.coordinates[replayIndex].latitude,
-                              longitude: localLog.coordinates[replayIndex].longitude,
-                              latitudeDelta: 0.05,
-                              longitudeDelta: 0.05,
-                            }
-                          : undefined
-                      }
-                      pointerEvents="none"
-                    >
-                      <Polyline
-                        coordinates={localLog.coordinates.map(c => ({ latitude: c.latitude, longitude: c.longitude }))}
-                        strokeColor="#007AFF"
-                        strokeWidth={3}
-                      />
-                      {localLog.coordinates[replayIndex] && (
-                        <Marker
-                          coordinate={{
-                            latitude: localLog.coordinates[replayIndex].latitude,
-                            longitude: localLog.coordinates[replayIndex].longitude,
-                          }}
-                        />
-                      )}
-                    </MapView>
-                    <TouchableOpacity
-                      style={styles.recenterBtn}
-                      onPress={() => {
-                        if (mapRef.current && localLog.coordinates[replayIndex]) {
-                          mapRef.current.animateToRegion({
-                            latitude: localLog.coordinates[replayIndex].latitude,
-                            longitude: localLog.coordinates[replayIndex].longitude,
-                            latitudeDelta: 0.01,
-                            longitudeDelta: 0.01,
-                          });
-                        }
-                      }}
-                      accessibilityLabel="Recenter on current log location"
-                    >
-                      <Ionicons name="locate" size={22} color="#2E66E7" />
-                    </TouchableOpacity>
-                  </View>
-                  {/* Slider and controls */}
-                  <View style={styles.sliderRow}>
-                    <TouchableOpacity onPress={() => setIsReplaying(!isReplaying)} style={{ backgroundColor: '#2E66E7', borderRadius: 16, padding: 6, marginRight: 8, marginLeft: 4 }}>
-                      <Ionicons name={isReplaying ? 'pause' : 'play'} size={16} color="#fff" />
-                    </TouchableOpacity>
-                    <Slider
-                      style={{ flex: 1, marginHorizontal: 12, height: 24 }}
-                      minimumValue={0}
-                      maximumValue={localLog.coordinates.length - 1}
-                      value={replayIndex}
-                      onValueChange={handleSliderChange}
-                      step={1}
-                      minimumTrackTintColor="#007AFF"
-                      maximumTrackTintColor="#ccc"
-                      thumbTintColor="#007AFF"
-                    />
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 12 }}>
-                      <TouchableOpacity onPress={() => setReplaySpeed(prev => {
-                        const idx = REPLAY_SPEEDS.indexOf(prev);
-                        return REPLAY_SPEEDS[(idx + 1) % REPLAY_SPEEDS.length];
-                      })} style={{ backgroundColor: '#eee', borderRadius: 20, padding: 8, marginRight: 4 }}>
-                          <Text style={styles.speedBtn}>{replaySpeed}x</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => {
-                          setReplayIndex(0);
-                          setIsReplaying(false);
-                        }} accessibilityLabel="Restart log replay" style={{ backgroundColor: '#eaf0fa', borderRadius: 20, padding: 8, marginRight: 4, marginLeft: 4 }}>
-                          <Text style={styles.replayBtn}>⟲</Text>
-                        </TouchableOpacity>
-                    </View>
-                  </View>
-                  <View style={styles.sliderInfoRow}>
-                    <Text style={styles.sliderInfoText}>{getCurrentPointTime()} / {getTotalDuration()}</Text>
-                    <Text style={styles.sliderInfoText}>{getCurrentPointTimestamp()}</Text>
-                  </View>
+                {/* Tab Switcher */}
+                <View style={themedStyles.tabSwitcher}>
+                  <TouchableOpacity
+                    style={[themedStyles.tabButton, activeTab === 'details' && themedStyles.tabButtonActive]}
+                    onPress={() => setActiveTab('details')}
+                    accessibilityLabel="Show trip details"
+                  >
+                    <ThemedText style={[themedStyles.tabText, activeTab === 'details' && themedStyles.tabTextActive]}>Details</ThemedText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[themedStyles.tabButton, activeTab === 'log' && themedStyles.tabButtonActive, { flexDirection: 'row' as const, justifyContent: 'center' as const, alignItems: 'center' as const }]}
+                    onPress={() => setActiveTab('log')}
+                    accessibilityLabel="Show trip log"
+                  >
+                    <Ionicons name="map" size={18} color={activeTab === 'log' ? theme.primary : theme.textSecondary} style={{ marginRight: 6 }} />
+                    <ThemedText style={[themedStyles.tabText, activeTab === 'log' && themedStyles.tabTextActive]}>Trip Log</ThemedText>
+                  </TouchableOpacity>
                 </View>
-                {/* Details Section */}
-                {renderLogDetails()}
-                <Formik
-                  initialValues={{
-                    description: localLog?.description || "",
-                    crewMembers: localLog?.crew_members || [""]
-                  }}
-                  validationSchema={validationSchema}
-                  onSubmit={handleUpdate}
-                  enableReinitialize
-                >
-                  {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
-                    <>
-                      <ScrollView
-                        style={styles.scrollView}
-                        contentContainerStyle={styles.scrollContent}
-                        keyboardShouldPersistTaps="handled"
-                        showsVerticalScrollIndicator
-                      >
-                        {!isEditing ? (
-                          renderLogDetails()
-                        ) : (
-                          <>
-                            <Text style={styles.sectionTitle}>Description</Text>
-                            <TextInput
-                              style={styles.input}
-                              placeholder="Trip Description"
-                              value={values.description}
-                              onChangeText={handleChange("description")}
-                              onBlur={handleBlur("description")}
-                              editable={isEditing}
-                              placeholderTextColor="#aaa"
-                            />
-                            {errors.description && touched.description && (
-                              <Text style={styles.errorText}>{errors.description}</Text>
-                            )}
-
-                            <Text style={styles.sectionTitle}>Crew Members</Text>
-                            <View style={styles.crewMembersHorizontal}>
-                              {values.crewMembers.map((member, idx) => (
-                                <View key={idx} style={styles.crewRowHorizontal}>
-                                  <TextInput
-                                    style={[styles.input, styles.crewInputHorizontal]}
-                                    placeholder={`Crew ${idx + 1}`}
-                                    value={member}
-                                    onChangeText={(text) => {
-                                      const updated = [...values.crewMembers];
-                                      updated[idx] = text;
-                                      setFieldValue("crewMembers", updated);
-                                    }}
-                                    editable={isEditing}
-                                    placeholderTextColor="#aaa"
-                                  />
-                                  {idx > 0 && isEditing && (
-                                    <TouchableOpacity
-                                      style={styles.deleteButtonHorizontal}
-                                      onPress={() => {
-                                        const updated = values.crewMembers.filter((_, i) => i !== idx);
+                {/* Tab Content */}
+                {activeTab === 'details' ? (
+                  <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator>
+                    {!isEditing && renderLogDetails()}
+                    <Formik
+                      initialValues={{
+                        description: localLog?.description || "",
+                        crewMembers: localLog?.crew_members || [""]
+                      }}
+                      validationSchema={validationSchema}
+                      onSubmit={handleUpdate}
+                      enableReinitialize
+                    >
+                      {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
+                        <>
+                          {isEditing && (
+                            <>
+                              <ThemedText style={themedStyles.sectionTitle}>Description</ThemedText>
+                              <TextInput
+                                style={themedStyles.input}
+                                placeholder="Trip Description"
+                                value={values.description}
+                                onChangeText={handleChange("description")}
+                                onBlur={handleBlur("description")}
+                                editable={isEditing}
+                                placeholderTextColor={theme.placeholder}
+                              />
+                              {errors.description && touched.description && (
+                                <ThemedText style={themedStyles.errorText}>{errors.description}</ThemedText>
+                              )}
+                              <ThemedText style={themedStyles.sectionTitle}>Crew Members</ThemedText>
+                              <View style={styles.crewMembersHorizontal}>
+                                {values.crewMembers.map((member, idx) => (
+                                  <View key={idx} style={styles.crewRowHorizontal}>
+                                    <TextInput
+                                      style={[themedStyles.input, styles.crewInputHorizontal]}
+                                      placeholder={`Crew ${idx + 1}`}
+                                      value={member}
+                                      onChangeText={(text) => {
+                                        const updated = [...values.crewMembers];
+                                        updated[idx] = text;
                                         setFieldValue("crewMembers", updated);
                                       }}
-                                    >
-                                      <Text style={styles.deleteButtonText}>🗑️</Text>
-                                    </TouchableOpacity>
-                                  )}
-                                </View>
-                              ))}
-                              <TouchableOpacity
-                                onPress={() => setFieldValue("crewMembers", [...values.crewMembers, ""])}
-                                style={styles.addButtonHorizontal}
-                              >
-                                <Text style={styles.addButtonText}>+ Add</Text>
-                              </TouchableOpacity>
-                            </View>
-                            {Array.isArray(errors.crewMembers) &&
-                              errors.crewMembers.some((err) => err) &&
-                              touched.crewMembers && (
-                                <Text style={styles.errorText}>Crew member name cannot be empty.</Text>
-                              )}
-                          </>
-                        )}
-                      </ScrollView>
-                      <View style={styles.buttonContainer}>
-                        {!isEditing ? (
-                          <View style={styles.actionRow}>
-                            <TouchableOpacity onPress={() => setIsEditing(true)} style={styles.editButton}>
-                              <Text style={styles.editButtonText}>Edit Log</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => setModalVisibility(false)} style={styles.cancelButton}>
-                              <Text style={styles.cancelText}>Close</Text>
-                            </TouchableOpacity>
+                                      editable={isEditing}
+                                      placeholderTextColor={theme.placeholder}
+                                    />
+                                    {idx > 0 && isEditing && (
+                                      <TouchableOpacity
+                                        style={styles.deleteButtonHorizontal}
+                                        onPress={() => {
+                                          const updated = values.crewMembers.filter((_, i) => i !== idx);
+                                          setFieldValue("crewMembers", updated);
+                                        }}
+                                      >
+                                        <ThemedText style={themedStyles.deleteButtonText}>🗑️</ThemedText>
+                                      </TouchableOpacity>
+                                    )}
+                                  </View>
+                                ))}
+                                <TouchableOpacity
+                                  onPress={() => setFieldValue("crewMembers", [...values.crewMembers, ""])}
+                                  style={themedStyles.addButtonHorizontal}
+                                >
+                                  <ThemedText style={themedStyles.addButtonText}>+ Add</ThemedText>
+                                </TouchableOpacity>
+                              </View>
+                              {Array.isArray(errors.crewMembers) &&
+                                errors.crewMembers.some((err) => err) &&
+                                touched.crewMembers && (
+                                  <ThemedText style={themedStyles.errorText}>Crew member name cannot be empty.</ThemedText>
+                                )}
+                            </>
+                          )}
+                          <View style={[styles.buttonContainer, { marginBottom: 8 }] }>
+                            {!isEditing ? (
+                              <View style={styles.actionRow}>
+                                <TouchableOpacity onPress={() => setIsEditing(true)} style={themedStyles.editButton}>
+                                  <ThemedText style={themedStyles.editButtonText}>Edit Log</ThemedText>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => setModalVisibility(false)} style={themedStyles.cancelButton}>
+                                  <ThemedText style={themedStyles.cancelText}>Close</ThemedText>
+                                </TouchableOpacity>
+                              </View>
+                            ) : (
+                              <View style={styles.actionRow}>
+                                <TouchableOpacity onPress={() => handleSubmit()} style={themedStyles.saveButton}>
+                                  <ThemedText style={themedStyles.saveButtonText}>Save Changes</ThemedText>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => setIsEditing(false)} style={themedStyles.cancelButton}>
+                                  <ThemedText style={themedStyles.cancelText}>Cancel</ThemedText>
+                                </TouchableOpacity>
+                              </View>
+                            )}
                           </View>
-                        ) : (
-                          <View style={styles.actionRow}>
-                            <TouchableOpacity onPress={() => handleSubmit()} style={styles.saveButton}>
-                              <Text style={styles.saveButtonText}>Save Changes</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => setIsEditing(false)} style={styles.cancelButton}>
-                              <Text style={styles.cancelText}>Cancel</Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
+                        </>
+                      )}
+                    </Formik>
+                  </ScrollView>
+                ) : (
+                  <View style={{ flex: 1 }}>
+                    {/* Removed Trip Log Banner - only show map and replay UI */}
+                    <View style={themedStyles.mapContainerDynamic}>
+                      <View style={{ position: 'relative' }}>
+                        <MapView
+                          ref={mapRef}
+                          style={{ width: '100%', height: 220, borderRadius: 12 }}
+                          initialRegion={mapRegion}
+                          region={mapRegion}
+                          onRegionChangeComplete={handleRegionChangeComplete}
+                          pointerEvents="none"
+                        >
+                          <Polyline
+                            coordinates={localLog.coordinates.map(c => ({ latitude: c.latitude, longitude: c.longitude }))}
+                            strokeColor={theme.primary}
+                            strokeWidth={3}
+                          />
+                          {localLog.coordinates[replayIndex] && (
+                            <Marker
+                              coordinate={{
+                                latitude: localLog.coordinates[replayIndex].latitude,
+                                longitude: localLog.coordinates[replayIndex].longitude,
+                              }}
+                            />
+                          )}
+                        </MapView>
+                        <TouchableOpacity
+                          style={themedStyles.recenterBtn}
+                          onPress={() => {
+                            if (mapRef.current && localLog.coordinates[replayIndex]) {
+                              setMapRegion(region => ({
+                                ...region,
+                                latitude: localLog.coordinates[replayIndex].latitude,
+                                longitude: localLog.coordinates[replayIndex].longitude,
+                              }));
+                              mapRef.current.animateToRegion({
+                                ...mapRegion,
+                                latitude: localLog.coordinates[replayIndex].latitude,
+                                longitude: localLog.coordinates[replayIndex].longitude,
+                              });
+                            }
+                          }}
+                          accessibilityLabel="Recenter on current log location"
+                        >
+                          <Ionicons name="locate" size={22} color={theme.primary} />
+                        </TouchableOpacity>
                       </View>
-                    </>
-                  )}
-                </Formik>
+                      {/* Slider and controls */}
+                      <View style={themedStyles.sliderRow}>
+                        <TouchableOpacity onPress={() => setIsReplaying(!isReplaying)} style={{ backgroundColor: theme.primary, borderRadius: 16, padding: 6, marginRight: 8, marginLeft: 4 }}>
+                          <Ionicons name={isReplaying ? 'pause' : 'play'} size={16} color={theme.buttonText} />
+                        </TouchableOpacity>
+                        <Slider
+                          style={{ flex: 1, marginHorizontal: 12, height: 24 }}
+                          minimumValue={0}
+                          maximumValue={localLog.coordinates.length - 1}
+                          value={replayIndex}
+                          onValueChange={handleSliderChange}
+                          step={1}
+                          minimumTrackTintColor={theme.primary}
+                          maximumTrackTintColor={theme.border}
+                          thumbTintColor={theme.primary}
+                        />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 12 }}>
+                          <TouchableOpacity onPress={() => setReplaySpeed(prev => {
+                            const idx = REPLAY_SPEEDS.indexOf(prev);
+                            return REPLAY_SPEEDS[(idx + 1) % REPLAY_SPEEDS.length];
+                          })} style={{ backgroundColor: theme.cardSecondary, borderRadius: 20, padding: 8, marginRight: 4 }}>
+                              <ThemedText style={themedStyles.speedBtn}>{replaySpeed}x</ThemedText>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => {
+                              setReplayIndex(0);
+                              setIsReplaying(false);
+                            }} accessibilityLabel="Restart log replay" style={[themedStyles.replayBtn, { backgroundColor: theme.primary }]}>
+                              <ThemedText style={{ color: theme.buttonText, fontSize: 22, textAlign: 'center', fontWeight: 'bold', padding: 0, margin: 0 }}>⟲</ThemedText>
+                            </TouchableOpacity>
+                        </View>
+                      </View>
+                      <View style={styles.sliderInfoRow}>
+                        <ThemedText style={themedStyles.sliderInfoText}>{getCurrentPointTime()} / {getTotalDuration()}</ThemedText>
+                        <ThemedText style={themedStyles.sliderInfoText}>{getCurrentPointTimestamp()}</ThemedText>
+                      </View>
+                    </View>
+                  </View>
+                )}
               </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
+        </View>
       </View>
     </Modal>
   );
@@ -449,7 +671,7 @@ const styles = StyleSheet.create({
   },
   dynamicModalContainer: {
     width: '95%',
-    height: '85%', // smaller modal height
+    height: '70%', // smaller modal height
     backgroundColor: '#fff',
     borderRadius: 22,
     padding: 0,
@@ -612,8 +834,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#f7f9fc",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 10, // reduced space below details
-    marginTop: 8, // reduced space above details
+    marginBottom: 1, // reduced space below details
+    marginTop: 18, // increased space above details for modal margin
     borderWidth: 1,
     borderColor: "#e3e8f0",
   },
@@ -695,10 +917,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#2E66E7',
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 15,
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    fontSize: 22,
+    borderRadius: 18,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 0,
+    paddingHorizontal: 0,
     marginRight: 8,
     marginLeft: 4,
   },

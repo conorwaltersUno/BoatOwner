@@ -2,6 +2,7 @@ import React, { Dispatch, SetStateAction } from "react";
 import { Text, View, StyleSheet } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
 import { FormattedExpensesForPieChart, ExpenseDTO } from "../interfaces/expenses/expense";
+import { useTheme } from "@/context/ThemeContext";
 
 interface ExpensesPieChartProps {
   expenses: ExpenseDTO[];
@@ -16,6 +17,8 @@ const ExpensesPieChart: React.FC<ExpensesPieChartProps> = ({
   selectedExpenseType,
   setSelectedExpenseType,
 }) => {
+  const { theme } = useTheme();
+
   let total = 0;
   expenses.forEach((ex) => {
     total += parseFloat(String(ex.amount));
@@ -49,9 +52,9 @@ const ExpensesPieChart: React.FC<ExpensesPieChartProps> = ({
       edgesPressable={true}
       centerLabelComponent={() =>
         selectedExpenseType ? (
-          <View style={styles.centerLabelContainer}>
-            <Text style={styles.labelText}>{selectedExpenseType}</Text>
-            <Text style={styles.totalText}>
+          <View style={[styles.centerLabelContainer, { backgroundColor: theme.background }]}>
+            <Text style={[styles.labelText, { color: theme.text }]}>{selectedExpenseType}</Text>
+            <Text style={[styles.totalText, { color: theme.text }]}>
               £
               {formattedData
                 .filter((e) => e.text === selectedExpenseType)
@@ -60,7 +63,9 @@ const ExpensesPieChart: React.FC<ExpensesPieChartProps> = ({
             </Text>
           </View>
         ) : (
-          <Text style={styles.centerLabel}>Total: £{total.toFixed(2)}</Text>
+          <View style={[styles.centerLabelContainer, { backgroundColor: theme.background }]}>
+            <Text style={[styles.centerLabel, { color: theme.text }]}>Total: £{total.toFixed(2)}</Text>
+          </View>
         )
       }
     />
@@ -75,16 +80,19 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: 80, // match innerRadius for perfect circle
+    minWidth: 160, // match inner diameter
+    minHeight: 160, // match inner diameter
+    overflow: "hidden",
+    // backgroundColor is set inline with theme.background
   },
   labelText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#000",
     marginRight: 8,
   },
   totalText: {
     fontSize: 20,
-    color: "#000",
   },
   pieContainer: {
     flex: 1,
@@ -95,7 +103,6 @@ const styles = StyleSheet.create({
   centerLabel: {
     fontSize: 16,
     textAlign: "center",
-    color: "#000",
   },
 });
 

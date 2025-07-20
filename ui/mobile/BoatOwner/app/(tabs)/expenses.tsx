@@ -13,6 +13,9 @@ import { useAddExpense, useGetExpenses } from "../../hooks/index";
 import AddExpenseModal from "@/components/AddExpenseModal";
 import ExpenseTable from "@/components/ExpenseTable";
 import ExpensesPieChart from "@/components/ExpensesPieChart";
+import { useTheme } from "@/context/ThemeContext";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 
 export default function Expenses() {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -20,6 +23,7 @@ export default function Expenses() {
 
   const { data: expenses = [], isLoading, isError, error } = useGetExpenses();
   const { mutate: addExpense } = useAddExpense();
+  const { theme } = useTheme();
 
   const handleAddExpense = async (newExpense: CreateExpenseDTO) => {
     addExpense(newExpense);
@@ -31,37 +35,37 @@ export default function Expenses() {
 
   if (isLoading) {
     return (
-      <View style={styles.centeredContainer}>
-        <ActivityIndicator size="large" color="#2E66E7" />
-        <Text style={styles.loadingText}>Loading expenses...</Text>
-      </View>
+      <ThemedView style={styles.centeredContainer}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <ThemedText style={[styles.loadingText, { color: theme.primary }]}>Loading expenses...</ThemedText>
+      </ThemedView>
     );
   }
 
   if (isError) {
     return (
-      <View style={styles.centeredContainer}>
-        <Text style={styles.errorTitle}>Something went wrong</Text>
-        <Text style={styles.errorText}>{error?.message || "Unable to load expenses."}</Text>
+      <ThemedView style={styles.centeredContainer}>
+        <ThemedText style={[styles.errorTitle, { color: '#E74C3C' }]}>Something went wrong</ThemedText>
+        <ThemedText style={[styles.errorText, { color: '#E74C3C' }]}>{error?.message || "Unable to load expenses."}</ThemedText>
         <TouchableOpacity
-          style={styles.retryButton}
+          style={[styles.retryButton, { backgroundColor: theme.primary }]}
           onPress={() => {
             /* Optionally add a refetch here */
           }}
-        ></TouchableOpacity>
-      </View>
+        >
+          <ThemedText style={styles.retryButtonText}>Retry</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
     );
   }
 
   if (expenses.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>No Expenses Yet</Text>
-        <Text style={styles.emptySubtitle}>
-          You haven't recorded any expenses. Tap below to add your first expense!
-        </Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
-          <Text style={styles.addButtonText}>+ Add a new expense</Text>
+      <ThemedView style={[styles.emptyContainer, { backgroundColor: theme.background }] }>
+        <ThemedText style={[styles.emptyTitle, { color: theme.primary }]}>No Expenses Yet</ThemedText>
+        <ThemedText style={[styles.emptySubtitle, { color: theme.text + '99' }]}>You haven't recorded any expenses. Tap below to add your first expense!</ThemedText>
+        <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.primary }]} onPress={() => setModalVisible(true)}>
+          <ThemedText style={styles.addButtonText}>+ Add a new expense</ThemedText>
         </TouchableOpacity>
         <AddExpenseModal
           visible={isModalVisible}
@@ -69,27 +73,27 @@ export default function Expenses() {
           onSubmit={handleAddExpense}
           testID="AddExpenseModal"
         />
-      </View>
+      </ThemedView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.pageTitle}>Expenses</Text>
-        <TouchableOpacity style={styles.addButtonSmall} onPress={() => setModalVisible(true)}>
-          <Text style={styles.addButtonTextSmall}>+ Add</Text>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }] }>
+      <ThemedView style={[styles.headerRow, { backgroundColor: theme.card, borderBottomColor: theme.border }] }>
+        <ThemedText style={[styles.pageTitle, { color: theme.primary }]}>Expenses</ThemedText>
+        <TouchableOpacity style={[styles.addButtonSmall, { backgroundColor: theme.primary }]} onPress={() => setModalVisible(true)}>
+          <ThemedText style={styles.addButtonTextSmall}>+ Add</ThemedText>
         </TouchableOpacity>
-      </View>
+      </ThemedView>
       <TouchableWithoutFeedback onPress={handleOutsidePress}>
-        <View style={styles.pieCard}>
-          <Text style={styles.sectionTitle}>Spending Breakdown</Text>
+        <ThemedView style={[styles.pieCard, { backgroundColor: theme.card, paddingVertical: 8, marginBottom: 6, minHeight: 140 }] }>
+          <ThemedText style={[styles.sectionTitle, { color: theme.primary }]}>Spending Breakdown</ThemedText>
           <ExpensesPieChart
             expenses={expenses}
             selectedExpenseType={selectedExpenseType}
             setSelectedExpenseType={setSelectedExpenseType}
           />
-        </View>
+        </ThemedView>
       </TouchableWithoutFeedback>
       <AddExpenseModal
         visible={isModalVisible}
@@ -97,8 +101,7 @@ export default function Expenses() {
         onSubmit={handleAddExpense}
         testID="AddExpenseModal"
       />
-
-      <Text style={[styles.sectionTitle, { marginLeft: 18, marginTop: 8 }]}>Expense Details</Text>
+      <ThemedText style={[styles.sectionTitle, { marginLeft: 18, marginTop: 8, color: theme.primary }]}>Expense Details</ThemedText>
       {selectedExpenseType ? (
         <ExpenseTable
           expenses={expenses}
@@ -106,9 +109,9 @@ export default function Expenses() {
           setSelectedExpenseType={setSelectedExpenseType}
         />
       ) : (
-        <Text style={styles.centerLabel}>Tap a category in the chart to view details.</Text>
+        <ThemedText style={[styles.centerLabel, { color: theme.text + '99' }]}>Tap a category in the chart to view details.</ThemedText>
       )}
-    </SafeAreaView>
+    </ThemedView>
   );
 }
 

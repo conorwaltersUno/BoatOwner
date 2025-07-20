@@ -1,0 +1,36 @@
+// Centralized theme definitions for BoatOwner app
+export const lightTheme = {
+  background: '#fff',
+  text: '#222',
+  primary: '#2E66E7',
+  card: '#f7f9fc',
+  border: '#e3e8f0',
+  cardSecondary: '#eaf0fa',
+  input: '#fafbfc',
+  error: '#E74C3C',
+  button: '#2E66E7',
+  buttonText: '#fff',
+  textSecondary: '#444',
+  modalOverlay: 'rgba(30, 40, 60, 0.25)',
+  shadow: '#000',
+  success: '#4CAF50',
+  placeholder: '#aaa',
+};
+
+export const darkTheme = {
+  background: '#181A20',
+  text: '#f7f7f7',
+  primary: '#4F8EF7',
+  card: '#23242a',
+  border: '#333',
+  cardSecondary: '#23242a',
+  input: '#23242a',
+  error: '#FF6B6B',
+  button: '#4F8EF7',
+  buttonText: '#fff',
+  textSecondary: '#b0b0b0',
+  modalOverlay: 'rgba(20, 20, 30, 0.7)',
+  shadow: '#000',
+  success: '#4CAF50',
+  placeholder: '#888',
+};

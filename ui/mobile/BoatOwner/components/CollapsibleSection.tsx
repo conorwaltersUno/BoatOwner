@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/context/ThemeContext';
 
 interface CollapsibleSectionProps {
   title: React.ReactNode;
@@ -10,11 +11,12 @@ interface CollapsibleSectionProps {
 
 const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, children, initiallyCollapsed = false }) => {
   const [collapsed, setCollapsed] = useState(initiallyCollapsed);
+  const { theme } = useTheme();
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.header} onPress={() => setCollapsed(c => !c)}>
-        <Text style={styles.title}>{title}</Text>
-        <Ionicons name={collapsed ? 'chevron-down' : 'chevron-up'} size={20} color="#2E66E7" />
+    <View style={[styles.container, { backgroundColor: theme.card }]}> {/* Themed background */}
+      <TouchableOpacity style={[styles.header, { backgroundColor: theme.background }]} onPress={() => setCollapsed(c => !c)}>
+        <Text style={[styles.title, { color: theme.primary }]}>{title}</Text>
+        <Ionicons name={collapsed ? 'chevron-down' : 'chevron-up'} size={20} color={theme.primary} />
       </TouchableOpacity>
       {!collapsed && <View style={styles.content}>{children}</View>}
     </View>
@@ -24,7 +26,6 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, children
 const styles = StyleSheet.create({
   container: {
     marginBottom: 18,
-    backgroundColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 1,
@@ -38,12 +39,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 14,
-    backgroundColor: '#e0e7ff',
   },
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2E66E7',
   },
   content: {
     padding: 10,
