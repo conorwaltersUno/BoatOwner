@@ -1,10 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Button, Alert } from "react-native";
+import { View, StyleSheet, ActivityIndicator, ScrollView, Alert, TouchableOpacity } from "react-native";
 import { PanGestureHandler, State } from "react-native-gesture-handler";
 import { FontAwesome } from "@expo/vector-icons";
 
 import TaskModal from "../../components/TaskModal/TaskModal";
 import { useAddTask, useGetTasks, useDeleteTask, useUpdateTask } from "../../hooks/index";
+import { useTheme } from "@/context/ThemeContext";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 
 import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo/todo";
 
@@ -15,6 +18,7 @@ export default function Todo() {
   const { mutate: addTask } = useAddTask();
   const { mutate: deleteTaskMutation } = useDeleteTask();
   const { mutate: updateTaskMutation } = useUpdateTask();
+  const { theme } = useTheme();
 
   const handleAddTask = (description: string, status: string) => {
     const newTask: CreateTaskDTO = { description, status };
@@ -44,30 +48,34 @@ export default function Todo() {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" testID="ActivityIndicator" />
-      </View>
+      <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} testID="ActivityIndicator" />
+      </ThemedView>
     );
   }
 
   if (isError) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>{error?.message}</Text>
-        <Button title="Add a task" onPress={() => setModalVisible(true)} />
+      <ThemedView style={[styles.container, { backgroundColor: theme.background }]}> 
+        <ThemedText style={[styles.errorText, { color: theme.error || '#E74C3C' }]}>{error?.message}</ThemedText>
+        <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.primary }]} onPress={() => setModalVisible(true)}>
+          <ThemedText style={styles.addButtonText}>+ Add a task</ThemedText>
+        </TouchableOpacity>
         <TaskModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddTask} />
-      </View>
+      </ThemedView>
     );
   }
 
   if (tasks.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>No Tasks Yet</Text>
-        <Text style={styles.emptySubtitle}>You haven't added any tasks. Tap below to create your first task!</Text>
-        <Button title="Add a task" onPress={() => setModalVisible(true)} />
+      <ThemedView style={[styles.emptyContainer, { backgroundColor: theme.background }]}> 
+        <ThemedText style={[styles.emptyTitle, { color: theme.primary }]}>No Tasks Yet</ThemedText>
+        <ThemedText style={[styles.emptySubtitle, { color: theme.text + '99' }]}>You haven't added any tasks. Tap below to create your first task!</ThemedText>
+        <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.primary }]} onPress={() => setModalVisible(true)}>
+          <ThemedText style={styles.addButtonText}>+ Add a task</ThemedText>
+        </TouchableOpacity>
         <TaskModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddTask} />
-      </View>
+      </ThemedView>
     );
   }
 
@@ -84,53 +92,45 @@ export default function Todo() {
         }
       }}
     >
-      <View style={styles.taskCard}>
+      <ThemedView style={[styles.taskCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <View style={styles.taskContent}>
           <View>
-            <Text style={[styles.taskDescription, task.status === "completed" && styles.completedTask]}>
-              {task.description}
-            </Text>
-            <Text style={styles.taskStatus}>Status: {task.status}</Text>
+            <ThemedText style={[styles.taskDescription, { color: theme.text }, task.status === "completed" && styles.completedTask]}>{task.description}</ThemedText>
+            <ThemedText style={[styles.taskStatus, { color: theme.text + '99' }]}>Status: {task.status}</ThemedText>
           </View>
           <FontAwesome
             name="trash"
-            color="red"
+            color={theme.error || '#E74C3C'}
             size={20}
             onPress={() => handleDeleteTask(task.id)}
             style={styles.deleteIcon}
           />
         </View>
-      </View>
+      </ThemedView>
     </PanGestureHandler>
   );
 
   return (
-    <ScrollView style={styles.container}>
-      <ScrollView style={styles.container}>
-        <View style={styles.addContainer}>
-          <Button title="Add a task" onPress={() => setModalVisible(true)} />
-        </View>
-      </ScrollView>
-      <TaskModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddTask} />
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Working on it</Text>
-        {pendingTasks.length > 0 ? (
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>  
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
+        <TouchableOpacity style={[styles.addButton, { backgroundColor: theme.primary, marginBottom: 18, marginTop: 0 }]} onPress={() => setModalVisible(true)}>
+          <ThemedText style={styles.addButtonText}>+ Add a task</ThemedText>
+        </TouchableOpacity>
+        <ThemedText style={[styles.sectionTitle, { color: theme.primary }]}>Pending Tasks</ThemedText>
+        {pendingTasks.length === 0 ? (
+          <ThemedText style={[styles.noTasksText, { color: theme.text + '99' }]}>No pending tasks</ThemedText>
+        ) : (
           pendingTasks.map(renderDraggableTaskCard)
-        ) : (
-          <Text style={styles.noTasksText}>No pending tasks</Text>
         )}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Completed</Text>
-        {completedTasks.length > 0 ? (
+        <ThemedText style={[styles.sectionTitle, { color: theme.primary, marginTop: 24 }]}>Completed Tasks</ThemedText>
+        {completedTasks.length === 0 ? (
+          <ThemedText style={[styles.noTasksText, { color: theme.text + '99' }]}>No completed tasks</ThemedText>
+        ) : (
           completedTasks.map(renderDraggableTaskCard)
-        ) : (
-          <Text style={styles.noTasksText}>No completed tasks</Text>
         )}
-      </View>
-    </ScrollView>
+        <TaskModal visible={isModalVisible} onClose={() => setModalVisible(false)} onSubmit={handleAddTask} />
+      </ScrollView>
+    </ThemedView>
   );
 }
 
@@ -138,25 +138,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f9f9f9",
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 30,
-    backgroundColor: "#f9f9f9",
   },
   emptyTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#2E66E7",
     marginBottom: 10,
     textAlign: "center",
   },
   emptySubtitle: {
     fontSize: 16,
-    color: "#666",
     marginBottom: 25,
     textAlign: "center",
   },
@@ -181,7 +177,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   taskCard: {
-    backgroundColor: "#e0f7fa",
     borderRadius: 8,
     padding: 15,
     marginBottom: 10,
@@ -202,17 +197,34 @@ const styles = StyleSheet.create({
   },
   taskStatus: {
     fontSize: 14,
-    color: "#616161",
   },
   deleteIcon: {
     marginLeft: 10,
   },
   noTasksText: {
     fontSize: 14,
-    color: "#9e9e9e",
   },
   errorText: {
-    color: "red",
     fontSize: 16,
+  },
+  addButton: {
+    backgroundColor: "#2E66E7",
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 24,
+    marginTop: 18,
+    marginBottom: 8,
+    alignItems: "center",
+    shadowColor: "#2E66E7",
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  addButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 18,
+    letterSpacing: 0.5,
   },
 });

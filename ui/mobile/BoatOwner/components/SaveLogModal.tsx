@@ -18,6 +18,8 @@ import { LocationPoint, SaveLogDTO } from "../interfaces/log/log";
 import { useSaveLog } from "@/hooks/useSaveLog";
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from "@/context/ThemeContext";
+import { ThemedText } from "@/components/ThemedText";
 
 interface SaveLogModalProps {
   modalVisibility: boolean;
@@ -35,6 +37,7 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
   endTime,
 }) => {
   const { mutate: saveLog } = useSaveLog();
+  const { theme } = useTheme();
 
   const validationSchema = Yup.object().shape({
     description: Yup.string().trim().required("Description is required."),
@@ -89,17 +92,17 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
   return (
     <Modal visible={modalVisibility} transparent animationType="slide">
       <TouchableWithoutFeedback onPress={() => setModalVisibility(false)}>
-        <View style={styles.modalOverlay}>
+        <View style={[styles.modalOverlay, { backgroundColor: 'rgba(30,40,60,0.18)' }] }>
           <TouchableWithoutFeedback>
             <KeyboardAvoidingView
               behavior={Platform.OS === "ios" ? "padding" : undefined}
               keyboardVerticalOffset={100}
-              style={styles.modalContainer}
+              style={[styles.modalContainer, { backgroundColor: theme.background, borderColor: theme.border }]}
             >
               <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                 <View style={styles.innerContainer}>
-                  <Text style={styles.modalTitle}>Trip Summary</Text>
-                  <Text style={styles.dateText}>{new Date().toLocaleDateString()}</Text>
+                  <ThemedText style={[styles.modalTitle, { color: theme.primary }]}>Trip Summary</ThemedText>
+                  <ThemedText style={[styles.dateText, { color: theme.text + '99' }]}>{new Date().toLocaleDateString()}</ThemedText>
                   <Formik
                     initialValues={{
                       description: "",
@@ -263,7 +266,7 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
                           </View>
                         </ScrollView>
                         <View style={styles.buttonContainer}>
-                          <TouchableOpacity onPress={() => handleSubmit()} style={styles.saveButton}>
+                          <TouchableOpacity onPress={() => handleSubmit()} style={[styles.saveButton, { backgroundColor: theme.primary }]}>
                             <Text style={styles.saveButtonText}>Save Trip</Text>
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => setModalVisibility(false)} style={styles.cancelButton}>
@@ -286,14 +289,12 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(30, 40, 60, 0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContainer: {
     width: "92%",
     height: "82%",
-    backgroundColor: "#fff",
     borderRadius: 18,
     padding: 0,
     shadowColor: "#000",
@@ -312,14 +313,12 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 26,
     fontWeight: "bold",
-    color: "#2E66E7",
     marginBottom: 2,
     textAlign: "center",
     letterSpacing: 0.5,
   },
   dateText: {
     fontSize: 15,
-    color: "#888",
     textAlign: "center",
     marginBottom: 12,
     fontWeight: "500",
@@ -402,7 +401,6 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    backgroundColor: "#4CAF50",
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",

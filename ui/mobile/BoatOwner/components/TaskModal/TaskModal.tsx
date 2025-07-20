@@ -4,15 +4,18 @@ import * as Yup from "yup";
 import {
   Modal,
   View,
-  Text,
   TextInput,
   StyleSheet,
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from "react-native";
 import { TaskModalProps } from "@/interfaces/todo/taskModal";
+import { useTheme } from "@/context/ThemeContext";
+import { ThemedText } from "@/components/ThemedText";
 
 const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => {
+  const { theme } = useTheme();
+
   const validationSchema = Yup.object().shape({
     description: Yup.string().trim().required("Description is required."),
   });
@@ -20,10 +23,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.modalOverlay}>
+        <View style={[styles.modalOverlay, { backgroundColor: theme.modalOverlay || 'rgba(30,40,60,0.18)' }] }>
           <TouchableWithoutFeedback>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Add a New Task</Text>
+            <View style={[styles.modalContainer, { backgroundColor: theme.background, borderColor: theme.border }] }>
+              <ThemedText style={[styles.modalTitle, { color: theme.primary }]}>Add a New Task</ThemedText>
               <Formik
                 initialValues={{ description: "" }}
                 validationSchema={validationSchema}
@@ -35,27 +38,31 @@ const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => 
               >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
                   <>
-                    <Text style={styles.inputLabel}>Task Description</Text>
+                    <ThemedText style={[styles.inputLabel, { color: theme.text }]}>Task Description</ThemedText>
                     <TextInput
-                      style={[styles.input, styles.textArea]}
+                      style={[
+                        styles.input,
+                        styles.textArea,
+                        { backgroundColor: theme.card, color: theme.text, borderColor: theme.border },
+                      ]}
                       placeholder="Enter task description"
                       value={values.description}
                       onChangeText={handleChange("description")}
                       onBlur={handleBlur("description")}
-                      placeholderTextColor="#aaa"
+                      placeholderTextColor={theme.text + '66'}
                       multiline
                       numberOfLines={4}
                       textAlignVertical="top"
                     />
                     {errors.description && touched.description && (
-                      <Text style={styles.errorText}>{errors.description}</Text>
+                      <ThemedText style={[styles.errorText, { color: theme.error || '#E74C3C' }]}>{errors.description}</ThemedText>
                     )}
                     <View style={styles.buttonRow}>
-                      <TouchableOpacity style={styles.saveButton} onPress={() => handleSubmit()}>
-                        <Text style={styles.saveButtonText}>Add Task</Text>
+                      <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.primary }]} onPress={() => handleSubmit()}>
+                        <ThemedText style={[styles.saveButtonText, { color: theme.background }]}>Add Task</ThemedText>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
-                        <Text style={styles.cancelText}>Cancel</Text>
+                      <TouchableOpacity onPress={onClose} style={[styles.cancelButton, { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}> 
+                        <ThemedText style={[styles.cancelText, { color: theme.error || '#E74C3C' }]}>Cancel</ThemedText>
                       </TouchableOpacity>
                     </View>
                   </>
@@ -72,13 +79,11 @@ const TaskModal: React.FC<TaskModalProps> = ({ visible, onClose, onSubmit }) => 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(30, 40, 60, 0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContainer: {
     width: "88%",
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 24,
     shadowColor: "#000",
@@ -91,14 +96,12 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#2E66E7",
     marginBottom: 18,
     textAlign: "center",
   },
   inputLabel: {
     fontSize: 15,
     fontWeight: "500",
-    color: "#2E66E7",
     marginBottom: 4,
     marginLeft: 2,
   },
@@ -131,7 +134,6 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    backgroundColor: "#2E66E7",
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",
@@ -144,7 +146,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",

@@ -1,9 +1,19 @@
 import { Tabs } from "expo-router";
 import { Ionicons, FontAwesome } from "@expo/vector-icons";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function TabLayout() {
+  const { theme } = useTheme();
   return (
-      <Tabs>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: theme.primary,
+          tabBarInactiveTintColor: theme.text + '99',
+          tabBarStyle: { backgroundColor: theme.background, borderTopColor: theme.border },
+          headerStyle: { backgroundColor: theme.background },
+          headerTitleStyle: { color: theme.text },
+        }}
+      >
         <Tabs.Screen
           name="todo"
           options={{

@@ -14,6 +14,8 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { ExpenseDTO, UpdateExpenseDTO } from "../interfaces/expenses/expense";
 import { useUpdateExpense } from "../hooks/index";
+import { useTheme } from "@/context/ThemeContext";
+import Toast from 'react-native-root-toast';
 
 interface EditExpenseModalProps {
   modalVisibility: boolean;
@@ -30,6 +32,7 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const { mutate: updateExpense } = useUpdateExpense();
+  const { theme, isDark } = useTheme();
 
   if (!expense) return null;
 
@@ -37,6 +40,16 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
     updateExpense(expenseToUpdate);
     setSelectedExpenseType(expenseToUpdate.expense_type);
     setModalVisibility(false);
+    Toast.show('Expense updated successfully!', {
+      duration: Toast.durations.SHORT,
+      position: Toast.positions.BOTTOM,
+      backgroundColor: theme.primary,
+      textColor: theme.text,
+      shadow: true,
+      animation: true,
+      hideOnPress: true,
+      delay: 0,
+    });
   };
 
   const validationSchema = Yup.object().shape({
@@ -48,6 +61,9 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
   const handleDateChange = (event: any, selectedDate: Date | undefined, setFieldValue: any) => {
     if (event.type === "set" && selectedDate) {
       setFieldValue("expense_date", selectedDate);
+      setShowDatePicker(false);
+    } else if (event.type === "dismissed") {
+      setShowDatePicker(false);
     }
   };
 
@@ -56,9 +72,8 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
       <TouchableWithoutFeedback onPress={() => setModalVisibility(false)}>
         <View style={styles.modalOverlay}>
           <TouchableWithoutFeedback>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Edit Expense</Text>
-
+            <View style={[styles.modalContainer, { backgroundColor: theme.card, shadowColor: theme.text }] }>
+              <Text style={[styles.modalTitle, { color: theme.primary }]}>Edit Expense</Text>
               <Formik
                 initialValues={{
                   id: expense.id,
@@ -75,59 +90,75 @@ const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
               >
                 {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
                   <>
-                    <Text style={styles.inputLabel}>Expense Type</Text>
+                    <Text style={[styles.inputLabel, { color: theme.primary }]}>Expense Type</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
                       placeholder="Expense Type"
+                      placeholderTextColor={theme.text + '66'}
                       value={values.expense_type}
                       onChangeText={handleChange("expense_type")}
                       onBlur={handleBlur("expense_type")}
                     />
                     {errors.expense_type && touched.expense_type && (
-                      <Text style={styles.errorText}>{errors.expense_type}</Text>
+                      <Text style={[styles.errorText, { color: '#E74C3C' }]}>{errors.expense_type}</Text>
                     )}
 
-                    <Text style={styles.inputLabel}>Amount</Text>
+                    <Text style={[styles.inputLabel, { color: theme.primary }]}>Amount</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
                       placeholder="Amount"
-                      value={values.amount.toString()}
+                      placeholderTextColor={theme.text + '66'}
+                      value={values.amount ? values.amount.toString() : ""}
                       onChangeText={handleChange("amount")}
                       onBlur={handleBlur("amount")}
                       keyboardType="numeric"
                     />
-                    {errors.amount && touched.amount && <Text style={styles.errorText}>{errors.amount}</Text>}
+                    {errors.amount && touched.amount && <Text style={[styles.errorText, { color: '#E74C3C' }]}>{errors.amount}</Text>}
 
-                    <Text style={styles.inputLabel}>Expense Date</Text>
-                    <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)}>
+                    <Text style={[styles.inputLabel, { color: theme.primary }]}>Expense Date</Text>
+                    <TouchableOpacity onPress={() => setShowDatePicker((prev) => !prev)}>
                       <View pointerEvents="none">
                         <TextInput
-                          style={styles.input}
+                          style={[
+                            styles.input,
+                            { backgroundColor: theme.background, color: isDark ? '#fff' : '#222', borderColor: theme.border }
+                          ]}
                           placeholder="Expense Date (YYYY-MM-DD)"
+                          placeholderTextColor={theme.text + '66'}
                           value={values.expense_date ? values.expense_date.toISOString().split("T")[0] : ""}
                           editable={false}
                         />
                       </View>
                     </TouchableOpacity>
                     {errors.expense_date && touched.expense_date && (
-                      <Text style={styles.errorText}>{errors.expense_date as string}</Text>
+                      <Text style={[styles.errorText, { color: '#E74C3C' }]}>{errors.expense_date as string}</Text>
                     )}
 
                     {showDatePicker && (
-                      <DateTimePicker
-                        value={values.expense_date || new Date()}
-                        mode="date"
-                        display={Platform.OS === "ios" ? "spinner" : "calendar"}
-                        onChange={(e, date) => handleDateChange(e, date, setFieldValue)}
-                      />
+                      <View style={{ backgroundColor: isDark ? '#222' : '#fff', borderRadius: 12, marginBottom: 12 }}>
+                        <DateTimePicker
+                          value={values.expense_date || new Date()}
+                          mode="date"
+                          display={Platform.OS === "ios" ? "spinner" : "calendar"}
+                          onChange={(e, date) => handleDateChange(e, date, setFieldValue)}
+                          textColor={isDark ? '#fff' : '#222'}
+                          themeVariant={isDark ? 'dark' : 'light'}
+                        />
+                      </View>
                     )}
 
-                    <View style={styles.buttonContainer}>
-                      <TouchableOpacity onPress={() => handleSubmit()} style={styles.saveButton}>
-                        <Text style={styles.saveButtonText}>Save Expense</Text>
+                    <View style={styles.buttonRow}>
+                      <TouchableOpacity style={[styles.saveButton, { backgroundColor: theme.primary }]} onPress={() => handleSubmit()}>
+                        <Text style={styles.saveButtonText}>Save</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => setModalVisibility(false)} style={styles.cancelButton}>
-                        <Text style={styles.cancelText}>Cancel</Text>
+                      <TouchableOpacity
+                        style={[styles.cancelButton, { backgroundColor: theme.background, borderColor: theme.border, borderWidth: 1 }]}
+                        onPress={() => {
+                          setShowDatePicker(false);
+                          setModalVisibility(false);
+                        }}
+                      >
+                        <Text style={[styles.cancelText, { color: '#E74C3C' }]}>Cancel</Text>
                       </TouchableOpacity>
                     </View>
                   </>
@@ -150,10 +181,8 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: "92%",
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 22,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.18,
     shadowRadius: 16,
@@ -163,34 +192,29 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#2E66E7",
     marginBottom: 18,
     textAlign: "center",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#d1d5db",
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
     fontSize: 16,
     backgroundColor: "#fafbfc",
-    color: "#222",
   },
   inputLabel: {
     fontSize: 15,
     fontWeight: "500",
-    color: "#2E66E7",
     marginBottom: 4,
     marginLeft: 2,
   },
   errorText: {
-    color: "#E74C3C",
     marginBottom: 10,
     textAlign: "left",
     fontSize: 14,
   },
-  buttonContainer: {
+  buttonRow: {
     marginTop: 18,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -198,20 +222,17 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: "#f0f0f0",
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",
     marginLeft: 8,
   },
   cancelText: {
-    color: "#E74C3C",
     fontWeight: "bold",
     fontSize: 16,
   },
   saveButton: {
     flex: 1,
-    backgroundColor: "#2E66E7",
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",

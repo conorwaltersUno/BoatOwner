@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Platform, ToastAndroid } from 'react-native';
+import { View, TextInput, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, Alert, Platform, ToastAndroid } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFriends, useFriendRequests, useSendFriendRequest, useRespondToFriendRequest, useRemoveFriend, useFriendsFeed, useCancelPendingFriendRequest } from '@/hooks/useFriends';
 import { searchUsers } from '@/api/fetch/friends.fetch';
@@ -10,6 +10,8 @@ import type { UserSearchResult } from '@/interfaces/friends';
 import LogRouteMapWithReplay from '@/components/LogRouteMapWithReplay';
 import dayjs from 'dayjs';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTheme } from '@/context/ThemeContext';
+import { ThemedText } from '@/components/ThemedText';
 
 export default function Friend() {
   const [activeTab, setActiveTab] = useState<'logs' | 'manage'>('logs');
@@ -24,6 +26,7 @@ export default function Friend() {
   const cancelPendingFriendRequest = useCancelPendingFriendRequest();
   const { feed: friendsFeed, isLoading: feedLoading } = useFriendsFeed();
   const queryClient = useQueryClient();
+  const { theme } = useTheme();
 
   useEffect(() => {
     const trimmed = searchQuery.trim();
@@ -152,27 +155,25 @@ export default function Friend() {
 
   // UI rendering
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}> {/* Main container uses theme */}
       {/* Tab Switcher */}
-      <View style={styles.tabSwitcher}>
+      <View style={[styles.tabSwitcher, { borderColor: theme.border }]}> {/* Tab switcher border */}
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'logs' && styles.tabActive]}
+          style={[styles.tabButton, activeTab === 'logs' && { borderBottomWidth: 2, borderColor: theme.primary }]}
           onPress={() => setActiveTab('logs')}
         >
-          <Text style={[styles.tabText, activeTab === 'logs' && styles.tabTextActive]}>Friends' Logs</Text>
+          <ThemedText style={[styles.tabText, activeTab === 'logs' && { color: theme.primary, fontWeight: 'bold' }]}>Friends' Logs</ThemedText>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'manage' && styles.tabActive]}
+          style={[styles.tabButton, activeTab === 'manage' && { borderBottomWidth: 2, borderColor: theme.primary }]}
           onPress={() => setActiveTab('manage')}
         >
-          <Text style={[styles.tabText, activeTab === 'manage' && styles.tabTextActive]}>Manage Friends</Text>
+          <ThemedText style={[styles.tabText, activeTab === 'manage' && { color: theme.primary, fontWeight: 'bold' }]}>Manage Friends</ThemedText>
         </TouchableOpacity>
       </View>
-
       {/* Friends' Logs Tab */}
       {activeTab === 'logs' && (
-        <View style={{ flex: 1 }}>
-          {/* Pull-to-refresh for friends logs */}
+        <View style={{ flex: 1, backgroundColor: theme.background }}>
           <FlatList
             data={friendsFeed}
             keyExtractor={item => String(item.id)}
@@ -197,35 +198,48 @@ export default function Friend() {
                 created_on: item.created_on ? new Date(item.created_on) : new Date(0),
               };
               return (
-                <View style={styles.igCard}>
-                  {/* Username at top */}
-                  <Text style={styles.igUsername}>{username}</Text>
-                  {/* Map with replay in the middle */}
-                  <View style={styles.igMapContainer}>
-                    <LogRouteMapWithReplay log={logForMap} height={220} />
+                <View style={[
+                  styles.igCard,
+                  {
+                    backgroundColor: theme.card, // Use theme.card for both modes for consistency
+                    borderColor: theme.primary,
+                    shadowColor: theme.primary,
+                  },
+                ]}>
+                  <ThemedText style={[styles.igUsername, { color: theme.primary, backgroundColor: theme.card }]}> {username} </ThemedText>
+                  <View style={[styles.igMapContainer, { marginLeft: 10, marginRight: 10 }]}> {/* Add margin to map */}
+                    <LogRouteMapWithReplay 
+                      log={logForMap} 
+                      height={220} 
+                      showReplayControls={true}
+                      // Pass theme for button coloring
+                    />
                   </View>
-                  {/* Info below map */}
                   <View style={styles.igInfoRow}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.igBoat}>{boatName}</Text>
-                      <Text style={styles.igBoatModel}>{boatModel}</Text>
+                      <ThemedText style={[styles.igBoat, { color: theme.text }]}>{boatName}</ThemedText>
+                      <ThemedText style={[styles.igBoatModel, { color: theme.text + '99' }]}>{boatModel}</ThemedText>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.igTime}>{logTime}</Text>
-                      <Text style={styles.igDuration}>Duration: {formatDuration(durationSec)}</Text>
+                      <ThemedText style={[styles.igTime, { color: theme.text + '99' }]}>{logTime}</ThemedText>
+                      <ThemedText style={[styles.igDuration, { color: theme.text + '99' }]}>Duration: {formatDuration(durationSec)}</ThemedText>
                     </View>
                   </View>
+                  {/* Action button container with lighter card color */}
+                  <View style={{ backgroundColor: theme.background + '22', borderRadius: 10, marginHorizontal: 12, marginBottom: 8, marginTop: 4, padding: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' }}>
+                    {/* Place action buttons here if needed */}
+                  </View>
                   {item.description ? (
-                    <Text style={styles.igDescription}>{item.description}</Text>
+                    <ThemedText style={[styles.igDescription, { color: theme.text }]}>{item.description}</ThemedText>
                   ) : null}
                   {item.crew_members?.length ? (
-                    <Text style={styles.igCrew}>Crew: {item.crew_members.join(', ')}</Text>
+                    <ThemedText style={[styles.igCrew, { color: theme.text + '99' }]}>Crew: {item.crew_members.join(', ')}</ThemedText>
                   ) : null}
                 </View>
               );
             }}
             contentContainerStyle={{ paddingBottom: 32 }}
-            ListEmptyComponent={feedLoading ? <ActivityIndicator style={{ marginTop: 32 }} /> : <Text style={styles.emptyText}>No logs from friends yet.</Text>}
+            ListEmptyComponent={feedLoading ? <ActivityIndicator style={{ marginTop: 32 }} /> : <ThemedText style={styles.emptyText}>No logs from friends yet.</ThemedText>}
             refreshing={feedLoading}
             onRefresh={() => {
               refetchFriends();
@@ -235,21 +249,20 @@ export default function Friend() {
           />
         </View>
       )}
-
       {/* Manage Friends Tab */}
       {activeTab === 'manage' && (
-        <View style={{ flex: 1 }}>
-          {/* Search Users */}
+        <View style={{ flex: 1, backgroundColor: theme.background }}>
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
             placeholder="Search users by username or email"
+            placeholderTextColor={theme.text + '99'}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoCapitalize="none"
             autoCorrect={false}
           />
           {searchQuery.trim().length > 0 && searchQuery.trim().length < 1 && (
-            <Text style={{ color: 'red', textAlign: 'center' }}>Enter at least 1 character to search.</Text>
+            <ThemedText style={{ color: 'red', textAlign: 'center' }}>Enter at least 1 character to search.</ThemedText>
           )}
           {searchLoading && <ActivityIndicator style={{ marginVertical: 8 }} />}
           {searchQuery.trim().length >= 1 && !searchLoading && (
@@ -259,66 +272,80 @@ export default function Friend() {
               renderItem={({ item }) => {
                 const status = getUserFriendStatus(item);
                 return (
-                  <View style={styles.searchResultRow}>
+                  <View style={{
+                    backgroundColor: theme.card,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: theme.primary,
+                    marginVertical: 6,
+                    marginHorizontal: 8,
+                    padding: 12,
+                    shadowColor: theme.primary,
+                    shadowOpacity: 0.08,
+                    shadowRadius: 4,
+                    shadowOffset: { width: 0, height: 2 },
+                  }}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.searchResultName}>
+                      <ThemedText style={[styles.searchResultName, { color: theme.text, fontSize: 17, fontWeight: '600' }]}>
                         {item.username || 'User'}
-                      </Text>
+                      </ThemedText>
                     </View>
-                    {status === 'Requested' ? (
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Text style={[styles.actionButton, styles.actionButtonRequested, { marginRight: 8 }]}>Requested</Text>
-                        <TouchableOpacity
-                          style={[styles.actionButton, { backgroundColor: '#E53935' }]}
-                          disabled={cancelPendingFriendRequest.isPending}
-                          onPress={() => {
-                            if (item.pendingRequestId) {
-                              Alert.alert(
-                                'Cancel Friend Request',
-                                'Are you sure you want to cancel this friend request?',
-                                [
-                                  { text: 'No', style: 'cancel' },
-                                  {
-                                    text: 'Yes',
-                                    style: 'destructive',
-                                    onPress: () => {
-                                      cancelPendingFriendRequest.mutate(item.pendingRequestId!, {
-                                        onSuccess: () => {
-                                          showToast('Friend request cancelled');
-                                          setSearchResults(results => results.map(u => u.id === item.id ? { ...u, friendStatus: 'none', pendingRequestId: null } : u));
-                                        },
-                                        onError: (err: any) => {
-                                          showToast(err?.message || 'Could not cancel friend request.');
-                                        },
-                                      });
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                      {status === 'Requested' ? (
+                        <>
+                          <ThemedText style={[styles.actionButton, styles.actionButtonRequested, { marginRight: 8, color: theme.text }]}>Requested</ThemedText>
+                          <TouchableOpacity
+                            style={[styles.actionButton, { backgroundColor: '#E53935' }]}
+                            disabled={cancelPendingFriendRequest.isPending}
+                            onPress={() => {
+                              if (item.pendingRequestId) {
+                                Alert.alert(
+                                  'Cancel Friend Request',
+                                  'Are you sure you want to cancel this friend request?',
+                                  [
+                                    { text: 'No', style: 'cancel' },
+                                    {
+                                      text: 'Yes',
+                                      style: 'destructive',
+                                      onPress: () => {
+                                        cancelPendingFriendRequest.mutate(item.pendingRequestId!, {
+                                          onSuccess: () => {
+                                            showToast('Friend request cancelled');
+                                            setSearchResults(results => results.map(u => u.id === item.id ? { ...u, friendStatus: 'none', pendingRequestId: null } : u));
+                                          },
+                                          onError: (err: any) => {
+                                            showToast(err?.message || 'Could not cancel friend request.');
+                                          },
+                                        });
+                                      },
                                     },
-                                  },
-                                ]
-                              );
-                            }
-                          }}
+                                  ]
+                                );
+                              }
+                            }}
+                          >
+                            <Ionicons name="close" size={18} color="#fff" />
+                          </TouchableOpacity>
+                        </>
+                      ) : (
+                        <TouchableOpacity
+                          style={[
+                            styles.actionButton,
+                            status === 'Add' && styles.actionButtonAdd,
+                            status === 'Friends' && styles.actionButtonFriends,
+                            status === 'Respond' && styles.actionButtonRespond,
+                          ]}
+                          disabled={status !== 'Add'}
+                          onPress={() => handleSendRequest(item.username)}
                         >
-                          <Ionicons name="close" size={18} color="#fff" />
+                          <ThemedText style={[styles.actionButtonText, { color: '#fff' }]}>{status}</ThemedText>
                         </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        style={[
-                          styles.actionButton,
-                          status === 'Add' && styles.actionButtonAdd,
-                          status === 'Friends' && styles.actionButtonFriends,
-                          status === 'Respond' && styles.actionButtonRespond,
-                        ]}
-                        disabled={status !== 'Add'}
-                        onPress={() => handleSendRequest(item.username)}
-                      >
-                        <Text style={styles.actionButtonText}>{status}</Text>
-                      </TouchableOpacity>
-                    )}
+                      )}
+                    </View>
                   </View>
                 );
               }}
-              ListEmptyComponent={<Text style={styles.emptyText}>No users found.</Text>}
+              ListEmptyComponent={<ThemedText style={styles.emptyText}>No users found.</ThemedText>}
               style={{ maxHeight: 200 }}
             />
           )}
@@ -327,9 +354,10 @@ export default function Friend() {
           <CollapsibleSection
             title={`Incoming Requests${incomingCount > 0 ? ` (${incomingCount})` : ''}`}
             initiallyCollapsed={!incomingOpen}
+            containerStyle={{ backgroundColor: theme.card, borderRadius: 12, marginHorizontal: 8, marginTop: 8, marginBottom: 8, padding: 8 }}
           >
             {incomingRequests.length === 0 ? (
-              <Text style={styles.emptyText}>No incoming requests.</Text>
+              <ThemedText style={styles.emptyText}>No incoming requests.</ThemedText>
             ) : (
               <FlatList
                 data={incomingRequests}
@@ -337,20 +365,20 @@ export default function Friend() {
                 renderItem={({ item }) => (
                   <View style={styles.requestRow}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.requestName}>{item.sender_details?.username || item.sender_details?.email || 'User'}</Text>
-                      <Text style={styles.requestEmail}>{item.sender_details?.email}</Text>
+                      <ThemedText style={styles.requestName}>{item.sender_details?.username || item.sender_details?.email || 'User'}</ThemedText>
+                      <ThemedText style={styles.requestEmail}>{item.sender_details?.email}</ThemedText>
                     </View>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.actionButtonAdd]}
                       onPress={() => handleRespondRequest(item.id, true)}
                     >
-                      <Text style={styles.actionButtonText}>Accept</Text>
+                      <ThemedText style={styles.actionButtonText}>Accept</ThemedText>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.actionButtonRequested]}
                       onPress={() => handleRespondRequest(item.id, false)}
                     >
-                      <Text style={styles.actionButtonText}>Decline</Text>
+                      <ThemedText style={styles.actionButtonText}>Decline</ThemedText>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -359,17 +387,33 @@ export default function Friend() {
           </CollapsibleSection>
 
           {/* Friends List */}
-          <CollapsibleSection title={`Your Friends (${friends.length})`} initiallyCollapsed={false}>
+          <CollapsibleSection title={`Your Friends (${friends.length})`} initiallyCollapsed={false}
+            containerStyle={{ backgroundColor: theme.card, borderRadius: 12, marginHorizontal: 8, marginTop: 8, marginBottom: 8, padding: 8 }}
+          >
             {friends.length === 0 ? (
-              <Text style={styles.emptyText}>You have no friends yet.</Text>
+              <ThemedText style={styles.emptyText}>You have no friends yet.</ThemedText>
             ) : (
               <FlatList
                 data={friends}
                 keyExtractor={item => String(item.id)}
                 renderItem={({ item }) => (
-                  <View style={styles.friendRow}>
+                  <View style={{
+                    backgroundColor: theme.card,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: theme.primary,
+                    marginVertical: 6,
+                    marginHorizontal: 8,
+                    padding: 12,
+                    shadowColor: theme.primary,
+                    shadowOpacity: 0.08,
+                    shadowRadius: 4,
+                    shadowOffset: { width: 0, height: 2 },
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.friendName}>{item.username || item.name || 'Unknown User'}</Text>
+                      <ThemedText style={[styles.friendName, { color: theme.text, fontSize: 17, fontWeight: '600' }]}>{item.username || item.name || 'Unknown User'}</ThemedText>
                     </View>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.actionButtonRemove]}
@@ -389,12 +433,14 @@ export default function Friend() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingTop: 8 },
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent', // use theme.background in component
+    paddingTop: 8,
+  },
   tabSwitcher: { flexDirection: 'row', marginBottom: 8, borderBottomWidth: 1, borderColor: '#eee' },
   tabButton: { flex: 1, padding: 12, alignItems: 'center' },
-  tabActive: { borderBottomWidth: 2, borderColor: '#007AFF' },
   tabText: { fontSize: 16, color: '#888' },
-  tabTextActive: { color: '#007AFF', fontWeight: 'bold' },
   searchInput: { borderWidth: 1, borderColor: '#eee', borderRadius: 8, padding: 10, margin: 8, fontSize: 16 },
   searchResultRow: { flexDirection: 'row', alignItems: 'center', padding: 8, borderBottomWidth: 1, borderColor: '#f0f0f0' },
   searchResultName: { fontWeight: 'bold', fontSize: 16 },

@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, Dimensions } from "
 import { ExpenseDTO } from "../interfaces/expenses/expense";
 import EditExpenseModal from "./EditExpenseModal";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@/context/ThemeContext";
 
 interface ExpenseTableProps {
   expenses: ExpenseDTO[];
@@ -15,6 +16,7 @@ const screenWidth = Dimensions.get("window").width;
 const formatDate = (dateString: string) => dateString.split("T")[0];
 
 const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseType, setSelectedExpenseType }) => {
+  const { theme } = useTheme();
   const [modalVisibility, setModalVisibility] = useState<boolean>(false);
   const [selectedExpenseForEdit, setselectedExpenseForEdit] = useState<ExpenseDTO | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: "expense_date" | "amount"; order: "asc" | "desc" } | null>(null);
@@ -44,9 +46,9 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseTy
     : filteredExpenses;
 
   const renderHeader = () => (
-    <View style={styles.headerRow}>
+    <View style={[styles.headerRow, { backgroundColor: theme.card, borderBottomColor: theme.border }] }>
       <TouchableOpacity onPress={() => toggleSortOrder("expense_date")} style={styles.sortableHeaderCell}>
-        <Text style={styles.headerCell}>Date</Text>
+        <Text style={[styles.headerCell, { color: theme.text }]}>Date</Text>
         <MaterialIcons
           name={
             sortConfig?.key === "expense_date"
@@ -56,11 +58,11 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseTy
               : "swap-vert"
           }
           size={20}
-          color="black"
+          color={theme.text}
         />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => toggleSortOrder("amount")} style={styles.sortableHeaderCell}>
-        <Text style={styles.headerCell}>Amount</Text>
+        <Text style={[styles.headerCell, { color: theme.text }]}>Amount</Text>
         <MaterialIcons
           name={
             sortConfig?.key === "amount"
@@ -70,26 +72,28 @@ const ExpenseTable: React.FC<ExpenseTableProps> = ({ expenses, selectedExpenseTy
               : "swap-vert"
           }
           size={20}
-          color="black"
+          color={theme.text}
         />
       </TouchableOpacity>
-      <Text style={styles.headerCell}>Actions</Text>
+      <Text style={[styles.headerCell, { color: theme.text }]}>Actions</Text>
     </View>
   );
 
   const renderExpenseRow = ({ item }: { item: ExpenseDTO }) => (
-    <View style={styles.row}>
-      <Text style={styles.dateCell}>{formatDate(item.expense_date)}</Text>
-      <Text style={styles.amountCell}>${item.amount}</Text>
+    <View style={[styles.row, { borderBottomColor: theme.border }] }>
+      <Text style={[styles.dateCell, { color: theme.text }]}>{formatDate(item.expense_date)}</Text>
+      <Text style={[styles.amountCell, { color: theme.text }]}>
+        ${item.amount}
+      </Text>
       <TouchableOpacity onPress={() => handleEditButtonClick(item)}>
-        <Text style={styles.editButton}>Edit</Text>
+        <Text style={[styles.editButton, { color: theme.primary }]}>Edit</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{selectedExpenseType}</Text>
+      <Text style={[styles.title, { color: theme.text }]}>{selectedExpenseType}</Text>
       {renderHeader()}
       <FlatList data={sortedExpenses} renderItem={renderExpenseRow} keyExtractor={(item, index) => index.toString()} />
       <EditExpenseModal

@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { LogDTO } from '@/interfaces/log/log';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/context/ThemeContext';
 
 interface LogRouteMapWithReplayProps {
   log: LogDTO;
@@ -17,6 +18,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SPEEDS = [0.5, 1, 1.5, 2, 5, 10];
 
 const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, height = 200, showReplayControls = true, onMapPress }) => {
+  const { theme, isDark } = useTheme();
   const [replayIndex, setReplayIndex] = useState(0);
   const [isReplaying, setIsReplaying] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -103,7 +105,7 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
   return (
     <View style={{ marginBottom: 8 }}>
       <TouchableOpacity activeOpacity={onMapPress ? 0.7 : 1} onPress={onMapPress} disabled={!onMapPress}>
-        <View style={[styles.mapContainer, { height }]}> 
+        <View style={[styles.mapContainer, { height, backgroundColor: theme.card }]}> 
           <MapView
             ref={mapRef}
             style={styles.map}
@@ -119,7 +121,7 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
             <Polyline
               coordinates={log?.coordinates || []}
               strokeWidth={7}
-              strokeColor="#2E66E7"
+              strokeColor={theme.primary}
               lineCap="round"
               lineJoin="round"
               zIndex={10}
@@ -127,7 +129,7 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
             <Polyline
               coordinates={log?.coordinates || []}
               strokeWidth={11}
-              strokeColor="#fff"
+              strokeColor={isDark ? theme.background : '#fff'}
               lineCap="round"
               lineJoin="round"
               zIndex={5}
@@ -147,7 +149,7 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
           </MapView>
           {/* Recenter button */}
           <TouchableOpacity
-            style={styles.recenterBtn}
+            style={[styles.recenterBtn, { backgroundColor: theme.background }]}
             onPress={() => {
               if (log?.coordinates?.length > 0 && mapRef.current) {
                 mapRef.current.animateToRegion({
@@ -160,7 +162,7 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
             }}
             accessibilityLabel="Recenter on current log location"
           >
-            <Ionicons name="locate" size={22} color="#2E66E7" />
+            <Ionicons name="locate" size={22} color={theme.primary} />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -169,7 +171,11 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
           {/* Slider for timeline with play/pause to the left */}
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity
-              style={[styles.playPauseButton, isReplaying ? styles.pauseButton : styles.playButton, { marginRight: 8, borderRadius: 16, padding: 6, minWidth: 28, minHeight: 28, marginLeft: 4 }]}
+              style={[
+                styles.playPauseButton,
+                { backgroundColor: isDark ? theme.primary : '#2E66E7' },
+                { marginRight: 8, borderRadius: 16, padding: 6, minWidth: 28, minHeight: 28, marginLeft: 4 },
+              ]}
               onPress={() => {
                 if (isReplaying) {
                   setIsReplaying(false);
@@ -188,14 +194,18 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
               maximumValue={log?.coordinates?.length ? log.coordinates.length - 1 : 0}
               value={replayIndex}
               onValueChange={val => setReplayIndex(Math.round(val))}
-              minimumTrackTintColor="#2E66E7"
-              maximumTrackTintColor="#eaf0fa"
-              thumbTintColor="#2E66E7"
+              minimumTrackTintColor={theme.primary}
+              maximumTrackTintColor={isDark ? theme.card : '#eaf0fa'}
+              thumbTintColor={theme.primary}
               disabled={!log?.coordinates?.length}
             />
             {/* Speed and replay controls to the right */}
             <TouchableOpacity
-              style={[styles.speedBtn, { minWidth: 60, minHeight: 40, alignItems: 'center', justifyContent: 'center', marginLeft: 8 }]} 
+              style={[
+                styles.speedBtn,
+                { backgroundColor: isDark ? theme.card : '#eee' },
+                { minWidth: 60, minHeight: 40, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
+              ]}
               onPress={() => {
                 const idx = SPEEDS.indexOf(speed);
                 setSpeed(SPEEDS[(idx + 1) % SPEEDS.length]);
@@ -203,10 +213,14 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
               disabled={!log?.coordinates?.length}
               accessibilityLabel={`Change replay speed (current: ${speed}x)`}
             >
-              <Text style={styles.speedBtnText}>{speed}x</Text>
+              <Text style={[styles.speedBtnText, { color: theme.primary }]}>{speed}x</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.replayButton, { minWidth: 44, minHeight: 40, alignItems: 'center', justifyContent: 'center', marginLeft: 4 }]} 
+              style={[
+                styles.replayButton,
+                { backgroundColor: isDark ? theme.card : '#eaf0fa' },
+                { minWidth: 44, minHeight: 40, alignItems: 'center', justifyContent: 'center', marginLeft: 4, marginRight: 8 }, // Add marginRight
+              ]}
               onPress={() => {
                 setReplayIndex(0);
                 setIsReplaying(false);
@@ -214,11 +228,11 @@ const LogRouteMapWithReplay: React.FC<LogRouteMapWithReplayProps> = ({ log, heig
               disabled={!log?.coordinates?.length}
               accessibilityLabel="Replay from start"
             >
-              <Text style={styles.replayIcon}>⟲</Text>
+              <Text style={[styles.replayIcon, { color: theme.primary }]}>⟲</Text>
             </TouchableOpacity>
           </View>
           {/* Progress info */}
-          <Text style={styles.replayProgress}>
+          <Text style={[styles.replayProgress, { color: theme.primary }]}>
             Elapsed: {getCurrentPointTime()} / {getTotalDuration()}
             {getCurrentPointTimestamp() ? ` (${getCurrentPointTimestamp()})` : ''}
           </Text>
@@ -320,8 +334,8 @@ const styles = StyleSheet.create({
   },
   recenterBtn: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    bottom: 10, // move to bottom
+    left: 10,   // move to left
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 7,

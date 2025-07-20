@@ -5,6 +5,9 @@ import { Calendar, DateData } from "react-native-calendars";
 import { useGetLogs } from "../../hooks/index";
 import { UpdateLogDTO, LogDTO } from "../../interfaces/log/log";
 import { useRouter } from "expo-router";
+import { useTheme } from "@/context/ThemeContext";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -65,9 +68,10 @@ function getYearStats(logs: LogDTO[]) {
 export default function CalendarLogsView() {
   const { data: logs = [], isLoading, isError, error } = useGetLogs();
   const router = useRouter();
+  const { theme, isDark } = useTheme();
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedLog, setSelectedLog] = useState<UpdateLogDTO | null>(null);
+  const [selectedLog, setSelectedLog] = useState<LogDTO | null>(null);
   const [isDetailModalVisible, setDetailModalVisible] = useState(false);
   const [isLogSelectionModalVisible, setLogSelectionModalVisible] = useState(false);
 
@@ -77,18 +81,18 @@ export default function CalendarLogsView() {
       if (!acc[logDate]) acc[logDate] = [];
       acc[logDate].push(log);
       return acc;
-    }, {} as Record<string, UpdateLogDTO[]>);
+    }, {} as Record<string, LogDTO[]>);
   }, [logs]);
 
   const markedDates = useMemo(() => {
     return Object.keys(logsByDate).reduce((acc, date) => {
       acc[date] = {
         marked: true,
-        dotColor: logsByDate[date].length > 1 ? "#E74C3C" : "#2E66E7",
+        dotColor: logsByDate[date].length > 1 ? '#E74C3C' : theme.primary,
       };
       return acc;
     }, {} as Record<string, { marked: boolean; dotColor?: string }>);
-  }, [logsByDate]);
+  }, [logsByDate, theme.primary]);
 
   const handleDayPress = (day: DateData) => {
     setSelectedDate(day.dateString);
@@ -105,150 +109,199 @@ export default function CalendarLogsView() {
     const logsOnDate = selectedDate ? logsByDate[selectedDate] || [] : [];
     return (
       <Modal visible={isLogSelectionModalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.selectionModalContainer}>
-            <Text style={styles.selectionModalTitle}>Logs on {selectedDate}</Text>
+        <ThemedView style={[styles.modalOverlay, { backgroundColor: theme.modalOverlay }] }>
+          <ThemedView style={[
+            styles.selectionModalContainer,
+            {
+              backgroundColor: theme.card,
+              shadowColor: theme.text,
+              shadowOpacity: 0.18,
+              shadowRadius: 16,
+              shadowOffset: { width: 0, height: 6 },
+              elevation: 8,
+            },
+          ]}>
+            <ThemedText style={[styles.selectionModalTitle, { color: theme.primary, fontSize: 22, fontWeight: 'bold', marginBottom: 18, textAlign: 'center' }]}>Logs on {selectedDate}</ThemedText>
             <FlatList
               data={logsOnDate}
               keyExtractor={(_, index) => `${selectedDate}-${index}`}
               renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.logSelectionItem}
-                  onPress={() => {
-                    setSelectedLog(item);
-                    setLogSelectionModalVisible(false);
-                    setDetailModalVisible(true);
-                  }}
-                >
-                  <Text style={styles.logSelectionItemText}>{item.description || "Unnamed Log"}</Text>
-                  <Text style={styles.logSelectionItemSubtext}>
-                    {new Date(item.log_started || item.created_on).toLocaleTimeString()}
-                  </Text>
-                </TouchableOpacity>
+                <ThemedView style={{
+                  backgroundColor: theme.background,
+                  borderRadius: 10,
+                  marginBottom: 12,
+                  padding: 14,
+                  shadowColor: theme.text,
+                  shadowOpacity: 0.06,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 2 },
+                  elevation: 2,
+                }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedLog(item);
+                      setLogSelectionModalVisible(false);
+                      setDetailModalVisible(true);
+                    }}
+                  >
+                    <ThemedText style={[styles.logSelectionItemText, { color: theme.text }]}>{item.description || "Unnamed Log"}</ThemedText>
+                    <ThemedText style={[styles.logSelectionItemSubtext, { color: theme.text + '99' }]}> {new Date(item.log_started || item.created_on).toLocaleTimeString()} </ThemedText>
+                  </TouchableOpacity>
+                </ThemedView>
               )}
-              ListEmptyComponent={<Text style={styles.noLogsText}>No logs found for this date</Text>}
+              ListEmptyComponent={<ThemedText style={styles.noLogsText}>No logs found for this date</ThemedText>}
             />
             <TouchableOpacity
-              style={styles.closeSelectionModalButton}
+              style={[styles.closeSelectionModalButton, { backgroundColor: theme.primary }]}
               onPress={() => setLogSelectionModalVisible(false)}
             >
-              <Text style={styles.closeSelectionModalButtonText}>Close</Text>
+              <ThemedText style={styles.closeSelectionModalButtonText}>Close</ThemedText>
             </TouchableOpacity>
-          </View>
-        </View>
+          </ThemedView>
+        </ThemedView>
       </Modal>
     );
   };
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <Text>Loading logs...</Text>
-      </View>
+      <ThemedView style={[styles.container, { backgroundColor: theme.background }] }>
+        <ThemedText>Loading logs...</ThemedText>
+      </ThemedView>
     );
   }
 
   if (isError) {
     return (
-      <View style={styles.container}>
-        <Text>Error loading logs: {error?.message}</Text>
-      </View>
+      <ThemedView style={[styles.container, { backgroundColor: theme.background }] }>
+        <ThemedText>Error loading logs: {error?.message}</ThemedText>
+      </ThemedView>
     );
   }
 
   if (!isLoading && logs.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>No Logs Yet</Text>
-        <Text style={styles.emptySubtitle}>
-          You haven't recorded any logs. Tap below to go to the home page and record your first log!
-        </Text>
+      <ThemedView style={[styles.emptyContainer, { backgroundColor: theme.background }] }>
+        <ThemedText style={[styles.emptyTitle, { color: theme.primary }]}>No Logs Yet</ThemedText>
+        <ThemedText style={[styles.emptySubtitle, { color: theme.text + '99' }]}>You haven't recorded any logs. Tap below to go to the home page and record your first log!</ThemedText>
         <Button title="Go to Home" onPress={() => router.replace("/(tabs)")} />
-      </View>
+      </ThemedView>
     );
   }
 
   const stats = getYearStats(logs);
 
   return (
-    <View style={styles.flexFill}>
-      <View style={styles.calendarHeader}>
-        <Text style={styles.calendarHeaderTitle}>Your Log Calendar</Text>
-      </View>
-      <View style={styles.flexGrow}>
-        <Calendar
-          markedDates={{
-            ...markedDates,
-            ...(selectedDate
-              ? {
-                  [selectedDate]: {
-                    ...(markedDates[selectedDate] || {}),
-                    selected: true,
-                    selectedColor: "#2E66E7",
-                  },
-                }
-              : {}),
-          }}
-          onDayPress={handleDayPress}
-          current={selectedDate || undefined}
-          monthFormat={"MMMM yyyy"}
-          theme={{
-            backgroundColor: "#fff",
-            calendarBackground: "#fff",
-            selectedDayBackgroundColor: "#2E66E7",
-            selectedDayTextColor: "#ffffff",
-            todayTextColor: "#2E66E7",
-            arrowColor: "#2E66E7",
-            textSectionTitleColor: "#2E66E7",
-            dayTextColor: "#222",
-            textDisabledColor: "#d9e1e8",
-            dotColor: "#2E66E7",
-            selectedDotColor: "#fff",
-            textDayFontWeight: "500",
-            textMonthFontWeight: "bold",
-            textDayHeaderFontWeight: "600",
-            textDayFontSize: 16,
-            textMonthFontSize: 20,
-            textDayHeaderFontSize: 14,
-          }}
-          style={[styles.calendar, { width: '100%', minHeight: SCREEN_HEIGHT * 0.28, maxHeight: SCREEN_HEIGHT * 0.32, marginBottom: 8 }]}
-        />
-      </View>
-      <View style={styles.statsCardFixed}>
-        <Text style={styles.statsTitle}>Yearly Stats</Text>
+    <ThemedView style={[styles.flexFill, { backgroundColor: theme.background }] }>
+      <ThemedView style={[
+        styles.statsCardFixed,
+        {
+          marginLeft: 10,
+          marginRight: 10,
+          marginTop: 10,
+          marginBottom: 14, // add space below calendar card
+          borderColor: theme.border,
+          backgroundColor: theme.card,
+          padding: 0, // remove extra padding
+        },
+      ]}>
+        <ThemedView style={[styles.calendarHeader, { backgroundColor: 'transparent', borderRadius: 0, marginLeft: 0, marginRight: 0 }] }>
+          <ThemedText style={[styles.calendarHeaderTitle, { color: theme.primary }]}>Your Log Calendar</ThemedText>
+        </ThemedView>
+        <ThemedView style={[styles.flexGrow, { backgroundColor: 'transparent', borderRadius: 0, marginLeft: 0, marginRight: 0, paddingBottom: 0 }] }>
+          <Calendar
+            key={isDark ? 'dark' : 'light'} // force remount on theme change
+            markedDates={{
+              ...markedDates,
+              ...(selectedDate
+                ? {
+                    [selectedDate]: {
+                      ...(markedDates[selectedDate] || {}),
+                      selected: true,
+                      selectedColor: theme.primary,
+                    },
+                  }
+                : {}),
+            }}
+            onDayPress={handleDayPress}
+            current={selectedDate || undefined}
+            monthFormat={"MMMM yyyy"}
+            theme={{
+              backgroundColor: theme.background,
+              calendarBackground: theme.background,
+              dayBackgroundColor: theme.background,
+              todayBackgroundColor: theme.background,
+              selectedDayBackgroundColor: theme.primary,
+              selectedDayTextColor: theme.background,
+              todayTextColor: theme.primary,
+              arrowColor: theme.primary,
+              textSectionTitleColor: theme.primary,
+              dayTextColor: theme.text,
+              textDisabledColor: theme.border,
+              dotColor: theme.primary,
+              selectedDotColor: theme.background,
+              textDayFontWeight: "500",
+              textMonthFontWeight: "bold",
+              textDayHeaderFontWeight: "600",
+              textDayFontSize: 16,
+              textMonthFontSize: 20,
+              textDayHeaderFontSize: 14,
+            }}
+            style={[
+              styles.calendar,
+              {
+                backgroundColor: theme.background,
+                minHeight: SCREEN_HEIGHT * 0.28,
+                maxHeight: SCREEN_HEIGHT * 0.32,
+                marginBottom: 8,
+                marginTop: 2,
+              },
+            ]}
+          />
+        </ThemedView>
+      </ThemedView>
+      <ThemedView style={[
+        styles.statsCardFixed,
+        {
+          backgroundColor: theme.cardSecondary || (isDark ? '#232a36' : '#f7f8fa'),
+          borderColor: theme.border,
+          marginTop: 40,
+        },
+      ]}>
+        <ThemedText style={[styles.statsTitle, { color: theme.primary }]}>Yearly Stats</ThemedText>
         <View style={styles.statsGrid}>
           <View style={styles.statsGridRow}>
             <View style={styles.statsGridItem}>
-              <Text style={styles.statsValue}>{stats.numLogs}</Text>
-              <Text style={styles.statsLabel}>Logs</Text>
+              <ThemedText style={[styles.statsValue, { color: theme.text }]}>{stats.numLogs}</ThemedText>
+              <ThemedText style={[styles.statsLabel, { color: theme.text + '99' }]}>Logs</ThemedText>
             </View>
             <View style={styles.statsGridItem}>
-              <Text style={styles.statsValue}>{stats.totalHours}</Text>
-              <Text style={styles.statsLabel}>Hours Travelling</Text>
-            </View>
-          </View>
-          <View style={styles.statsGridRow}>
-            <View style={styles.statsGridItem}>
-              <Text style={styles.statsValue}>{stats.avgCrew}</Text>
-              <Text style={styles.statsLabel}>Avg. Crew</Text>
-            </View>
-            <View style={styles.statsGridItem}>
-              <Text style={styles.statsValue}>{stats.totalDistanceNm}</Text>
-              <Text style={styles.statsLabel}>Distance (nm)</Text>
+              <ThemedText style={[styles.statsValue, { color: theme.text }]}>{stats.totalHours}</ThemedText>
+              <ThemedText style={[styles.statsLabel, { color: theme.text + '99' }]}>Hours Travelling</ThemedText>
             </View>
           </View>
           <View style={styles.statsGridRow}>
             <View style={styles.statsGridItem}>
-              <Text style={styles.statsValue}>{stats.longestHours}</Text>
-              <Text style={styles.statsLabel}>Longest Trip</Text>
+              <ThemedText style={[styles.statsValue, { color: theme.text }]}>{stats.avgCrew}</ThemedText>
+              <ThemedText style={[styles.statsLabel, { color: theme.text + '99' }]}>Avg. Crew</ThemedText>
             </View>
             <View style={styles.statsGridItem}>
-              <Text style={styles.statsValue}>{stats.shortestHours}</Text>
-              <Text style={styles.statsLabel}>Shortest Trip</Text>
+              <ThemedText style={[styles.statsValue, { color: theme.text }]}>{stats.totalDistanceNm}</ThemedText>
+              <ThemedText style={[styles.statsLabel, { color: theme.text + '99' }]}>Distance (nm)</ThemedText>
+            </View>
+          </View>
+          <View style={styles.statsGridRow}>
+            <View style={styles.statsGridItem}>
+              <ThemedText style={[styles.statsValue, { color: theme.text }]}>{stats.longestHours}</ThemedText>
+              <ThemedText style={[styles.statsLabel, { color: theme.text + '99' }]}>Longest Trip</ThemedText>
+            </View>
+            <View style={styles.statsGridItem}>
+              <ThemedText style={[styles.statsValue, { color: theme.text }]}>{stats.shortestHours}</ThemedText>
+              <ThemedText style={[styles.statsLabel, { color: theme.text + '99' }]}>Shortest Trip</ThemedText>
             </View>
           </View>
         </View>
-      </View>
+      </ThemedView>
       {renderLogSelectionModal()}
       {selectedLog && (
         <LogDetailModal
@@ -257,19 +310,17 @@ export default function CalendarLogsView() {
           log={selectedLog}
         />
       )}
-    </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   statsCardFixed: {
     width: "98%",
     alignSelf: 'center',
-    backgroundColor: "#F0EFF4",
     borderRadius: 16,
     padding: 14,
     marginTop: 4,
@@ -280,52 +331,48 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     elevation: 2,
     borderWidth: 1,
-    borderColor: "#b0b3bb",
     justifyContent: 'flex-start',
     minHeight: SCREEN_HEIGHT * 0.22,
     maxHeight: SCREEN_HEIGHT * 0.35,
   },
   flexFill: {
     flex: 1,
-    backgroundColor: "#f9f9f9",
     minHeight: SCREEN_HEIGHT,
     width: '100%',
   },
   flexGrow: {
-    width: '100%',
     minHeight: SCREEN_HEIGHT * 0.28,
     maxHeight: SCREEN_HEIGHT * 0.32,
     justifyContent: 'flex-start',
   },
   calendarHeader: {
-    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 24,
     paddingTop: 24,
-    marginBottom: 4,
+    paddingBottom: 8,
+    borderRadius: 0,
   },
   calendarHeaderTitle: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#2E66E7",
+    width: undefined,
+    alignSelf: 'stretch'
   },
   calendar: {
-    alignSelf: "center",
     borderRadius: 18,
     overflow: "hidden",
     marginBottom: 8,
     marginTop: 2,
-    width: '100%',
     minHeight: SCREEN_HEIGHT * 0.28,
     maxHeight: SCREEN_HEIGHT * 0.32,
   },
   statsCardExpanded: {
     flex: 1,
     width: "98%",
-    alignSelf: 'center',
-    backgroundColor: "#F0EFF4",
+    alignSelf: 'stretch',
     borderRadius: 16,
     padding: 14,
     marginTop: 4,
@@ -336,7 +383,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     elevation: 2,
     borderWidth: 1,
-    borderColor: "#b0b3bb",
     justifyContent: 'flex-start',
   },
   statsTitle: {
@@ -376,18 +422,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 30,
-    backgroundColor: "#fff",
   },
   emptyTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#2E66E7",
     marginBottom: 10,
     textAlign: "center",
   },
   emptySubtitle: {
     fontSize: 16,
-    color: "#666",
     marginBottom: 25,
     textAlign: "center",
   },

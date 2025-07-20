@@ -1,12 +1,15 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Switch } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import { clearTokens } from "@/utils/tokenStorage";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function Settings() {
   const { signOut } = useAuth();
   const router = useRouter();
+  const { theme, isDark, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     clearTokens();
@@ -15,15 +18,24 @@ export default function Settings() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.title, { color: theme.primary }]}>Settings</Text>
+      <View style={styles.themeRow}>
+        <Text style={[styles.themeLabel, { color: theme.text }]}>Dark Mode</Text>
+        <Switch
+          value={isDark}
+          onValueChange={toggleTheme}
+          thumbColor={isDark ? theme.primary : "#f4f3f4"}
+          trackColor={{ false: "#ccc", true: theme.primary }}
+        />
+      </View>
       <View style={styles.spacer} />
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <FontAwesome name="sign-out" size={20} color="#fff" style={styles.logoutIcon} />
-        <Text style={styles.logoutText}>Log Out</Text>
+      <TouchableOpacity style={[styles.logoutButton, { backgroundColor: theme.card }]} onPress={handleLogout}>
+        <FontAwesome name="sign-out" size={20} color={theme.primary} style={styles.logoutIcon} />
+        <Text style={[styles.logoutText, { color: theme.primary }]}>Log Out</Text>
       </TouchableOpacity>
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>BoatOwner App v1.0</Text>
+      <View style={[styles.footer, { backgroundColor: theme.background }] }>
+        <Text style={[styles.footerText, { color: theme.text + '99' }]}>BoatOwner App v1.0</Text>
       </View>
     </View>
   );
@@ -32,7 +44,6 @@ export default function Settings() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9f9f9",
     paddingHorizontal: 24,
     paddingTop: 60,
     alignItems: "center",
@@ -41,9 +52,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#2E66E7",
     marginBottom: 40,
     textAlign: "center",
+  },
+  themeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  themeLabel: {
+    fontSize: 18,
+    fontWeight: "500",
   },
   spacer: {
     flex: 1,
@@ -74,7 +96,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   footerText: {
-    color: "#aaa",
     fontSize: 14,
   },
 });
