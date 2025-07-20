@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, StyleSheet, TouchableOpacity } from "react-native";
+import { View, TextInput, Button, StyleSheet, TouchableOpacity, Platform } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { useSignIn } from "@/hooks/useSignIn";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { AntDesign } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { saveTokens } from "@/utils/tokenStorage";
 import { useTheme } from "@/context/ThemeContext";
 import { ThemedText } from "@/components/ThemedText";
@@ -24,6 +26,7 @@ type SignInScreenProps = {
 // @ts-ignore
 export default function SignInScreen({ navigation }: SignInScreenProps) {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const { mutateAsync, isPending, error } = useSignIn();
   const { setAuthenticated } = useAuth();
   const router = useRouter();
@@ -42,7 +45,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   };
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}>
+    <ThemedView style={[styles.container, { backgroundColor: theme.background }]}> 
       <View style={[styles.logoContainer, { marginBottom: 32 }]}> {/* Adjusted margin for spacing */}
         <FontAwesome5 name="ship" size={64} color={theme.text} />
       </View>
@@ -58,14 +61,25 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
         keyboardType="email-address"
         placeholderTextColor={theme.text + '99'}
       />
-      <TextInput
-        placeholder="Password"
-        value={form.password}
-        onChangeText={(password) => setForm((f) => ({ ...f, password }))}
-        secureTextEntry
-        style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border }]}
-        placeholderTextColor={theme.text + '99'}
-      />
+      <View style={{ position: 'relative' }}>
+        <TextInput
+          placeholder="Password"
+          value={form.password}
+          onChangeText={(password) => setForm((f) => ({ ...f, password }))}
+          secureTextEntry={!showPassword}
+          style={[styles.input, { backgroundColor: theme.card, color: theme.text, borderColor: theme.border, paddingRight: 44 }]}
+          placeholderTextColor={theme.text + '99'}
+        />
+        {form.password.length > 0 && (
+          <TouchableOpacity
+            style={{ position: 'absolute', right: 16, top: -5, bottom: 0, height: '100%', justifyContent: 'center'}}
+            onPress={() => setShowPassword((v) => !v)}
+            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+          >
+            <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={22} color={theme.text + '99'} />
+          </TouchableOpacity>
+        )}
+      </View>
       {error && <ThemedText style={[styles.error, { color: '#e74c3c' }]}>{error.message}</ThemedText>}
       <Button title={isPending ? "Signing In..." : "Sign In"} onPress={handleSignIn} color={theme.primary} />
       <View style={styles.dividerContainer}>
@@ -73,13 +87,21 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
         <ThemedText style={[styles.dividerText, { color: theme.text + '99' }]}>or</ThemedText>
         <View style={[styles.divider, { backgroundColor: theme.border }]} />
       </View>
-      <TouchableOpacity style={[styles.socialButton, { backgroundColor: '#000' }]} activeOpacity={0.7}>
-        <ThemedText style={[styles.socialButtonText, { color: '#fff' }]}>Sign in with Apple</ThemedText>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.socialButton, styles.googleButton, { backgroundColor: theme.card, borderColor: theme.border }]} activeOpacity={0.7}>
-        <ThemedText style={[styles.socialButtonText, { color: theme.text }]}>Sign in with Google</ThemedText>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.replace("/(auth)/SignUp")}>
+      {/* Apple Sign In Button (iOS only) */}
+      {Platform.OS === 'ios' && (
+        <TouchableOpacity style={styles.appleButton} activeOpacity={0.8}>
+          <AntDesign name="apple1" size={22} color="#fff" style={{ marginRight: 8 }} />
+          <ThemedText style={styles.appleButtonText}>Sign in with Apple</ThemedText>
+        </TouchableOpacity>
+      )}
+      {/* Google Sign In Button (Android only) */}
+      {Platform.OS === 'android' && (
+        <TouchableOpacity style={styles.googleButton} activeOpacity={0.8}>
+          <AntDesign name="google" size={22} color="#fff" style={{ marginRight: 8 }} />
+          <ThemedText style={styles.googleButtonText}>Sign in with Google</ThemedText>
+        </TouchableOpacity>
+      )}
+      <TouchableOpacity onPress={() => router.replace("/(auth)/SignUp")}> 
         <ThemedText style={[styles.signupText, { color: theme.primary }]}>Don't have an account? Sign Up</ThemedText>
       </TouchableOpacity>
     </ThemedView>
@@ -105,19 +127,36 @@ const styles = StyleSheet.create({
   dividerContainer: { flexDirection: "row", alignItems: "center", marginVertical: 18 },
   divider: { flex: 1, height: 1 },
   dividerText: { marginHorizontal: 10 },
-  socialButton: {
+  appleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#000',
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: "center",
     marginBottom: 12,
+    justifyContent: 'center',
+  },
+  appleButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+    textAlign: 'center',
   },
   googleButton: {
-    borderWidth: 1,
-    borderColor: "#d0d0d0",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4285F4', // Google blue
+    borderWidth: 0,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    justifyContent: 'center',
   },
-  socialButtonText: {
-    fontWeight: "600",
+  googleButtonText: {
+    color: '#fff',
+    fontWeight: '600',
     fontSize: 16,
+    textAlign: 'center',
   },
   signupText: {
     textAlign: "center",

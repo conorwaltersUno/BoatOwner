@@ -229,7 +229,6 @@ export default function CalendarLogsView() {
             theme={{
               backgroundColor: theme.background,
               calendarBackground: theme.background,
-              dayBackgroundColor: theme.background,
               todayBackgroundColor: theme.background,
               selectedDayBackgroundColor: theme.primary,
               selectedDayTextColor: theme.background,
