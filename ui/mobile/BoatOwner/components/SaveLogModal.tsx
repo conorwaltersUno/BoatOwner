@@ -61,37 +61,98 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
     setStep(0);
   };
 
-  const REPLAY_SPEEDS = [0.5, 1, 1.5, 2, 5, 10];
+  // --- Route Replay State (copied and adapted from LogRouteMapWithReplay) ---
+  const REPLAY_SPEEDS = [0.5, 1, 1.5, 2, 5, 10, 20, 50];
   const [replayIndex, setReplayIndex] = React.useState(0);
   const [isReplaying, setIsReplaying] = React.useState(false);
   const [replaySpeed, setReplaySpeed] = React.useState(1);
+  const [replayProgress, setReplayProgress] = React.useState(0); // floating point progress
+  const [isFollowing, setIsFollowing] = React.useState(true);
   const [mapRegion, setMapRegion] = React.useState<any>(undefined);
   const mapRef = React.useRef<MapView | null>(null);
 
   React.useEffect(() => {
     setReplayIndex(0);
+    setReplayProgress(0);
     setIsReplaying(false);
     setReplaySpeed(1);
+    setIsFollowing(true);
   }, [locations]);
 
   React.useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
+    const TICK_MS = 4;
     if (isReplaying && locations.length > 1) {
       interval = setInterval(() => {
-        setReplayIndex(prev => {
-          if (prev < locations.length - 1) {
-            return prev + 1;
-          } else {
-            // Loop back to start
+        setReplayProgress((prev) => {
+          const next = prev + replaySpeed * (TICK_MS / 1000);
+          if (next >= locations.length - 1) {
+            setIsReplaying(false);
             return 0;
           }
+          return next;
         });
-      }, Math.max(10, 100 / replaySpeed));
+      }, TICK_MS);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isReplaying, locations, replaySpeed]);
+
+  // Interpolated pin position for smoother following at high speeds
+  const getInterpolatedCoord = () => {
+    if (!locations.length) return null;
+    const idx = Math.floor(replayProgress);
+    const frac = replayProgress - idx;
+    const curr = locations[idx];
+    const next = locations[idx + 1] || curr;
+    if (replaySpeed > 10 && next && curr) {
+      return {
+        latitude: curr.latitude + (next.latitude - curr.latitude) * frac,
+        longitude: curr.longitude + (next.longitude - curr.longitude) * frac,
+      };
+    }
+    return curr;
+  };
+
+  // Keep replayIndex in sync with replayProgress
+  React.useEffect(() => {
+    if (locations.length > 1) {
+      const idx = Math.floor(replayProgress);
+      setReplayIndex(Math.min(idx, locations.length - 1));
+    }
+  }, [replayProgress, locations]);
+
+  // When user drags slider, update both replayIndex and replayProgress
+  const handleSliderChange = (val: number) => {
+    setReplayIndex(val);
+    setReplayProgress(val);
+    setIsReplaying(false);
+  };
+
+  // When replay starts, follow pin
+  React.useEffect(() => {
+    if (isReplaying) setIsFollowing(true);
+  }, [isReplaying]);
+
+  // Follow pin as replayIndex changes, unless user has panned/zoomed
+  React.useEffect(() => {
+    if (
+      isFollowing &&
+      locations.length > 0 &&
+      mapRef.current
+    ) {
+      const interp = getInterpolatedCoord();
+      if (interp) {
+        mapRef.current.animateToRegion({
+          latitude: interp.latitude,
+          longitude: interp.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }, replaySpeed > 10 ? 80 : 350);
+      }
+    }
+  }, [replayIndex, replayProgress, isFollowing, locations, replaySpeed]);
 
   return (
     <Modal visible={modalVisibility} transparent animationType="slide">
@@ -265,11 +326,13 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
                             }}
                             region={mapRegion}
                             onRegionChangeComplete={region => setMapRegion(region)}
+                            onPanDrag={() => setIsFollowing(false)}
+                            onTouchStart={() => setIsFollowing(false)}
                           >
                             <Polyline coordinates={locations} strokeWidth={4} strokeColor={theme.primary} />
                             {locations.length > 0 && (
                               <Marker
-                                coordinate={locations[replayIndex]}
+                                coordinate={getInterpolatedCoord() || locations[replayIndex]}
                                 pinColor={theme.error}
                                 title="Current Position"
                               />
@@ -290,17 +353,17 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
                                   minimumValue={0}
                                   maximumValue={locations.length - 1}
                                   value={replayIndex}
-                                  onValueChange={(val: number) => setReplayIndex(Math.round(val))}
+                                  onValueChange={handleSliderChange}
                                   minimumTrackTintColor={theme.primary}
                                   maximumTrackTintColor={theme.cardSecondary}
                                   thumbTintColor={theme.primary}
                                 />
                                 <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 12 }}>
                                   <TouchableOpacity
-                                    onPress={() => setReplaySpeed(prev => {
-                                      const idx = REPLAY_SPEEDS.indexOf(prev);
-                                      return REPLAY_SPEEDS[(idx + 1) % REPLAY_SPEEDS.length];
-                                    })}
+                                    onPress={() => {
+                                      const idx = REPLAY_SPEEDS.indexOf(replaySpeed);
+                                      setReplaySpeed(REPLAY_SPEEDS[(idx + 1) % REPLAY_SPEEDS.length]);
+                                    }}
                                     style={{ backgroundColor: theme.input, borderRadius: 20, padding: 8, marginRight: 4 }}
                                   >
                                     <ThemedText style={[styles.speedBtn, { color: theme.primary }]}>{replaySpeed}x</ThemedText>
@@ -308,6 +371,7 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
                                   <TouchableOpacity
                                     onPress={() => {
                                       setReplayIndex(0);
+                                      setReplayProgress(0);
                                       setIsReplaying(false);
                                     }}
                                     accessibilityLabel="Restart log replay"
@@ -325,9 +389,10 @@ const SaveLogModal: React.FC<SaveLogModalProps> = ({
                               style={[styles.recenterBtn, { backgroundColor: theme.input, borderColor: theme.border }]}
                               onPress={() => {
                                 if (locations.length > 0 && mapRef.current) {
+                                  const interp = getInterpolatedCoord();
                                   mapRef.current.animateToRegion({
-                                    latitude: locations[replayIndex].latitude,
-                                    longitude: locations[replayIndex].longitude,
+                                    latitude: interp ? interp.latitude : locations[replayIndex].latitude,
+                                    longitude: interp ? interp.longitude : locations[replayIndex].longitude,
                                     latitudeDelta: 0.01,
                                     longitudeDelta: 0.01,
                                   });

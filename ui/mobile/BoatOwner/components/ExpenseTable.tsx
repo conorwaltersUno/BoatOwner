@@ -162,4 +162,21 @@ const styles = StyleSheet.create({
   },
 });
 
+// Utility: Assign colors to expense types so no two adjacent types have the same color
+export function assignDonutColors(types: string[], palette: string[]): Record<string, string> {
+  if (palette.length < 2) throw new Error('Palette must have at least 2 colors');
+  const result: Record<string, string> = {};
+  let lastColorIdx = -1;
+  for (let i = 0; i < types.length; i++) {
+    let colorIdx = (lastColorIdx + 1) % palette.length;
+    // If only two colors, this is enough. If more, check for next available not equal to last
+    if (palette.length > 2 && colorIdx === lastColorIdx) {
+      colorIdx = (colorIdx + 1) % palette.length;
+    }
+    result[types[i]] = palette[colorIdx];
+    lastColorIdx = colorIdx;
+  }
+  return result;
+}
+
 export default ExpenseTable;
