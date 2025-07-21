@@ -208,6 +208,53 @@ expenses {
 
 ---
 
+## 🖥️ Development Server & AWS Setup Summary
+
+### Backend Dev Server on AWS (EC2 + RDS + Self-Hosted Runner)
+
+1. **AWS EC2 Instance**
+   - Provision an Ubuntu EC2 instance in your AWS account.
+   - Attach a security group allowing SSH (port 22) from your IP and API port (e.g., 4000) as needed.
+   - Use a key pair for SSH access (`.pem` file).
+
+2. **AWS RDS (PostgreSQL) Database**
+   - Create an RDS PostgreSQL instance in the same VPC as your EC2.
+   - Set "Publicly Accessible" to No for security (recommended for production).
+   - Attach a security group allowing inbound PostgreSQL (TCP 5432) from your EC2's security group.
+
+3. **Self-Hosted GitHub Actions Runner**
+   - SSH into your EC2 instance and set up the runner:
+     ```zsh
+     mkdir ~/actions-runner && cd ~/actions-runner
+     curl -o actions-runner-linux-x64-<version>.tar.gz -L https://github.com/actions/runner/releases/download/v<version>/actions-runner-linux-x64-<version>.tar.gz
+     tar xzf actions-runner-linux-x64-<version>.tar.gz
+     ./config.sh --url https://github.com/<owner>/<repo> --token <YOUR_TOKEN>
+     sudo ./svc.sh install
+     sudo ./svc.sh start
+     ```
+   - The runner will now pick up jobs from your repo and run them inside your VPC.
+
+4. **Checking DB Connectivity from EC2**
+   - Test DNS resolution:
+     ```zsh
+     nslookup <rds-endpoint>
+     ```
+   - Test network connectivity:
+     ```zsh
+     telnet <rds-endpoint> 5432
+     ```
+   - Test PostgreSQL connection:
+     ```zsh
+     psql -h <rds-endpoint> -U <username> -d <dbname> -p 5432
+     ```
+   - If you see the `boatowner=>` prompt, connection is successful.
+
+5. **Typical Workflow**
+   - Push code/migrations to GitHub.
+   - Self-hosted runner on EC2 picks up the job, runs migrations/deployments, and connects to RDS securely.
+
+---
+
 ## 📝 Learn More
 
 - [Expo documentation](https://docs.expo.dev/)
