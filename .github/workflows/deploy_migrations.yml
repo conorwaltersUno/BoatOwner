@@ -20,6 +20,6 @@ jobs:
       - name: migrate develop
         if: github.ref == 'refs/heads/develop'
         run: flyway -url='${{ secrets.DEV_DB_URL }}' -user=${{ secrets.DEV_DB_USER }} -password=${{ secrets.DEV_DB_PASSWORD }} -locations=filesystem:./database/migrations -outOfOrder=true -baselineOnMigrate=true -connectRetries=5 migrate
-      - name: migrate master
-        if: github.ref == 'refs/heads/master'
-        run: flyway -url='${{ secrets.PROD_DB_URL }}' -user=${{ secrets.PROD_DB_USER }} -password=${{ secrets.PROD_DB_PASSWORD }} -locations=filesystem:./database/migrations -outOfOrder=true -baselineOnMigrate=true -connectRetries=5 migrate
+      # - name: migrate master
+      #   if: github.ref == 'refs/heads/master'
+      #   run: flyway -url='${{ secrets.PROD_DB_URL }}' -user=${{ secrets.PROD_DB_USER }} -password=${{ secrets.PROD_DB_PASSWORD }} -locations=filesystem:./database/migrations -outOfOrder=true -baselineOnMigrate=true -connectRetries=5 migrate
