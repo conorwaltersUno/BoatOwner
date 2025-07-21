@@ -24,7 +24,6 @@ jobs:
 
       - name: Save Docker image to tar
         run: |
-          cd server
           docker save boatowner-api:latest -o boatowner-api.tar
 
       - name: Copy Docker image to EC2 (develop)
