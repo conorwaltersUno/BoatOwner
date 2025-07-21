@@ -12,25 +12,9 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Copy migrations to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "./database/migrations"
-          target: "~/BoatOwner/server/database/migrations"
-      - name: Run Flyway migrations on EC2
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          script: |
-            cd ~/BoatOwner/server
-            if ! command -v flyway &> /dev/null; then
-              wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/7.8.2/flyway-commandline-7.8.2-linux-x64.tar.gz
-              tar -xvf flyway-commandline-7.8.2-linux-x64.tar.gz
-              sudo ln -s ~/BoatOwner/server/flyway-7.8.2/flyway /usr/local/bin/flyway
-            fi
-            flyway -url='${{ secrets.DEV_DB_URL }}' -user='${{ secrets.DEV_DB_USER }}' -password='${{ secrets.DEV_DB_PASSWORD }}' -locations=filesystem:./database/migrations -outOfOrder=true -baselineOnMigrate=true -connectRetries=5 migrate
+      - name: Run Flyway migrations
+        run: |
+          wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/7.8.2/flyway-commandline-7.8.2-linux-x64.tar.gz
+          tar -xvf flyway-commandline-7.8.2-linux-x64.tar.gz
+          sudo ln -s $PWD/flyway-7.8.2/flyway /usr/local/bin/flyway
+          flyway -url='${{ secrets.DEV_DB_URL }}' -user='${{ secrets.DEV_DB_USER }}' -password='${{ secrets.DEV_DB_PASSWORD }}' -locations=filesystem:./database/migrations -outOfOrder=true -baselineOnMigrate=true -connectRetries=5 migrate
