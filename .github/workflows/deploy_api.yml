@@ -35,6 +35,24 @@ jobs:
           source: "./server/boatowner-api.tar"
           target: "~/boatowner-api.tar"
 
+      - name: Copy .env.example to EC2 (develop)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ${{ secrets.DEV_EC2_USER }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          source: "./server/.env.example"
+          target: "~/BoatOwner/server/.env.example"
+
+      - name: Copy .env.development to EC2 (develop)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ${{ secrets.DEV_EC2_USER }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          source: "./server/.env.development"
+          target: "~/BoatOwner/server/.env.development"
+
       - name: Diagnostic EC2 SSH & Environment Info
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -69,8 +87,9 @@ jobs:
           script: |
             mkdir -p ~/BoatOwner/server
             docker load -i ~/boatowner-api.tar
-            cp .env.example .env
-            docker compose up -d --build
+            cp ~/BoatOwner/server/.env.development ~/BoatOwner/server/.env
+            cd ~/BoatOwner/server
+            docker-compose up -d --build
             docker image prune -f
 
       - name: Notify Success
