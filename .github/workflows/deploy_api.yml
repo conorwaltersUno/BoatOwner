@@ -35,7 +35,7 @@ jobs:
           source: "./server/boatowner-api.tar"
           target: "~/boatowner-api.tar"
 
-      - name: Diagnostic: EC2 SSH & Environment Info
+      - name: Diagnostic EC2 SSH & Environment Info
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEV_EC2_HOST }}
