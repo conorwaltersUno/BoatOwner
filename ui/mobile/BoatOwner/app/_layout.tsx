@@ -4,6 +4,7 @@ import { AuthProvider } from '../context/AuthContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { View } from 'react-native';
+import { DataPrefetchProvider } from '../context/DataPrefetchContext';
 
 const queryClient = new QueryClient();
 
@@ -26,7 +27,9 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ThemeProvider>
-            <ThemedRoot />
+            <DataPrefetchProvider>
+              <ThemedRoot />
+            </DataPrefetchProvider>
           </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>

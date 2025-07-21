@@ -8,6 +8,7 @@ import { useAddTask, useGetTasks, useDeleteTask, useUpdateTask } from "../../hoo
 import { useTheme } from "@/context/ThemeContext";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { useDataPrefetch } from "@/context/DataPrefetchContext";
 
 import { CreateTaskDTO, TaskDTO } from "@/interfaces/todo/todo";
 
@@ -19,6 +20,7 @@ export default function Todo() {
   const { mutate: deleteTaskMutation } = useDeleteTask();
   const { mutate: updateTaskMutation } = useUpdateTask();
   const { theme } = useTheme();
+  const { prefetching } = useDataPrefetch();
 
   const handleAddTask = (description: string, status: string) => {
     const newTask: CreateTaskDTO = { description, status };
@@ -45,6 +47,10 @@ export default function Todo() {
 
   const pendingTasks = tasks.filter((task) => task.status === "pending");
   const completedTasks = tasks.filter((task) => task.status === "completed");
+
+  if (prefetching) {
+    return <ThemedView style={[styles.container, { backgroundColor: theme.background }]} />;
+  }
 
   if (isLoading) {
     return (

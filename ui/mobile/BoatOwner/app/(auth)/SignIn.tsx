@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import { View, TextInput, Button, StyleSheet, TouchableOpacity, Platform, ActivityIndicator } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 import { useSignIn } from "@/hooks/useSignIn";
@@ -10,6 +10,7 @@ import { saveTokens } from "@/utils/tokenStorage";
 import { useTheme } from "@/context/ThemeContext";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { useDataPrefetch } from "@/context/DataPrefetchContext";
 
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -31,6 +32,7 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
   const { setAuthenticated } = useAuth();
   const router = useRouter();
   const { theme } = useTheme();
+  const { prefetchAllData, prefetching, prefetchError } = useDataPrefetch();
 
   const handleSignIn = async () => {
     try {
@@ -38,11 +40,32 @@ export default function SignInScreen({ navigation }: SignInScreenProps) {
       const { accessToken, refreshToken, userId, boatId } = data;
       await saveTokens(accessToken, refreshToken, userId, boatId);
       setAuthenticated(true);
+      // Prefetch all data before navigating
+      await prefetchAllData();
       router.replace("/(tabs)");
     } catch (err) {
       // error is handled by react-query
     }
   };
+
+  if (prefetching) {
+    return (
+      <ThemedView style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}> 
+        <ActivityIndicator size="large" color={theme.primary} />
+        <ThemedText style={{ color: theme.primary, marginTop: 18, fontSize: 18 }}>Loading your data...</ThemedText>
+      </ThemedView>
+    );
+  }
+  if (prefetchError) {
+    return (
+      <ThemedView style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}> 
+        <ThemedText style={{ color: '#e74c3c', marginBottom: 18, fontSize: 16 }}>{prefetchError}</ThemedText>
+        <TouchableOpacity onPress={prefetchAllData} style={{ backgroundColor: theme.primary, padding: 12, borderRadius: 8 }}>
+          <ThemedText style={{ color: theme.background, fontWeight: 'bold' }}>Retry</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView style={[styles.container, { backgroundColor: theme.background }]}> 

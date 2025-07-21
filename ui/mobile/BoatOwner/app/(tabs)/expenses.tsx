@@ -16,6 +16,7 @@ import ExpensesPieChart from "@/components/ExpensesPieChart";
 import { useTheme } from "@/context/ThemeContext";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { useDataPrefetch } from "@/context/DataPrefetchContext";
 
 export default function Expenses() {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -24,6 +25,7 @@ export default function Expenses() {
   const { data: expenses = [], isLoading, isError, error } = useGetExpenses();
   const { mutate: addExpense } = useAddExpense();
   const { theme } = useTheme();
+  const { prefetching } = useDataPrefetch();
 
   const handleAddExpense = async (newExpense: CreateExpenseDTO) => {
     addExpense(newExpense);
@@ -32,6 +34,10 @@ export default function Expenses() {
   const handleOutsidePress = () => {
     setSelectedExpenseType(null);
   };
+
+  if (prefetching) {
+    return <ThemedView style={styles.centeredContainer} />;
+  }
 
   if (isLoading) {
     return (

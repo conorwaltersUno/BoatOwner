@@ -3,7 +3,7 @@ name: Deploy API
 on:
   push:
     branches:
-      - master
+      - develop
     paths:
       - "server/**"
 
@@ -17,24 +17,36 @@ jobs:
     steps:
       - name: 🛎 Checkout
         uses: actions/checkout@v2
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+
+      - name: Build Docker image
+        run: |
+          docker build --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" -t boatowner-api:latest .
+
+      - name: Save Docker image to tar
+        run: |
+          docker save boatowner-api:latest -o boatowner-api.tar
+
+      - name: Copy Docker image to EC2 (develop)
+        uses: appleboy/scp-action@v0.1.7
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "eu-west-2"
-      - name: Install AWS Lightsail Client
-        run: |
-          curl "https://s3.us-west-2.amazonaws.com/lightsailctl/latest/linux-amd64/lightsailctl" -o "lightsailctl"
-          sudo mv "lightsailctl" "/usr/local/bin/lightsailctl"
-          sudo chmod +x /usr/local/bin/lightsailctl
-      - name: Build and push image to Lightsail
-        id: build-image
-        run: |
-          docker build --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" -t container-service-1:latest .
-          aws lightsail push-container-image --region eu-west-2 --service-name container-service-1 --label container-service-1 --image container-service-1:latest
-      - name: Deploy Service
-        run: |
-          aws lightsail get-container-images --service-name container-service-1 | jq --raw-output ".containerImages[0].image" > image.txt
-          jq --arg image $(cat image.txt) '.containers.app.image = $image' container.template.json > container.json
-          aws lightsail create-container-service-deployment --service-name container-service-1 --cli-input-json file://$(pwd)/container.json
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ${{ secrets.DEV_EC2_USER }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          source: "./server/boatowner-api.tar"
+          target: "~/boatowner-api.tar"
+
+      - name: Deploy and run Docker Compose on EC2 (develop)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ${{ secrets.DEV_EC2_USER }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          script: |
+            mkdir -p ~/BoatOwner/server
+            docker load -i ~/boatowner-api.tar
+            cp .env.example .env
+            docker compose up -d --build
+            docker image prune -f
+
+      - name: Notify Success
+        run: echo "Backend deployed to DEV EC2 successfully!"

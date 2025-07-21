@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '@/context/ThemeContext';
 import { ThemedText } from '@/components/ThemedText';
+import { useDataPrefetch } from "@/context/DataPrefetchContext";
 
 export default function Friend() {
   const [activeTab, setActiveTab] = useState<'logs' | 'manage'>('logs');
@@ -27,6 +28,11 @@ export default function Friend() {
   const { feed: friendsFeed, isLoading: feedLoading } = useFriendsFeed();
   const queryClient = useQueryClient();
   const { theme } = useTheme();
+  const { prefetching } = useDataPrefetch();
+
+  if (prefetching) {
+    return <View style={{ flex: 1, backgroundColor: theme.background }} />;
+  }
 
   useEffect(() => {
     const trimmed = searchQuery.trim();
@@ -154,6 +160,14 @@ export default function Friend() {
   };
 
   // UI rendering
+  if (prefetching) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}> 
+        {/* No spinner, just a blank screen or skeleton if desired */}
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}> {/* Main container uses theme */}
       {/* Tab Switcher */}

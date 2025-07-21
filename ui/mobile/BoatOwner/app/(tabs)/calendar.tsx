@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import { useTheme } from "@/context/ThemeContext";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { useDataPrefetch } from "@/context/DataPrefetchContext";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -69,6 +70,7 @@ export default function CalendarLogsView() {
   const { data: logs = [], isLoading, isError, error } = useGetLogs();
   const router = useRouter();
   const { theme, isDark } = useTheme();
+  const { prefetching } = useDataPrefetch();
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedLog, setSelectedLog] = useState<LogDTO | null>(null);
@@ -162,6 +164,10 @@ export default function CalendarLogsView() {
       </Modal>
     );
   };
+
+  if (prefetching) {
+    return <ThemedView style={[styles.container, { backgroundColor: theme.background }]} />;
+  }
 
   if (isLoading) {
     return (
