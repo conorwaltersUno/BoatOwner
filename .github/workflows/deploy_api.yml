@@ -24,6 +24,7 @@ jobs:
 
       - name: Save Docker image to tar
         run: |
+          cd server
           docker save boatowner-api:latest -o boatowner-api.tar
 
       - name: Copy Docker image to EC2 (develop)
@@ -42,7 +43,7 @@ jobs:
           host: ${{ secrets.DEV_EC2_HOST }}
           username: ${{ secrets.DEV_EC2_USER }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "./server/.env"
+          source: "./server/.env.development"
           target: "~/BoatOwner/server"
           overwrite: true
 
@@ -55,32 +56,7 @@ jobs:
           source: "./docker-compose.yml"
           target: "~/BoatOwner/server"
           overwrite: true
-
-      - name: Diagnostic EC2 SSH & Environment Info
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          script: |
-            echo "== Hostname and IP =="
-            hostname
-            ip addr
-            echo "== Current User =="
-            whoami
-            echo "== Home Directory Permissions =="
-            ls -ld ~
-            echo "== Target Path Permissions =="
-            ls -l ~/boatowner-api.tar || echo "No tar file yet"
-            echo "== Docker Containers =="
-            docker ps -a || echo "Docker not running"
-            echo "== Disk Space =="
-            df -h
-            echo "== Network Info =="
-            netstat -tuln | grep 22 || echo "No SSH port open"
-            echo "== Last 20 lines of auth.log =="
-            sudo tail -20 /var/log/auth.log || echo "No auth.log access"
-
+          
       - name: Deploy and run Docker Compose on EC2 (develop)
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -88,7 +64,6 @@ jobs:
           username: ${{ secrets.DEV_EC2_USER }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           script: |
-            mkdir -p ~/BoatOwner/server
             docker load -i ~/boatowner-api.tar
             cp ~/BoatOwner/server/.env.development ~/BoatOwner/server/.env
             cd ~/BoatOwner/server
