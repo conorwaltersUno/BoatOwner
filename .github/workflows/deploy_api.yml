@@ -36,23 +36,13 @@ jobs:
           target: "~"
           overwrite: true
 
-      - name: Copy .env.example to EC2 (develop)
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "./server/.env.example"
-          target: "~/BoatOwner/server"
-          overwrite: true
-
       - name: Copy .env.development to EC2 (develop)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEV_EC2_HOST }}
           username: ${{ secrets.DEV_EC2_USER }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "./server/.env.development"
+          source: "./server/.env"
           target: "~/BoatOwner/server"
           overwrite: true
 
