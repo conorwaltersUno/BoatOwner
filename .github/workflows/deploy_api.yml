@@ -33,7 +33,7 @@ jobs:
           username: ${{ secrets.DEV_EC2_USER }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           source: "./server/boatowner-api.tar"
-          target: "~/boatowner-api.tar"
+          target: "~"
 
       - name: Copy .env.example to EC2 (develop)
         uses: appleboy/scp-action@v0.1.7
@@ -42,7 +42,7 @@ jobs:
           username: ${{ secrets.DEV_EC2_USER }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           source: "./server/.env.example"
-          target: "~/BoatOwner/server/.env.example"
+          target: "~/BoatOwner/server"
 
       - name: Copy .env.development to EC2 (develop)
         uses: appleboy/scp-action@v0.1.7
@@ -51,7 +51,7 @@ jobs:
           username: ${{ secrets.DEV_EC2_USER }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           source: "./server/.env.development"
-          target: "~/BoatOwner/server/.env.development"
+          target: "~/BoatOwner/server"
 
       - name: Copy docker-compose.yml to EC2 (develop)
         uses: appleboy/scp-action@v0.1.7
@@ -60,7 +60,7 @@ jobs:
           username: ${{ secrets.DEV_EC2_USER }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           source: "./docker-compose.yml"
-          target: "~/BoatOwner/server/docker-compose.yml"
+          target: "~/BoatOwner/server"
 
       - name: Diagnostic EC2 SSH & Environment Info
         uses: appleboy/ssh-action@v1.0.3
