@@ -36,13 +36,13 @@ jobs:
           target: "~/boatowner-api.tar"
           overwrite: true
 
-      - name: Copy .env to EC2 (develop)
+      - name: Copy .env.development to EC2 (develop)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEV_EC2_HOST }}
           username: ${{ secrets.DEV_EC2_USER }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "./server/.env"
+          source: "./server/.env.development"
           target: "~/BoatOwner/server/.env"
           overwrite: true
 
@@ -53,7 +53,7 @@ jobs:
           username: ${{ secrets.DEV_EC2_USER }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           source: "./docker-compose.yml"
-          target: "~/BoatOwner/server"
+          target: "~/BoatOwner/server/docker-compose.yml"
           overwrite: true
           
       - name: Deploy and run Docker Compose on EC2 (develop)
