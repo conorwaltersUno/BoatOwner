@@ -43,5 +43,4 @@ app.use((err, req: Request, res: Response, next: NextFunction) => {
   return next();
 });
 
-
 export { app };
