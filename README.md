@@ -225,12 +225,8 @@ expenses {
 3. **Self-Hosted GitHub Actions Runner**
    - SSH into your EC2 instance and set up the runner:
      ```zsh
-     mkdir ~/actions-runner && cd ~/actions-runner
-     curl -o actions-runner-linux-x64-<version>.tar.gz -L https://github.com/actions/runner/releases/download/v<version>/actions-runner-linux-x64-<version>.tar.gz
-     tar xzf actions-runner-linux-x64-<version>.tar.gz
-     ./config.sh --url https://github.com/<owner>/<repo> --token <YOUR_TOKEN>
-     sudo ./svc.sh install
-     sudo ./svc.sh start
+     cd actions-runner/
+     ./run.sh
      ```
    - The runner will now pick up jobs from your repo and run them inside your VPC.
 
@@ -249,9 +245,38 @@ expenses {
      ```
    - If you see the `boatowner=>` prompt, connection is successful.
 
+5. **Connect to EC2 instance**
+   - To connect to DEV EC2, use the following command ```ssh -i Desktop/boatownerec2key.pem ubuntu@3.255.10.141z```
+
 5. **Typical Workflow**
    - Push code/migrations to GitHub.
    - Self-hosted runner on EC2 picks up the job, runs migrations/deployments, and connects to RDS securely.
+
+---
+
+## 🗺️ Dev Architecture Diagram
+
+```mermaid
+graph TD
+    subgraph AWS_VPC
+        EC2[EC2 Instance]
+        RDS[(RDS PostgreSQL)]
+        Runner[GitHub Actions Self-Hosted Runner]
+        EC2 -- runs backend, runner, connects to RDS --> RDS
+        Runner -- picks up jobs from GitHub --> EC2
+    end
+    GitHub[GitHub Repository]
+    DevMachine[Developer Machine]
+    DevMachine -- push code/migrations --> GitHub
+    GitHub -- triggers workflow --> Runner
+```
+
+**Legend:**
+- EC2: Ubuntu instance running backend and self-hosted runner
+- RDS: PostgreSQL database
+- Runner: GitHub Actions self-hosted runner (on EC2)
+- GitHub: Source code and workflow triggers
+- DevMachine: Your local development machine
 
 ---
 
