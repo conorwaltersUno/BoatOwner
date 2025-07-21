@@ -16,5 +16,5 @@ jobs:
         run: |
           wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/7.8.2/flyway-commandline-7.8.2-linux-x64.tar.gz
           tar -xvf flyway-commandline-7.8.2-linux-x64.tar.gz
-          sudo ln -s $PWD/flyway-7.8.2/flyway /usr/local/bin/flyway
+          sudo ln -s $PWD/flyway-7.8.2/flyway /usr/local/bin/flyway || true
           flyway -url='${{ secrets.DEV_DB_URL }}' -user='${{ secrets.DEV_DB_USER }}' -password='${{ secrets.DEV_DB_PASSWORD }}' -locations=filesystem:./database/migrations -outOfOrder=true -baselineOnMigrate=true -connectRetries=5 migrate
