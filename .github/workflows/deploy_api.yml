@@ -34,6 +34,7 @@ jobs:
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           source: "./server/boatowner-api.tar"
           target: "~"
+          overwrite: true
 
       - name: Copy .env.example to EC2 (develop)
         uses: appleboy/scp-action@v0.1.7
@@ -43,6 +44,7 @@ jobs:
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           source: "./server/.env.example"
           target: "~/BoatOwner/server"
+          overwrite: true
 
       - name: Copy .env.development to EC2 (develop)
         uses: appleboy/scp-action@v0.1.7
@@ -52,6 +54,7 @@ jobs:
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           source: "./server/.env.development"
           target: "~/BoatOwner/server"
+          overwrite: true
 
       - name: Copy docker-compose.yml to EC2 (develop)
         uses: appleboy/scp-action@v0.1.7
@@ -61,6 +64,7 @@ jobs:
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           source: "./docker-compose.yml"
           target: "~/BoatOwner/server"
+          overwrite: true
 
       - name: Diagnostic EC2 SSH & Environment Info
         uses: appleboy/ssh-action@v1.0.3
