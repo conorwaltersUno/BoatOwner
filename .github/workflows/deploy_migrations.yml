@@ -12,7 +12,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Run Flyway migrations
+      - name: Run Flyway migrations for DEV environment
         run: |
           wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/7.8.2/flyway-commandline-7.8.2-linux-x64.tar.gz
           tar -xvf flyway-commandline-7.8.2-linux-x64.tar.gz

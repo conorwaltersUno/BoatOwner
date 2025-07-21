@@ -1,8 +1,9 @@
 version: "3.4"
 services:
+  # Local PostgreSQL database (for local development only)
   db:
     image: postgres:latest
-    container_name: boatownr_db
+    container_name: boatowner_db_local
     restart: always
     ports:
       - "5432:5432"
@@ -11,7 +12,9 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
     volumes:
-      - db:/var/lib/postgresql/data
+      - db_local:/var/lib/postgresql/data
+
+  # Flyway migrations (for local development only)
   flyway:
     image: flyway/flyway
     command: -url=jdbc:postgresql://db/postgres -schemas=public -user=user
@@ -20,8 +23,9 @@ services:
       - ./database:/flyway/sql
     depends_on:
       - db
+
+  # API service (for local development only)
   api:
-    profiles: ["dev"]
     build:
       context: ./server
       dockerfile: dockerfile.local
@@ -31,11 +35,14 @@ services:
       - "3001:3001"
     depends_on:
       - flyway
+    env_file:
+      - ./server/.env.local
     environment:
       DATABASE_URL: "postgres://user:password@db:5432/postgres?schema=public"
       ACCESS_TOKEN_SECRET: "q4yQNhc7qU"
       REFRESH_TOKEN_SECRET: "O0KwrXUFWx"
+      NODE_ENV: "development"
 
 volumes:
-  db:
-    name: boatownr_db
+  db_local:
+    name: boatowner_db_local

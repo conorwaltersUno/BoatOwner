@@ -141,24 +141,47 @@ expenses {
 1. **Install dependencies**
 
    ```bash
+   cd server
    npm install
    ```
 
 2. **Configure environment variables**
 
-   Copy `.env` and fill in your values for database, JWT secrets, etc.
-
-3. **Start the backend (local Docker)**
+   Copy `server/.env.example` to `server/.env` and fill in your values:
 
    ```bash
-   docker compose --profile dev up
+   cp server/.env.example server/.env
+   # Edit server/.env with your database URL, JWT secrets, etc.
    ```
 
-   Or with Makefile:
+3. **Choose your deployment method:**
 
+   **Local Development (with local PostgreSQL):**
    ```bash
-   make start_backend_docker
+   # Start local database, run migrations, and API
+   make start_local_backend
+   
+   # Or manually:
+   docker compose --profile local up --build -d
+   cd server && npm run start
    ```
+
+   **Deployed Environment (with external database like RDS):**
+   ```bash
+   # Requires pre-built Docker image
+   docker compose --profile deployed up -d
+   
+   # Or with Makefile:
+   make start_deployed
+   ```
+
+4. **Environment Profiles:**
+   - **`local`**: Uses local PostgreSQL database, builds API from source with hot reload
+   - **`deployed`**: Uses pre-built Docker image, connects to external database (RDS)
+
+5. **Database Migrations:**
+   - Local: Automatically run by Flyway service
+   - Deployed: Run separately via GitHub Actions or manual Flyway execution
 
 ---
 
@@ -277,6 +300,79 @@ graph TD
 - Runner: GitHub Actions self-hosted runner (on EC2)
 - GitHub: Source code and workflow triggers
 - DevMachine: Your local development machine
+
+---
+
+## 🚀 Deployment Process (Environment-Specific)
+
+### Environment-Specific Docker Compose Strategy
+
+The deployment pipeline uses separate Docker Compose files and environment configurations for each deployment target:
+
+#### **Architecture Benefits:**
+1. **Clear Separation**: Each environment has dedicated configuration files
+2. **Environment-Specific Settings**: Unique database credentials and secrets per environment
+3. **Security**: Production secrets isolated from development
+4. **Scalability**: Easy to add new environments (staging, qa, demo)
+
+#### **File Structure:**
+```
+├── docker-compose.yml          # Local development only
+├── docker-compose.dev.yml      # Development environment deployment
+├── docker-compose.staging.yml  # Staging environment deployment  
+├── docker-compose.prod.yml     # Production environment deployment
+└── server/
+    ├── .env.local              # Local development
+    ├── .env.dev                # Development environment
+    ├── .env.staging            # Staging environment
+    └── .env.prod               # Production environment
+```
+
+#### **Current Deployment Flow (DEV):**
+1. **Code Push**: Push to `develop` branch triggers deployment
+2. **Docker Build**: API built as Docker image on self-hosted runner
+3. **File Upload**: SCP operations upload:
+   - Docker image tar file to `~/boatowner-api.tar`
+   - Development environment file (`server/.env.dev`)
+   - Development compose file (`docker-compose.dev.yml`)
+4. **Deployment**: SSH script loads Docker image and starts services using dev-specific files
+
+#### **Environment Commands:**
+```bash
+# Local development
+docker compose up -d
+
+# Development deployment  
+docker compose -f docker-compose.dev.yml up -d
+
+# Staging deployment (future)
+docker compose -f docker-compose.staging.yml up -d
+
+# Production deployment (future)
+docker compose -f docker-compose.prod.yml up -d
+```
+
+#### **Database Configuration (DEV):**
+- **Database Name**: `boatowner_dev`
+- **Database User**: `boatowner_dev_user`
+- **Database Host**: AWS RDS (eu-west-1)
+- **Environment**: Development with proper isolation
+
+#### **Key Files:**
+- `.github/workflows/deploy_api.yml` - Development deployment workflow
+- `docker-compose.dev.yml` - Development environment Docker Compose
+- `server/.env.dev` - Development environment variables
+- `ENVIRONMENT_DEPLOYMENT_SETUP.md` - Comprehensive environment setup guide
+
+#### **Troubleshooting:**
+If deployment fails, check:
+1. **GitHub Actions logs** for specific error messages
+2. **Environment file** (`.env.dev`) has correct database credentials
+3. **Docker Compose file** (`docker-compose.dev.yml`) references correct environment
+4. **EC2 security groups** allow SSH and required ports
+5. **RDS connectivity** from EC2 instance using dev database credentials
+
+For detailed troubleshooting steps, see `DEPLOYMENT_TROUBLESHOOTING.md`.
 
 ---
 

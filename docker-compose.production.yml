@@ -1,0 +1,14 @@
+version: "3.4"
+services:
+  api:
+    image: boatowner-api:latest
+    container_name: boatowner_api
+    restart: always
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./server/.env
+
+volumes:
+  db:
+    name: boatownr_db

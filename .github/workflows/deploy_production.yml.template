@@ -1,9 +1,9 @@
-name: Deploy API to DEV
+name: Deploy API to Production
 
 on:
   push:
     branches:
-      - develop
+      - main
     paths:
       - "server/**"
 
@@ -21,19 +21,19 @@ jobs:
       - name: Build Docker image
         working-directory: ./server
         run: |
-          docker build --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" -t boatowner-api:latest .
+          docker build --build-arg API_DB_URL="${{ secrets.PROD_DB_URL }}" -t boatowner-api:latest .
 
       - name: Save Docker image to tar
         working-directory: ./server
         run: |
           docker save boatowner-api:latest -o boatowner-api.tar
 
-      - name: Copy Docker image to EC2 (develop)
+      - name: Copy Docker image to EC2 (production)
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          host: ${{ secrets.PROD_EC2_HOST }}
+          username: ${{ secrets.PROD_EC2_USER }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
           script: |
             # Remove old tar file if it exists
             rm -f ~/boatowner-api.tar
@@ -41,9 +41,9 @@ jobs:
       - name: Upload Docker image via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          host: ${{ secrets.PROD_EC2_HOST }}
+          username: ${{ secrets.PROD_EC2_USER }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
           source: "server/boatowner-api.tar"
           target: "~/"
           overwrite: true
@@ -51,29 +51,29 @@ jobs:
       - name: Upload environment file via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "server/.env.dev"
+          host: ${{ secrets.PROD_EC2_HOST }}
+          username: ${{ secrets.PROD_EC2_USER }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
+          source: "server/.env.prod"
           target: "~/BoatOwner/server/"
           overwrite: true
 
       - name: Upload docker-compose file via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "docker-compose.dev.yml"
+          host: ${{ secrets.PROD_EC2_HOST }}
+          username: ${{ secrets.PROD_EC2_USER }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
+          source: "docker-compose.prod.yml"
           target: "~/BoatOwner/"
           overwrite: true
           
-      - name: Deploy and run Docker Compose on EC2 (develop)
+      - name: Deploy and run Docker Compose on EC2 (production)
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          host: ${{ secrets.PROD_EC2_HOST }}
+          username: ${{ secrets.PROD_EC2_USER }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
           script: |
             # Create directory structure if it doesn't exist
             mkdir -p ~/BoatOwner/server
@@ -88,16 +88,16 @@ jobs:
             echo "=== Checking file structure ==="
             echo "Files in ~/BoatOwner:"
             ls -la
-            echo "Type of docker-compose.dev.yml:"
-            file docker-compose.dev.yml
+            echo "Type of docker-compose.prod.yml:"
+            file docker-compose.prod.yml
             echo "Files in ~/BoatOwner/server:"
             ls -la server/
-            echo "Type of .env.dev file:"
-            file server/.env.dev
+            echo "Type of .env.prod file:"
+            file server/.env.prod
             
-            # Start services with Docker Compose using DEV environment
-            echo "=== Starting Docker Compose for DEV ==="
-            docker-compose -f docker-compose.dev.yml up -d || docker compose -f docker-compose.dev.yml up -d
+            # Start services with Docker Compose using PRODUCTION environment
+            echo "=== Starting Docker Compose for PRODUCTION ==="
+            docker-compose -f docker-compose.prod.yml up -d || docker compose -f docker-compose.prod.yml up -d
             
             # Show running containers
             echo "=== Running containers ==="
@@ -108,4 +108,4 @@ jobs:
             docker image prune -f
 
       - name: Notify Success
-        run: echo "Backend deployed to DEV EC2 successfully!"
+        run: echo "Backend deployed to PRODUCTION EC2 successfully!"

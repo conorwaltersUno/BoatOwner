@@ -1,0 +1,15 @@
+version: "3.4"
+services:
+  # API service for DEV environment
+  api:
+    image: boatowner-api:latest
+    container_name: boatowner_api_dev
+    restart: always
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./server/.env.dev
+    environment:
+      NODE_ENV: "development"
+
+# No volumes needed for dev deployment as we use external RDS

@@ -1,0 +1,15 @@
+version: "3.4"
+services:
+  # API service for STAGING environment
+  api:
+    image: boatowner-api:latest
+    container_name: boatowner_api_staging
+    restart: always
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./server/.env.staging
+    environment:
+      NODE_ENV: "staging"
+
+# No volumes needed for staging deployment as we use external RDS
