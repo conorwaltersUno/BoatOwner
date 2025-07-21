@@ -53,6 +53,15 @@ jobs:
           source: "./server/.env.development"
           target: "~/BoatOwner/server/.env.development"
 
+      - name: Copy docker-compose.yml to EC2 (develop)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ${{ secrets.DEV_EC2_USER }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          source: "./docker-compose.yml"
+          target: "~/BoatOwner/server/docker-compose.yml"
+
       - name: Diagnostic EC2 SSH & Environment Info
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -89,7 +98,10 @@ jobs:
             docker load -i ~/boatowner-api.tar
             cp ~/BoatOwner/server/.env.development ~/BoatOwner/server/.env
             cd ~/BoatOwner/server
-            docker-compose up -d --build
+            ls -l
+            ls -l docker-compose.yml
+            ls -l .env
+            docker-compose up -d --build || docker compose up -d --build
             docker image prune -f
 
       - name: Notify Success
