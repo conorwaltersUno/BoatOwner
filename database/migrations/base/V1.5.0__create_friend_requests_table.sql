@@ -10,3 +10,4 @@ CREATE TABLE friend_requests (
 );
 CREATE INDEX idx_friend_requests_receiver ON friend_requests(receiver_id);
 CREATE INDEX idx_friend_requests_sender ON friend_requests(sender_id);
+
