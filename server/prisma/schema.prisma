@@ -69,6 +69,7 @@ model user {
   email                                             String            @unique @db.VarChar(255)
   password                                          String            @db.VarChar(255)
   created                                           DateTime          @default(now()) @db.Timestamp(6)
+  username                                          String?           @unique @db.VarChar(50)
   boat                                              boat[]
   friend_requests_friend_requests_receiver_idTouser friend_requests[] @relation("friend_requests_receiver_idTouser")
   friend_requests_friend_requests_sender_idTouser   friend_requests[] @relation("friend_requests_sender_idTouser")
