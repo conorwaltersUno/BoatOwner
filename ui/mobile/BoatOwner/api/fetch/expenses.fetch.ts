@@ -3,12 +3,12 @@ import Constants from "expo-constants";
 import { APIPort } from "@/constants/APIPort";
 import { authFetch } from "../../api/fetch/auth.fetch";
 
-const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
+const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV === 'true';
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
 
 const apiUrl = isLocalDev
   ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + `:${APIPort.localPort}`
-  : `https://${apiBaseUrl}:${APIPort.localPort}`;
+  : apiBaseUrl;
 
 export const fetchExpenses = async (boatId: number) => {
   try {

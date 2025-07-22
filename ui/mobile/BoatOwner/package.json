@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "start-local": "NODE_ENV=local npx expo start",
+    "start-local": "NODE_ENV=local npx expo start --clear",
+    "start-dev": "NODE_ENV=development npx expo start --clear",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",

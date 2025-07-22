@@ -4,12 +4,12 @@ import { APIPort } from "@/constants/APIPort";
 import { authFetch } from "./auth.fetch";
 import { getUserId } from "@/utils/tokenStorage";
 
-const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
+const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV === 'true';
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
 
 const apiUrl = isLocalDev
   ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + `:${APIPort.localPort}`
-  : `https://${apiBaseUrl}:${APIPort.localPort}`;
+  : apiBaseUrl;
 
 // GET /friends/:userId
 export const fetchFriends = async (): Promise<FriendUserDTO[]> => {

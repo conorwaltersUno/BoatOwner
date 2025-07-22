@@ -2,12 +2,12 @@ import { APIPort } from "@/constants/APIPort";
 import { APIRoutes } from "@/constants/APIRoutes";
 import Constants from "expo-constants";
 
-const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
+const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV === 'true';
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
 
 const apiUrl = isLocalDev
   ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + `:${APIPort.localPort}`
-  : `https://${apiBaseUrl}:${APIPort.localPort}`;
+  : apiBaseUrl;
 
 export async function signUp(email: string, password: string, username: string, boat_name: string, boat_model: string) {
   const res = await fetch(`${apiUrl}${APIRoutes.users}`, {

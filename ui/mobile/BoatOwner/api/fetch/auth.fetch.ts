@@ -1,14 +1,21 @@
 import { getAccessToken, getRefreshToken, saveTokens, clearTokens } from "@/utils/tokenStorage";
-import { router } from "expo-router"; // or useRouter if you prefer
+import { router } from "expo-router";
+import Constants from "expo-constants";
+import { APIPort } from "@/constants/APIPort";
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || "";
+const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV === 'true';
+const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
+
+const apiUrl = isLocalDev
+  ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + `:${APIPort.localPort}`
+  : apiBaseUrl;
 
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = await getRefreshToken();
   if (!refreshToken) return null;
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/users/token`, {
+    const res = await fetch(`${apiUrl}/api/users/token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),

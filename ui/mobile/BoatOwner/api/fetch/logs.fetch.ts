@@ -4,12 +4,12 @@ import Constants from "expo-constants";
 import { LogDTO, SaveLogDTO, UpdateLogDTO } from "../../interfaces/log/log";
 import { authFetch } from "../../api/fetch/auth.fetch";
 
-const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV;
+const isLocalDev = process.env.EXPO_PUBLIC_IS_LOCAL_DEV === 'true';
 const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "";
 
 const apiUrl = isLocalDev
   ? "http://" + Constants.expoConfig?.hostUri!.split(`:`).shift() + `:${APIPort.localPort}`
-  : `https://${apiBaseUrl}:${APIPort.localPort}`;
+  : apiBaseUrl;
 
 export const postLog = async (log: SaveLogDTO, boatId: number) => {
   try {

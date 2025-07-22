@@ -103,6 +103,250 @@ expenses {
 
 ---
 
+## 🚀 Comprehensive Makefile Development Guide
+
+The BoatOwner project includes a sophisticated Makefile that streamlines development workflows by automating environment setup, service orchestration, and environment switching. This guide covers all available commands and their use cases.
+
+### **🎯 Primary Development Commands**
+
+#### **Full Local Development (Recommended for Full-Stack Work)**
+
+```bash
+make start_full_local
+```
+
+**What this command does:**
+1. 📦 Sets up local environment (`.env.local` configuration)
+2. 🐳 Starts local PostgreSQL database in Docker container
+3. ⏳ Waits for database initialization (5 seconds)
+4. 🔧 Installs server dependencies (`npm install`)
+5. 🖥️  Opens **new terminal** with backend server on `http://localhost:3001`
+6. 📱 Opens **new terminal** with mobile app connecting to local server
+7. ✅ Complete isolated development environment ready
+
+**Perfect for:**
+- Backend + Frontend development
+- Database schema changes
+- Full feature development
+- Testing complete workflows
+
+#### **Frontend-Only Development**
+
+```bash
+make start_mobile_dev
+```
+
+**What this command does:**
+1. 🔧 Switches to development environment (`.env.development`)
+2. 📱 Starts mobile app in development mode
+3. 🌐 Connects to AWS development server at `http://3.255.10.141:3001`
+4. 🚀 No local backend needed - uses shared development server
+
+**Perfect for:**
+- UI/UX development
+- Frontend feature work
+- Testing against shared backend
+- Quick mobile app testing
+
+### **🔧 Component-Specific Commands**
+
+#### **Database Only**
+```bash
+make start_local_db
+```
+- Starts only the PostgreSQL database container
+- Perfect for database testing, migrations, or data inspection
+
+#### **Backend + Database**
+```bash
+make start_local_backend
+```
+- Starts database container AND backend server in current terminal
+- Server runs on `http://localhost:3001`
+- Perfect for backend-only development
+
+#### **Deployed Environment**
+```bash
+make start_deployed
+```
+- Uses pre-built Docker images with external database (RDS)
+- Simulates production-like environment locally
+
+#### **Fresh Backend Environment**
+```bash
+make start_new_backend
+```
+- Completely resets local environment
+- Removes containers and volumes
+- Rebuilds from scratch
+- Perfect for troubleshooting or clean start
+
+### **🧪 Testing Commands**
+
+#### **Run All Backend Tests**
+```bash
+make test_all
+```
+- Executes complete backend test suite
+- Required before deployments
+- Validates all API endpoints and business logic
+
+### **🔄 Environment Switching Commands**
+
+#### **Switch to Local Development**
+```bash
+make switch_to_local
+```
+- Changes mobile app configuration to connect to `localhost:3001`
+- Uses `.env.local.backup` or `.env.local` files
+- Perfect for switching from AWS dev server to local server
+
+#### **Switch to Development Server**
+```bash
+make switch_to_dev
+```
+- Changes mobile app configuration to connect to AWS development server
+- Uses `.env.development` file
+- Perfect for switching from local to shared development environment
+
+### **📋 Complete Command Reference**
+
+| Command | Purpose | Environment | Use Case |
+|---------|---------|-------------|----------|
+| `make start_full_local` | Complete dev environment | Local | Full-stack development |
+| `make start_mobile_dev` | Mobile app only | AWS Dev | Frontend development |
+| `make start_local_db` | Database only | Local | Database work |
+| `make start_local_backend` | Backend + Database | Local | Backend development |
+| `make start_deployed` | Production-like | External DB | Production testing |
+| `make start_new_backend` | Fresh environment | Local | Clean start/troubleshooting |
+| `make test_all` | Run tests | Any | Testing/CI validation |
+| `make switch_to_local` | Switch to localhost | Local | Environment switching |
+| `make switch_to_dev` | Switch to AWS dev | AWS Dev | Environment switching |
+
+### **🎯 Development Workflow Patterns**
+
+#### **Full-Stack Feature Development**
+```bash
+# 1. Start complete local environment
+make start_full_local
+
+# Result: 3 terminals open:
+# Terminal 1: Database logs (current terminal)
+# Terminal 2: Backend server (http://localhost:3001)
+# Terminal 3: Mobile app (connects to localhost)
+
+# 2. Develop your feature across backend and frontend
+# 3. Test everything locally
+
+# 4. Run tests before committing
+make test_all
+```
+
+#### **Frontend-Only Development**
+```bash
+# 1. Connect to shared development server
+make start_mobile_dev
+
+# Result: Mobile app connects to http://3.255.10.141:3001
+# No local backend needed - work on UI/UX freely
+```
+
+#### **Backend-Only Development**
+```bash
+# 1. Start database and backend only
+make start_local_backend
+
+# Result: Server runs in current terminal
+# Use API testing tools (Postman, curl, etc.)
+```
+
+#### **Environment Switching Workflow**
+```bash
+# Start with AWS development server
+make start_mobile_dev
+
+# Switch to local development for debugging
+make switch_to_local
+# Mobile app now connects to localhost:3001
+
+# Switch back to AWS development server
+make switch_to_dev
+# Mobile app now connects to http://3.255.10.141:3001
+```
+
+#### **Troubleshooting Workflow**
+```bash
+# If environment is corrupted or behaving strangely
+make start_new_backend
+
+# This will:
+# 1. Stop all containers
+# 2. Remove containers and volumes
+# 3. Start fresh database
+# 4. Install dependencies
+# 5. Start clean backend
+```
+
+### **🔧 Environment Configuration**
+
+The Makefile automatically handles environment selection through file copying:
+
+- **Local Development**: 
+  - Uses `.env.local` and `.env.local.backup` files
+  - Database: `localhost:5432`
+  - Server: `http://localhost:3001`
+
+- **Development Testing**: 
+  - Uses `.env.development` files
+  - Server: `http://3.255.10.141:3001` (AWS development server)
+  - Database: AWS RDS (managed externally)
+
+- **Terminal Management**:
+  - Backend and frontend run in separate terminal windows
+  - Better debugging with isolated logs
+  - macOS Terminal automation via AppleScript
+
+### **⚙️ Advanced Configuration**
+
+#### **Makefile Variables**
+```makefile
+COMMAND=start          # npm script to run
+DOCKER_ENV=dev        # Docker environment
+ENV=dev               # Environment selector
+```
+
+#### **Docker Compose Architecture**
+
+The project uses a **file-based approach** for environment separation:
+
+- **`docker-compose.yml`**: Local development only (database + API)
+- **`docker-compose.dev.yml`**: Development environment (API only, external RDS)
+- **`docker-compose.staging.yml`**: Staging environment (API only, staging RDS)
+- **`docker-compose.prod.yml`**: Production environment (API only, production RDS)
+
+**Note**: The Makefile uses `--profile local` for backward compatibility, but the current Docker Compose files don't actually use profiles. Instead, they use separate files for clear environment separation.
+
+#### **Environment File Management**
+
+The Makefile automatically handles environment switching by copying files:
+
+```bash
+# Switch to local development
+make switch_to_local
+# Copies: .env.local.backup → .env
+
+# Switch to development server
+make switch_to_dev  
+# Copies: .env.development → .env
+```
+
+#### **Helper Commands (Internal Use)**
+- `_start_local_server`: Starts server in current terminal
+- `_start_local_mobile`: Starts mobile app in current terminal
+- `default_goal`: Lists all available Makefile targets
+
+---
+
 ## 🛠️ Getting Started (Frontend)
 
 1. **Install dependencies**
@@ -138,6 +382,18 @@ expenses {
 
 ## 🛠️ Getting Started (Backend)
 
+### **Quick Start (Recommended)**
+
+Use the Makefile commands for the fastest setup:
+
+```bash
+# Full local development environment
+make start_full_local
+# This opens 3 terminals: database logs, backend server, mobile app
+```
+
+### **Manual Setup (Advanced Users)**
+
 1. **Install dependencies**
 
    ```bash
@@ -147,41 +403,365 @@ expenses {
 
 2. **Configure environment variables**
 
-   Copy `server/.env.example` to `server/.env` and fill in your values:
-
    ```bash
-   cp server/.env.example server/.env
-   # Edit server/.env with your database URL, JWT secrets, etc.
+   # Copy example environment file
+   cp server/.env.example server/.env.local
+   
+   # Edit server/.env.local with your values:
+   # DATABASE_URL, JWT_SECRET, REFRESH_TOKEN_SECRET, etc.
    ```
 
-3. **Choose your deployment method:**
+3. **Choose your development approach:**
 
-   **Local Development (with local PostgreSQL):**
+   #### **🎯 Full-Stack Development (Recommended)**
    ```bash
-   # Start local database, run migrations, and API
+   # Complete local environment with database, backend, and mobile app
+   make start_full_local
+   
+   # Result:
+   # - Terminal 1: Database logs (current terminal)
+   # - Terminal 2: Backend server on http://localhost:3001
+   # - Terminal 3: Mobile app connecting to localhost
+   ```
+
+   #### **🔧 Backend-Only Development**
+   ```bash
+   # Database + Backend in current terminal
    make start_local_backend
    
-   # Or manually:
-   docker compose --profile local up --build -d
-   cd server && npm run start
+   # Or individual components:
+   make start_local_db          # Database only
+   cd server && npm run start:local  # Backend only
    ```
 
-   **Deployed Environment (with external database like RDS):**
+   #### **🌐 Frontend with AWS Development Server**
    ```bash
-   # Requires pre-built Docker image
-   docker compose --profile deployed up -d
+   # Mobile app connects to shared AWS development server
+   make start_mobile_dev
    
-   # Or with Makefile:
+   # Connects to: http://3.255.10.141:3001
+   ```
+
+   #### **🔄 Environment Switching**
+   ```bash
+   # Switch mobile app between local and AWS development server
+   make switch_to_local     # Connect to localhost:3001
+   make switch_to_dev       # Connect to AWS development server
+   ```
+
+   #### **🧪 Testing & Cleanup**
+   ```bash
+   # Run all backend tests
+   make test_all
+   
+   # Fresh start (cleans containers and volumes)
+   make start_new_backend
+   
+   # Production-like deployment testing
    make start_deployed
    ```
 
-4. **Environment Profiles:**
-   - **`local`**: Uses local PostgreSQL database, builds API from source with hot reload
-   - **`deployed`**: Uses pre-built Docker image, connects to external database (RDS)
+### **Available npm Scripts**
 
-5. **Database Migrations:**
-   - Local: Automatically run by Flyway service
-   - Deployed: Run separately via GitHub Actions or manual Flyway execution
+#### **Backend Scripts (server directory)**
+```bash
+cd server
+
+# Development scripts
+npm run start          # Standard development server
+npm run start:local    # Local development with .env.local
+npm run dev            # Development with hot reload
+npm run build          # Production build
+
+# Testing scripts
+npm test              # Run all backend tests
+npm run test:watch    # Run tests in watch mode
+npm run test:coverage # Run tests with coverage report
+
+# Development tools
+npm run swagger-autogen # Generate API documentation
+npm run lint          # Lint TypeScript code
+npm run format        # Format code with Prettier
+```
+
+#### **Frontend Scripts (ui/mobile/BoatOwner directory)**
+```bash
+cd ui/mobile/BoatOwner
+
+# Environment-specific scripts
+npm run start-local    # Connect to localhost:3001
+npm run start-dev      # Connect to AWS development server  
+npm run start-prod     # Connect to production server
+
+# Platform-specific scripts
+npm run android-local  # Android with local server
+npm run ios-dev        # iOS with development server
+npm run web-local      # Web with local server
+
+# Standard Expo scripts
+npx expo start         # Standard Expo development
+npx expo start --clear # Start with cleared cache
+```
+
+### **Environment File Structure**
+
+#### **Backend Environment Files**
+```
+server/
+├── .env.example       # Template file (committed)
+├── .env.local         # Local development (ignored)
+├── .env.development   # Development testing (ignored)
+└── .env.production    # Production deployment (ignored)
+```
+
+#### **Frontend Environment Files**
+```
+ui/mobile/BoatOwner/
+├── .env.template      # Template file (committed)
+├── .env               # Active configuration (copied by Makefile)
+├── .env.local         # Local development (ignored)
+├── .env.local.backup  # Backup of local config (ignored)
+├── .env.development   # Development testing (ignored)
+└── .env.production    # Production deployment (ignored)
+```
+
+### **Database Configuration**
+
+#### **Local Development**
+- **Database**: Local PostgreSQL in Docker container
+- **Port**: `5432`
+- **Connection**: `postgresql://user:password@localhost:5432/postgres`
+- **Auto-migrations**: Handled by Flyway service in Docker Compose
+
+#### **Development Testing**
+- **Database**: AWS RDS PostgreSQL
+- **Connection**: Configured in `.env.development`
+- **Migrations**: Deployed via GitHub Actions
+
+#### **Production**
+- **Database**: AWS RDS PostgreSQL (production instance)
+- **Connection**: Configured in `.env.production`
+- **Security**: Enhanced security groups and encryption
+
+### **Docker Compose Configuration**
+
+#### **Local Development (`docker-compose.yml`)**
+- **Services**: PostgreSQL database + Flyway migrations + API service
+- **Database**: Local PostgreSQL container with persistent volume
+- **API**: Built from source with hot reload via volumes
+- **Command**: `docker compose up -d` (used by Makefile commands)
+
+#### **Environment-Specific Deployments**
+- **Development**: `docker-compose.dev.yml` (AWS RDS database)
+- **Staging**: `docker-compose.staging.yml` (staging RDS database)
+- **Production**: `docker-compose.prod.yml` (production RDS database)
+
+---
+
+## 🔧 Development Troubleshooting
+
+### **Common Makefile Issues**
+
+#### **Database Connection Issues**
+```bash
+# Check if database is running
+docker ps | grep postgres
+
+# Restart database if needed
+make start_local_db
+
+# For corrupted database, use fresh start
+make start_new_backend
+```
+
+#### **Port Already in Use**
+```bash
+# Kill processes on port 3001 (backend)
+lsof -ti :3001 | xargs kill -9
+
+# Kill processes on port 8081 (Expo)
+lsof -ti :8081 | xargs kill -9
+
+# Kill processes on port 5432 (PostgreSQL)
+lsof -ti :5432 | xargs kill -9
+```
+
+#### **Environment Configuration Issues**
+```bash
+# Verify environment files exist
+ls -la server/.env*
+ls -la ui/mobile/BoatOwner/.env*
+
+# Test backend environment loading
+cd server && NODE_ENV=local node -e "require('dotenv').config({path: '.env.local'}); console.log('DB:', process.env.DATABASE_URL);"
+
+# Test frontend environment switching
+make switch_to_local
+cat ui/mobile/BoatOwner/.env | grep EXPO_PUBLIC_IS_LOCAL_DEV
+
+make switch_to_dev
+cat ui/mobile/BoatOwner/.env | grep EXPO_PUBLIC_IS_LOCAL_DEV
+```
+
+#### **Terminal Windows Not Opening (macOS)**
+```bash
+# Grant Terminal permissions:
+# System Preferences > Security & Privacy > Automation > Terminal
+
+# Alternative: Run components manually
+make start_local_db
+cd server && npm run start:local &
+cd ui/mobile/BoatOwner && npm run start-local
+```
+
+#### **Docker Issues**
+```bash
+# Clean up Docker completely
+docker compose down -v
+docker system prune -f
+docker volume prune -f
+
+# Restart Docker Desktop and try fresh start
+make start_new_backend
+```
+
+**Note**: The Makefile uses `--profile local` in some commands for backward compatibility. If you see profile-related errors, the Docker Compose files work without profiles - the `--profile local` flag is simply ignored by the current configuration.
+
+#### **Makefile Command Not Found**
+```bash
+# Check if make is installed
+which make
+
+# Install make on macOS (if needed)
+xcode-select --install
+
+# List all available Makefile commands
+make
+```
+
+#### **Environment Switching Problems**
+```bash
+# Reset mobile app environment files
+cd ui/mobile/BoatOwner
+
+# Backup current .env
+cp .env .env.backup
+
+# Use development server
+make switch_to_dev
+
+# Use local server
+make switch_to_local
+
+# Verify current configuration
+cat .env | grep EXPO_PUBLIC
+```
+
+### **Development Server URLs**
+
+| Service | Local URL | Development URL |
+|---------|-----------|-----------------|
+| Backend API | `http://localhost:3001` | `http://3.255.10.141:3001` |
+| API Health Check | `http://localhost:3001/health` | `http://3.255.10.141:3001/health` |
+| Mobile App | Expo Go via QR code | Expo Go via QR code |
+| Database | `localhost:5432` | AWS RDS (internal) |
+| Swagger Docs | `http://localhost:3001/api-docs` | `http://3.255.10.141:3001/api-docs` |
+
+### **Quick Health Checks**
+
+#### **Test Local Backend**
+```bash
+# Start local environment
+make start_full_local
+
+# Test API health
+curl http://localhost:3001/health
+
+# Expected response: {"status":"ok","database":"connected"}
+```
+
+#### **Test Development Backend**
+```bash
+# Test AWS development server
+curl http://3.255.10.141:3001/health
+
+# Expected response: {"status":"ok","database":"connected"}
+```
+
+#### **Check Database Connection**
+```bash
+# Test local database
+make start_local_db
+docker exec -it boatowner-db psql -U boatowner -d boatowner -c "SELECT 1;"
+
+# Should return: 1 (1 row)
+```
+
+#### **Test Environment Switching**
+```bash
+# Switch to local and verify
+make switch_to_local
+grep "EXPO_PUBLIC_IS_LOCAL_DEV=true" ui/mobile/BoatOwner/.env
+
+# Switch to dev and verify  
+make switch_to_dev
+grep "EXPO_PUBLIC_IS_LOCAL_DEV=false" ui/mobile/BoatOwner/.env
+```
+
+### **Common Error Solutions**
+
+#### **"Database connection failed"**
+```bash
+# Solution 1: Restart database
+make start_local_db
+
+# Solution 2: Fresh start
+make start_new_backend
+
+# Solution 3: Check Docker
+docker ps | grep postgres
+```
+
+#### **"Port 3001 already in use"**
+```bash
+# Kill existing process
+lsof -ti :3001 | xargs kill -9
+
+# Or use different port in .env.local
+echo "PORT=3002" >> server/.env.local
+```
+
+#### **"Terminal windows not opening"**
+```bash
+# Manual startup
+make start_local_db
+
+# In separate terminal
+cd server && npm run start:local
+
+# In another terminal
+cd ui/mobile/BoatOwner && npm run start-local
+```
+
+#### **"Environment files not found"**
+```bash
+# Verify files exist
+ls -la server/.env*
+ls -la ui/mobile/BoatOwner/.env*
+
+# Create missing files from templates
+cp server/.env.example server/.env.local
+cp ui/mobile/BoatOwner/.env.template ui/mobile/BoatOwner/.env.local
+```
+
+#### **"Docker compose command not found"**
+```bash
+# Try legacy syntax
+docker-compose --version
+
+# Install Docker Desktop (includes docker compose)
+# https://docs.docker.com/desktop/install/mac-install/
+```
 
 ---
 
