@@ -12,10 +12,18 @@ COPY tsconfig.json ./
 RUN npm config set fetch-timeout 60000 && \
     npm config set fetch-retry-mintimeout 10000 && \
     npm config set fetch-retry-maxtimeout 60000 && \
-    npm config set fetch-retries 3
+    npm config set fetch-retries 3 && \
+    npm config set audit false && \
+    npm config set fund false
 
 # Install dependencies with verbose logging and faster npm ci
-RUN npm ci --verbose --no-audit --no-fund
+# Add explicit memory limit and network timeout handling
+RUN echo "Starting npm ci installation..." && \
+    npm ci --verbose --no-audit --no-fund --maxsockets 1 || \
+    (echo "npm ci failed, trying with legacy-peer-deps..." && \
+     npm ci --verbose --no-audit --no-fund --legacy-peer-deps --maxsockets 1) || \
+    (echo "npm ci still failed, trying npm install..." && \
+     npm install --verbose --no-audit --no-fund --maxsockets 1)
 
 # Copy rest of the application
 COPY . .

@@ -47,23 +47,64 @@ jobs:
         timeout-minutes: 15
         run: |
           echo "=== Docker Build Started at $(date) ==="
-          echo "=== Starting Docker build with enhanced logging ==="
+          echo "=== Available resources before build ==="
+          df -h
+          free -h
+          echo "=== Starting Docker build (legacy builder compatible) ==="
           
-          # Build with timeout and detailed progress
+          # Check if we can see npm install progress by monitoring container
           timeout 900 docker build \
             --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" \
-            --progress=plain \
             --no-cache \
-            -t boatowner-api:latest . || {
-            echo "=== Docker build failed or timed out ==="
+            -t boatowner-api:latest . &
+          
+          BUILD_PID=$!
+          
+          # Monitor the build process
+          echo "=== Monitoring Docker build (PID: $BUILD_PID) ==="
+          
+          # Check every 30 seconds for npm install progress
+          while kill -0 $BUILD_PID 2>/dev/null; do
+            echo "Build still running at $(date)..."
+            
+            # Check if there are any npm install containers running
+            NPM_CONTAINERS=$(docker ps --filter "ancestor=node:22" --format "table {{.ID}}\t{{.Status}}" 2>/dev/null || echo "")
+            if [ ! -z "$NPM_CONTAINERS" ]; then
+              echo "=== Active npm install containers ==="
+              echo "$NPM_CONTAINERS"
+              
+              # Try to get logs from the running container
+              CONTAINER_ID=$(docker ps --filter "ancestor=node:22" -q | head -1)
+              if [ ! -z "$CONTAINER_ID" ]; then
+                echo "=== Latest logs from npm install ==="
+                docker logs --tail=10 $CONTAINER_ID 2>/dev/null || echo "Could not get container logs"
+              fi
+            fi
+            
+            # Check system resources
+            echo "=== System status ==="
+            echo "Memory: $(free -h | grep Mem:)"
+            echo "Disk: $(df -h / | tail -1)"
+            
+            sleep 30
+          done
+          
+          # Wait for the build to complete
+          wait $BUILD_PID
+          BUILD_EXIT_CODE=$?
+          
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "=== Docker build failed with exit code $BUILD_EXIT_CODE ==="
             echo "=== Docker system info ==="
             docker system df
             echo "=== Docker processes ==="
             docker ps -a
+            echo "=== Failed containers logs ==="
+            docker ps -a --filter "status=exited" --format "{{.ID}}" | head -3 | xargs -I {} docker logs {} 2>/dev/null || echo "No failed container logs"
             exit 1
-          }
+          fi
           
-          echo "=== Docker Build Completed at $(date) ==="
+          echo "=== Docker Build Completed Successfully at $(date) ==="
           echo "=== Final image size ==="
           docker images boatowner-api:latest
 
