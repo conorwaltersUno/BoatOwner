@@ -77,3 +77,8 @@ _start_local_server:
 
 _start_local_mobile:
 	cd ui/mobile/BoatOwner && npm run start-local
+
+# Debug Docker build locally
+debug_docker_build:
+	@echo "🔍 Running Docker build debug script..."
+	./debug-docker-build.sh

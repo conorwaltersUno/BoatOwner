@@ -1,4 +1,4 @@
-name: Deploy API to DEV
+name: Deploy API to DEV (Robust)
 
 on:
   push:
@@ -14,6 +14,7 @@ defaults:
 jobs:
   deploy:
     runs-on: self-hosted
+    timeout-minutes: 30  # Overall job timeout
     steps:
       - name: 🛎 Checkout
         uses: actions/checkout@v2
@@ -42,25 +43,33 @@ jobs:
           echo "=== Environment Variables ==="
           env | grep -E '^(GITHUB|RUNNER|NODE)' | sort
 
-      - name: Build Docker image
+      - name: 🧹 Cleanup previous builds
+        run: |
+          echo "=== Cleaning up previous builds ==="
+          docker image rm boatowner-api:latest 2>/dev/null || echo "No existing image to remove"
+          docker builder prune -f
+          docker system prune -f
+          echo "=== Post-cleanup disk space ==="
+          df -h
+
+      - name: 🔨 Build Docker image (Primary attempt)
+        id: primary-build
+        continue-on-error: true
         working-directory: ./server
+        timeout-minutes: 15
         run: |
           echo "=== Docker Build Started at $(date) ==="
           echo "=== Available disk space ==="
           df -h
-          echo "=== Available memory ==="
-          free -h || echo "free command not available on macOS"
-          echo "=== Docker version ==="
-          docker --version
           echo "=== Starting Docker build with timeout ==="
           
           # Build with timeout and better logging
-          timeout 15m docker build \
+          timeout 900 docker build \
             --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" \
             --progress=plain \
             --no-cache \
             -t boatowner-api:latest . || {
-            echo "=== Docker build failed or timed out ==="
+            echo "=== Primary Docker build failed ==="
             echo "=== Docker system info ==="
             docker system df
             echo "=== Docker processes ==="
@@ -72,7 +81,54 @@ jobs:
           echo "=== Final image size ==="
           docker images boatowner-api:latest
 
-      - name: Save Docker image to tar
+      - name: 🔨 Build Docker image (Fallback attempt)
+        if: steps.primary-build.outcome == 'failure'
+        working-directory: ./server
+        timeout-minutes: 20
+        run: |
+          echo "=== Starting Fallback Docker Build ==="
+          echo "=== Using optimized Dockerfile ==="
+          
+          # Try with the optimized Dockerfile
+          if [ -f dockerfile.optimized ]; then
+            echo "Using optimized Dockerfile..."
+            timeout 1200 docker build \
+              --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" \
+              --progress=plain \
+              -f dockerfile.optimized \
+              -t boatowner-api:latest . || {
+              echo "=== Optimized build also failed ==="
+              echo "=== Attempting minimal build strategy ==="
+              
+              # Last resort: build in steps
+              echo "Building base image first..."
+              docker build --target builder \
+                --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" \
+                --progress=plain \
+                -f dockerfile.optimized \
+                -t boatowner-api:builder .
+              
+              echo "Building final image..."
+              docker build \
+                --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" \
+                --progress=plain \
+                -f dockerfile.optimized \
+                -t boatowner-api:latest .
+            }
+          else
+            echo "No optimized Dockerfile found, trying with different flags..."
+            timeout 1200 docker build \
+              --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" \
+              --progress=plain \
+              --memory=2g \
+              -t boatowner-api:latest .
+          fi
+          
+          echo "=== Fallback Build Completed ==="
+          docker images boatowner-api:latest
+
+      - name: 💾 Save Docker image to tar
+        timeout-minutes: 10
         working-directory: ./server
         run: |
           echo "=== Saving Docker image at $(date) ==="
@@ -80,7 +136,7 @@ jobs:
           df -h
           
           # Save image with timeout
-          timeout 5m docker save boatowner-api:latest -o boatowner-api.tar || {
+          timeout 600 docker save boatowner-api:latest -o boatowner-api.tar || {
             echo "=== Docker save failed or timed out ==="
             echo "=== Available disk space after failure ==="
             df -h
@@ -93,7 +149,7 @@ jobs:
           echo "=== Available disk space after save ==="
           df -h
 
-      - name: Prepare deployment files
+      - name: 📋 Prepare deployment files
         run: |
           # Create deployment directory with proper structure
           mkdir -p deployment-files
@@ -107,7 +163,7 @@ jobs:
           echo "=== Verifying file types ==="
           file deployment-files/*
 
-      - name: Upload deployment files to EC2
+      - name: 📤 Upload deployment files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEV_EC2_HOST }}
@@ -118,7 +174,7 @@ jobs:
           strip_components: 1
           overwrite: true
 
-      - name: Deploy and run Docker Compose on EC2 (develop)
+      - name: 🚀 Deploy and run Docker Compose on EC2 (develop)
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEV_EC2_HOST }}
@@ -160,7 +216,7 @@ jobs:
             echo "=== Cleaning up old images ==="
             docker image prune -f
 
-      - name: Verify deployment
+      - name: ✅ Verify deployment
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEV_EC2_HOST }}
@@ -174,7 +230,31 @@ jobs:
             # Test if the API is responding (adjust port if needed)
             echo "=== Testing API health endpoint ==="
             sleep 10  # Give container time to start
-            curl -f http://localhost:3001/health || echo "Health check failed - container may still be starting"
+            
+            # Multiple health check attempts
+            for i in {1..5}; do
+              if curl -f --max-time 10 http://localhost:3001/health; then
+                echo "Health check passed on attempt $i!"
+                break
+              else
+                echo "Health check attempt $i failed, retrying in 5 seconds..."
+                sleep 5
+              fi
+            done
 
-      - name: Notify Success
+      - name: 🎉 Notify Success
         run: echo "Backend deployed to DEV EC2 successfully!"
+
+      - name: 🚨 Debug on failure
+        if: failure()
+        run: |
+          echo "=== Deployment Failed - Debug Information ==="
+          echo "Job status: ${{ job.status }}"
+          echo "Available disk space:"
+          df -h
+          echo "Docker images:"
+          docker images
+          echo "Docker containers:"
+          docker ps -a
+          echo "Docker system info:"
+          docker system df
