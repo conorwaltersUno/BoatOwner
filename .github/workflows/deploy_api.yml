@@ -77,11 +77,11 @@ jobs:
             
             # Stop existing containers if running
             echo "=== Stopping existing containers ==="
-            docker compose -f docker-compose.dev.yml down || echo "No containers to stop"
+            docker-compose -f docker-compose.dev.yml down || echo "No containers to stop"
             
             # Start services with Docker Compose using DEV environment
             echo "=== Starting Docker Compose for DEV ==="
-            docker compose -f docker-compose.dev.yml up -d
+            docker-compose -f docker-compose.dev.yml up -d
             
             # Show running containers
             echo "=== Running containers ==="
@@ -89,7 +89,7 @@ jobs:
             
             # Show container logs for debugging
             echo "=== Container logs ==="
-            docker compose -f docker-compose.dev.yml logs --tail=20
+            docker-compose -f docker-compose.dev.yml logs --tail=20
             
             # Clean up old Docker images
             echo "=== Cleaning up old images ==="
@@ -104,7 +104,7 @@ jobs:
           script: |
             echo "=== Final deployment verification ==="
             cd ~/boatowner-deployment
-            docker compose -f docker-compose.dev.yml ps
+            docker-compose -f docker-compose.dev.yml ps
             
             # Test if the API is responding (adjust port if needed)
             echo "=== Testing API health endpoint ==="
