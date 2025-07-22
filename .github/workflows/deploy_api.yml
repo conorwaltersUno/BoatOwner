@@ -7,18 +7,8 @@ on:
     paths:
       - "server/**"
 
-defaults:            # Test if the API is responding (adjust port if needed)
-            echo "=== Testing API health endpoint ==="
-            sleep 15  # Give container more time to start
-            for i in {1..5}; do
-              if curl -f --max-time 10 http://localhost:3001/health; then
-                echo "Health check passed!"
-                break
-              else
-                echo "Health check attempt $i failed, retrying in 5 seconds..."
-                sleep 5
-              fi
-            doneun:
+defaults:
+  run:
     shell: bash
 
 jobs:
@@ -119,7 +109,7 @@ jobs:
             # Test if the API is responding (adjust port if needed)
             echo "=== Testing API health endpoint ==="
             sleep 10  # Give container time to start
-            curl -f http://localhost:3000/health || echo "Health check failed - container may still be starting"
+            curl -f http://localhost:3001/health || echo "Health check failed - container may still be starting"
 
       - name: Notify Success
         run: echo "Backend deployed to DEV EC2 successfully!"
