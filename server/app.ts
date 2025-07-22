@@ -56,3 +56,4 @@ console.log('🔧 BoatOwner API Application configured');
 console.log('📋 Routes registered:', ['/health', '/users', '/boat', '/logs', '/tasks', '/friends', '/auth-check', '/expenses']);
 
 export { app };
+

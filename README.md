@@ -110,26 +110,6 @@ The BoatOwner project includes a sophisticated Makefile that streamlines develop
 ### **🎯 Primary Development Commands**
 
 #### **Full Local Development (Recommended for Full-Stack Work)**
-
-```bash
-make start_full_local
-```
-
-**What this command does:**
-1. 📦 Sets up local environment (copies `.env.local.backup` to `.env`)
-2. 🐳 Starts local PostgreSQL database using Docker Compose with `--profile local`
-3. ⏳ Waits for database initialization (5 seconds)
-4. 🔧 Installs server dependencies (`npm install`)
-5. 🖥️  Opens **new terminal** with backend server using `npm run start:local`
-6. 📱 Opens **new terminal** with mobile app using `npm run start-local`
-7. ✅ Complete isolated development environment ready
-
-**Perfect for:**
-- Backend + Frontend development
-- Database schema changes
-- Full feature development
-- Testing complete workflows
-
 #### **Frontend-Only Development**
 
 ```bash
@@ -165,14 +145,6 @@ make start_local_backend
 - Installs dependencies and runs backend server in current terminal
 - Server runs on `http://localhost:3001`
 - Perfect for backend-only development
-
-#### **Deployed Environment**
-```bash
-make start_deployed
-```
-- Uses pre-built Docker images with `--profile deployed`
-- Simulates production-like environment locally
-- Uses external database configuration
 
 #### **Fresh Backend Environment**
 ```bash
