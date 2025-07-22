@@ -2,7 +2,7 @@ export interface UserDTO {
   id: number;
   email: string;
   password: string;
-  username: string; // NEW
+  username: string | null; // Nullable to match database schema
   created: string;
 }
 
@@ -11,7 +11,7 @@ export interface CreateUserDTO {
   boat_model: string;
   email: string;
   password: string;
-  username: string; // NEW
+  username: string; // Required for creation
 }
 
 export interface refreshTokenDTO {

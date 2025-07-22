@@ -16,8 +16,8 @@ import { FriendRequestDTO, FriendUserDTO, FriendsLogDTO } from "../../interfaces
 jest.mock("../../services/friends");
 
 describe("FriendsController", () => {
-  const mockUser = { id: 1, email: "user@email.com", name: "User" };
-  const mockFriend = { id: 2, email: "friend@email.com", name: "Friend" };
+  const mockUser = { id: 1, email: "user@email.com", name: "User", username: "user1" };
+  const mockFriend = { id: 2, email: "friend@email.com", name: "Friend", username: "friend1" };
 
   beforeAll(() => {
     jest.spyOn(UserService, "getUserById").mockImplementation(async (id: number) => {

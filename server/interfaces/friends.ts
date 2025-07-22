@@ -8,15 +8,34 @@ export interface FriendRequestDTO {
   updated_at: string;
   sender_details: {
     id: number;
-    username: string;
+    username: string | null; // Make nullable to match database
     email: string;
   };
+}
+
+// Create friend request DTO for incoming requests
+export interface CreateFriendRequestDTO {
+  receiver_username: string;
+}
+
+// Friend DTO for basic friend information
+export interface FriendDTO {
+  id: number;
+  username: string | null;
+  email: string;
+}
+
+// User search DTO for finding users
+export interface UserSearchDTO {
+  id: number;
+  username: string | null;
+  email: string;
 }
 
 // Friend user DTO for friend list
 export interface FriendUserDTO {
   id: number;
-  username: string;
+  username: string | null; // Make nullable to match database
   // Removed email for security
   // email: string;
   name?: string | null;
@@ -39,7 +58,7 @@ export interface FriendsLogDTO {
   // The user who owns the log (the friend)
   user: {
     id: number;
-    username: string;
+    username: string | null; // Make nullable to match database
     // Removed email for security
     // email: string;
   };

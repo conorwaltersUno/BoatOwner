@@ -1,7 +1,7 @@
 import { FriendDTO, FriendRequestDTO, CreateFriendRequestDTO, UserSearchDTO } from "./friends";
 
 export * from "./boats";
-export * from "./expenses";
+export * from "./expense";
 export * from "./log";
 export * from "./task";
 export * from "./user";
