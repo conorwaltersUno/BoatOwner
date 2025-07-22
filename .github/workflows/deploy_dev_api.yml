@@ -18,80 +18,15 @@ jobs:
       - name: 🛎 Checkout
         uses: actions/checkout@v2
 
-      - name: 🔍 Debug runner environment
-        run: |
-          echo "=== GitHub Actions Runner Debug Info ==="
-          echo "Runner OS: $RUNNER_OS"
-          echo "Runner Architecture: $RUNNER_ARCH"
-          echo "GitHub Workspace: $GITHUB_WORKSPACE"
-          echo "Current directory: $(pwd)"
-          echo "Current user: $(whoami)"
-          echo "=== System Resources ==="
-          echo "Available disk space:"
-          df -h
-          echo "Available memory:"
-          free -h || echo "free command not available on macOS"
-          echo "CPU info:"
-          nproc || echo "nproc not available"
-          echo "=== Docker Environment ==="
-          docker --version
-          docker info || echo "Docker info failed"
-          echo "=== Node.js Environment ==="
-          node --version
-          npm --version
-          echo "=== Environment Variables ==="
-          env | grep -E '^(GITHUB|RUNNER|NODE)' | sort
-
       - name: Build Docker image
         working-directory: ./server
         run: |
-          echo "=== Docker Build Started at $(date) ==="
-          echo "=== Available disk space ==="
-          df -h
-          echo "=== Available memory ==="
-          free -h || echo "free command not available on macOS"
-          echo "=== Docker version ==="
-          docker --version
-          echo "=== Starting Docker build with timeout ==="
-          
-          # Build with timeout and better logging
-          timeout 15m docker build \
-            --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" \
-            --progress=plain \
-            --no-cache \
-            -t boatowner-api:latest . || {
-            echo "=== Docker build failed or timed out ==="
-            echo "=== Docker system info ==="
-            docker system df
-            echo "=== Docker processes ==="
-            docker ps -a
-            exit 1
-          }
-          
-          echo "=== Docker Build Completed at $(date) ==="
-          echo "=== Final image size ==="
-          docker images boatowner-api:latest
+          docker build --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" -t boatowner-api:latest .
 
       - name: Save Docker image to tar
         working-directory: ./server
         run: |
-          echo "=== Saving Docker image at $(date) ==="
-          echo "=== Available disk space before save ==="
-          df -h
-          
-          # Save image with timeout
-          timeout 5m docker save boatowner-api:latest -o boatowner-api.tar || {
-            echo "=== Docker save failed or timed out ==="
-            echo "=== Available disk space after failure ==="
-            df -h
-            exit 1
-          }
-          
-          echo "=== Docker image saved successfully ==="
-          echo "=== Image file size ==="
-          ls -lh boatowner-api.tar
-          echo "=== Available disk space after save ==="
-          df -h
+          docker save boatowner-api:latest -o boatowner-api.tar
 
       - name: Prepare deployment files
         run: |
