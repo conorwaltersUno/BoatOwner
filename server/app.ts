@@ -33,14 +33,26 @@ app.use("/auth-check", AuthRouter);
 app.use("/expenses", ExpenseRouter);
 
 app.use((err, req: Request, res: Response, next: NextFunction) => {
+  console.error('❌ Application Error:', {
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
+
   if (err) {
     return res.status(err.status || 500).json({
       message: err.message,
-      stack: err.stack,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     });
   }
 
   return next();
 });
+
+// Add startup logging
+console.log('🔧 BoatOwner API Application configured');
+console.log('📋 Routes registered:', ['/health', '/users', '/boat', '/logs', '/tasks', '/friends', '/auth-check', '/expenses']);
 
 export { app };
