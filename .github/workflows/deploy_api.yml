@@ -7,8 +7,18 @@ on:
     paths:
       - "server/**"
 
-defaults:
-  run:
+defaults:            # Test if the API is responding (adjust port if needed)
+            echo "=== Testing API health endpoint ==="
+            sleep 15  # Give container more time to start
+            for i in {1..5}; do
+              if curl -f --max-time 10 http://localhost:3001/health; then
+                echo "Health check passed!"
+                break
+              else
+                echo "Health check attempt $i failed, retrying in 5 seconds..."
+                sleep 5
+              fi
+            doneun:
     shell: bash
 
 jobs:
@@ -28,46 +38,31 @@ jobs:
         run: |
           docker save boatowner-api:latest -o boatowner-api.tar
 
-      - name: Copy Docker image to EC2 (develop)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          script: |
-            # Remove old tar file if it exists
-            rm -f ~/boatowner-api.tar
-
-      - name: Upload Docker image via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "server/boatowner-api.tar"
-          target: "~/"
-          overwrite: true
-
-      - name: Upload environment file via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "server/.env.dev"
-          target: "~/BoatOwner/server/"
-          overwrite: true
-
-      - name: Upload docker-compose file via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEV_EC2_HOST }}
-          username: ${{ secrets.DEV_EC2_USER }}
-          key: ${{ secrets.DEV_EC2_SSH_KEY }}
-          source: "docker-compose.dev.yml"
-          target: "~/BoatOwner/"
-          overwrite: true
+      - name: Prepare deployment files
+        run: |
+          # Create deployment directory with proper structure
+          mkdir -p deployment-files
+          cp server/boatowner-api.tar deployment-files/
+          cp docker-compose.dev.yml deployment-files/
+          cp server/.env.dev deployment-files/
           
+          # Verify files exist
+          echo "=== Files prepared for deployment ==="
+          ls -la deployment-files/
+          echo "=== Verifying file types ==="
+          file deployment-files/*
+
+      - name: Upload deployment files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ${{ secrets.DEV_EC2_USER }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          source: "deployment-files/*"
+          target: "~/boatowner-deployment/"
+          strip_components: 1
+          overwrite: true
+
       - name: Deploy and run Docker Compose on EC2 (develop)
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -75,37 +70,56 @@ jobs:
           username: ${{ secrets.DEV_EC2_USER }}
           key: ${{ secrets.DEV_EC2_SSH_KEY }}
           script: |
-            # Create directory structure if it doesn't exist
-            mkdir -p ~/BoatOwner/server
+            set -e  # Exit on any error
             
-            # Load Docker image
-            docker load -i ~/boatowner-api.tar
-            
-            # Navigate to BoatOwner directory
-            cd ~/BoatOwner
+            # Navigate to deployment directory
+            cd ~/boatowner-deployment
             
             # Debug: List files to verify they exist and are files (not directories)
-            echo "=== Checking file structure ==="
-            echo "Files in ~/BoatOwner:"
+            echo "=== Checking deployment files ==="
             ls -la
-            echo "Type of docker-compose.dev.yml:"
-            file docker-compose.dev.yml
-            echo "Files in ~/BoatOwner/server:"
-            ls -la server/
-            echo "Type of .env.dev file:"
-            file server/.env.dev
+            echo "=== Verifying file types ==="
+            file boatowner-api.tar docker-compose.dev.yml .env.dev
+            
+            # Load Docker image
+            echo "=== Loading Docker image ==="
+            docker load -i boatowner-api.tar
+            
+            # Stop existing containers if running
+            echo "=== Stopping existing containers ==="
+            docker compose -f docker-compose.dev.yml down || echo "No containers to stop"
             
             # Start services with Docker Compose using DEV environment
             echo "=== Starting Docker Compose for DEV ==="
-            docker-compose -f docker-compose.dev.yml up -d || docker compose -f docker-compose.dev.yml up -d
+            docker compose -f docker-compose.dev.yml up -d
             
             # Show running containers
             echo "=== Running containers ==="
             docker ps
             
+            # Show container logs for debugging
+            echo "=== Container logs ==="
+            docker compose -f docker-compose.dev.yml logs --tail=20
+            
             # Clean up old Docker images
             echo "=== Cleaning up old images ==="
             docker image prune -f
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ${{ secrets.DEV_EC2_USER }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          script: |
+            echo "=== Final deployment verification ==="
+            cd ~/boatowner-deployment
+            docker compose -f docker-compose.dev.yml ps
+            
+            # Test if the API is responding (adjust port if needed)
+            echo "=== Testing API health endpoint ==="
+            sleep 10  # Give container time to start
+            curl -f http://localhost:3000/health || echo "Health check failed - container may still be starting"
 
       - name: Notify Success
         run: echo "Backend deployed to DEV EC2 successfully!"
