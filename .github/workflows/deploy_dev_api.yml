@@ -18,15 +18,76 @@ jobs:
       - name: 🛎 Checkout
         uses: actions/checkout@v2
 
+      - name: 🔍 Debug runner environment
+        run: |
+          echo "=== GitHub Actions Runner Debug Info ==="
+          echo "Runner OS: $RUNNER_OS"
+          echo "Current directory: $(pwd)"
+          echo "=== System Resources ==="
+          echo "Available disk space:"
+          df -h
+          echo "Available memory:"
+          free -h || echo "free command not available on macOS"
+          echo "=== Docker Environment ==="
+          docker --version
+          docker system df
+          echo "=== Dockerfile content ==="
+          cat server/dockerfile
+
+      - name: 🧹 Cleanup previous builds
+        run: |
+          echo "=== Cleaning up previous builds ==="
+          docker image rm boatowner-api:latest 2>/dev/null || echo "No existing image to remove"
+          docker builder prune -f
+          echo "=== Post-cleanup disk space ==="
+          df -h
+
       - name: Build Docker image
         working-directory: ./server
+        timeout-minutes: 15
         run: |
-          docker build --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" -t boatowner-api:latest .
+          echo "=== Docker Build Started at $(date) ==="
+          echo "=== Starting Docker build with enhanced logging ==="
+          
+          # Build with timeout and detailed progress
+          timeout 900 docker build \
+            --build-arg API_DB_URL="${{ secrets.API_DB_URL }}" \
+            --progress=plain \
+            --no-cache \
+            -t boatowner-api:latest . || {
+            echo "=== Docker build failed or timed out ==="
+            echo "=== Docker system info ==="
+            docker system df
+            echo "=== Docker processes ==="
+            docker ps -a
+            exit 1
+          }
+          
+          echo "=== Docker Build Completed at $(date) ==="
+          echo "=== Final image size ==="
+          docker images boatowner-api:latest
 
       - name: Save Docker image to tar
         working-directory: ./server
+        timeout-minutes: 10
         run: |
-          docker save boatowner-api:latest -o boatowner-api.tar
+          echo "=== Saving Docker image at $(date) ==="
+          echo "=== Available disk space before save ==="
+          df -h
+          
+          # Save image with timeout
+          timeout 600 docker save boatowner-api:latest -o boatowner-api.tar || {
+            echo "=== Docker save failed or timed out ==="
+            echo "=== Available disk space after failure ==="
+            df -h
+            exit 1
+          }
+          
+          echo "=== Docker image saved successfully ==="
+          echo "=== Image file size ==="
+          ls -lh boatowner-api.tar
+          echo "=== Available disk space after save ==="
+          df -h
 
       - name: Prepare deployment files
         run: |
